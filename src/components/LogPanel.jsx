@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ServerDropdown from './ServerDropdown';
 import LogEntry from './LogEntry';
-import ThemeToggle from './ThemeToggle'; // Add this import
+import ThemeToggle from './ThemeToggle';
 
 const LogPanel = ({ 
   selectedTopic,
@@ -12,10 +12,9 @@ const LogPanel = ({
   onClearLogs,
   theme,
   darkMode,
-  onThemeToggle // Add this prop
+  onThemeToggle
 }) => {
   const [logSearchTerm, setLogSearchTerm] = useState("");
-  const [logLevel, setLogLevel] = useState("all");
   const [autoScroll, setAutoScroll] = useState(true);
   const [showServerDropdown, setShowServerDropdown] = useState(false);
   const [serverSearchTerm, setServerSearchTerm] = useState("");
@@ -45,12 +44,10 @@ const LogPanel = ({
             log.message.toLowerCase().includes(logSearchTerm.toLowerCase()) ||
             log.serverName.toLowerCase().includes(logSearchTerm.toLowerCase());
           
-          const matchesLevel = logLevel === "all" || log.level === logLevel;
-          
-          return matchesSearch && matchesLevel;
+          return matchesSearch;
         }) || []
       : []
-  , [selectedTopic, logsByTopic, selectedServer, logSearchTerm, logLevel]);
+  , [selectedTopic, logsByTopic, selectedServer, logSearchTerm]);
 
   useEffect(() => {
     if (autoScroll && scrollRef.current) {
@@ -97,7 +94,7 @@ const LogPanel = ({
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* Theme Toggle - Add this at the beginning of controls */}
+            {/* Theme Toggle */}
             <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
 
             {/* Server Dropdown */}
@@ -132,20 +129,6 @@ const LogPanel = ({
                 darkMode={darkMode}
               />
             </div>
-
-            {/* Level Select */}
-            <select
-              value={logLevel}
-              onChange={(e) => setLogLevel(e.target.value)}
-              className={`${theme.input} rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 
-                       ${darkMode ? 'focus:ring-green-500/50' : 'focus:ring-blue-500/50'} cursor-pointer`}
-            >
-              <option value="all">All Levels</option>
-              <option value="error">Errors</option>
-              <option value="warn">Warnings</option>
-              <option value="info">Info</option>
-              <option value="debug">Debug</option>
-            </select>
 
             {/* Auto-scroll Button */}
             <button
@@ -191,7 +174,7 @@ const LogPanel = ({
             onChange={(e) => setLogSearchTerm(e.target.value)}
           />
           
-          {(selectedServer || logLevel !== 'all' || logSearchTerm) && (
+          {(selectedServer || logSearchTerm) && (
             <div className="flex items-center flex-wrap gap-2 text-xs">
               <span className={theme.textMuted}>Active filters:</span>
               {selectedServer && (
@@ -200,20 +183,6 @@ const LogPanel = ({
                   <span>Server: {selectedServer}</span>
                   <button
                     onClick={onClearServer}
-                    className="hover:text-red-400 ml-1"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
-              )}
-              {logLevel !== 'all' && (
-                <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full 
-                               ${darkMode ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-500/20 text-purple-600'}`}>
-                  <span>Level: {logLevel}</span>
-                  <button
-                    onClick={() => setLogLevel('all')}
                     className="hover:text-red-400 ml-1"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,8 +220,6 @@ const LogPanel = ({
               <LogEntry
                 key={i}
                 log={log}
-                onServerSelect={handleServerSelect}
-                selectedServer={selectedServer}
                 theme={theme}
                 darkMode={darkMode}
               />

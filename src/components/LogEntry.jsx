@@ -1,5 +1,5 @@
 import React from 'react';
-import { getLogLevelColor, formatTimestamp } from '../utils/logUtils';
+import { formatTimestamp } from '../utils/logUtils'; // Removed getLogLevelColor
 
 const LogEntry = ({ 
   log, 
@@ -12,27 +12,22 @@ const LogEntry = ({
                border ${theme.border}`}
     >
       <div className="flex items-start space-x-3">
-        {log.level && (
-          <span className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${getLogLevelColor(log.level, darkMode)}`}>
-            {log.level.toUpperCase()}
-          </span>
-        )}
-        
-        {/* Different color for timestamp */}
+        {/* Timestamp */}
         <span className={`${darkMode ? 'text-purple-400' : 'text-purple-600'} text-xs whitespace-nowrap font-mono`}>
           [{formatTimestamp(log.timestamp)}]
         </span>
         
-        {/* Different color for server name - no longer clickable */}
+        {/* Server name */}
         <span className={`${darkMode ? 'text-amber-400' : 'text-amber-700'} font-medium whitespace-nowrap`}>
           {log.serverName}
         </span>
         
-        {/* Different color for message */}
+        {/* Message */}
         <span className={`${darkMode ? 'text-emerald-300' : 'text-emerald-700'} break-all flex-1`}>
           {log.message}
         </span>
 
+        {/* Copy button */}
         <button
           onClick={() => navigator.clipboard.writeText(log.message)}
           className={`opacity-0 group-hover:opacity-100 transition-opacity 
