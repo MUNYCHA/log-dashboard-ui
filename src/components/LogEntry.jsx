@@ -36,7 +36,7 @@ const LogEntry = ({ log, theme, darkMode, keywords, now }) => {
 
   return (
     <div
-      className={`group py-2 px-3 rounded-lg ${theme.logEntry} transition-colors border ${theme.border}`}
+      className={`group py-2 px-3 rounded-lg ${theme.logEntry} transition-all duration-150 border ${theme.border}`}
     >
       <div className="flex items-start space-x-3">
         {/* Timestamp — shows relative time, full on hover */}
@@ -67,7 +67,7 @@ const LogEntry = ({ log, theme, darkMode, keywords, now }) => {
         {/* Copy button */}
         <button
           onClick={() => navigator.clipboard.writeText(log.message)}
-          className={`opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0
+          className={`opacity-0 group-hover:opacity-100 transition-all duration-150 active:scale-90 flex-shrink-0
                    ${theme.textMuted} hover:${theme.textSecondary}`}
           title="Copy message"
         >

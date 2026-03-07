@@ -4,8 +4,8 @@ const ThemeToggle = ({ darkMode, onToggle }) => {
   return (
     <button
       onClick={onToggle}
-      className={`p-1.5 rounded-lg transition-all
-                 ${darkMode ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700' : 'bg-white text-gray-800 hover:bg-gray-100 shadow-md'}`}
+      className={`p-1.5 rounded-lg transition-all duration-150 hover:scale-110 active:scale-95
+                 ${darkMode ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700 hover:shadow-lg hover:shadow-yellow-400/20' : 'bg-white text-gray-800 hover:bg-indigo-50 hover:shadow-lg hover:shadow-indigo-200 shadow-md'}`}
     >
       {darkMode ? (
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

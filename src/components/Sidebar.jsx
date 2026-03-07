@@ -78,7 +78,7 @@ const Sidebar = ({
                 <button
                   onClick={() => onTopicSelect(topic)}
                   className={`w-full text-left px-4 py-3 border-b ${theme.border}
-                           ${theme.hover} transition-all duration-200 group
+                           ${theme.hover} transition-all duration-150 group active:scale-[0.99]
                            ${selectedTopic === topic ? theme.selected : ""}`}
                 >
                   <div className="flex items-center justify-between">

@@ -78,7 +78,7 @@ const FilterDropdown = ({
           <button
             type="button"
             onClick={() => { onClearItem(); onClose(); }}
-            className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors cursor-pointer
+            className={`w-full text-left px-3 py-2 text-sm rounded-md transition-all duration-150 cursor-pointer active:scale-[0.98]
               ${!selectedItem ? selectedClass : theme.hover}`}
           >
             <div className="flex items-center space-x-2">
@@ -97,7 +97,7 @@ const FilterDropdown = ({
                   key={item}
                   type="button"
                   onClick={() => { onSelectItem(item); onClose(); }}
-                  className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors cursor-pointer
+                  className={`w-full text-left px-3 py-2 text-sm rounded-md transition-all duration-150 cursor-pointer active:scale-[0.98]
                     ${selectedItem === item ? selectedClass : theme.hover}`}
                 >
                   <div className="flex items-center space-x-2">

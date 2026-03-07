@@ -95,7 +95,7 @@ const KeywordFilter = ({
           <button
             type="button"
             onClick={() => onModeChange(mode === 'or' ? 'and' : 'or')}
-            className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+            className={`text-xs px-2 py-0.5 rounded-full border transition-all duration-150 hover:scale-105 active:scale-95 ${
               darkMode
                 ? 'border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/20'
                 : 'border-cyan-400/50 text-cyan-600 hover:bg-cyan-100'

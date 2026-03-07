@@ -426,7 +426,7 @@ const LogPanel = ({
               {/* Pause */}
               <button
                 onClick={togglePause}
-                className={`p-1.5 rounded-lg transition-colors ${isPaused ? accentPaused : theme.input}`}
+                className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${isPaused ? accentPaused : theme.input}`}
                 title={isPaused ? "Resume stream" : "Pause stream"}
               >
                 {isPaused ? (
@@ -444,7 +444,7 @@ const LogPanel = ({
               <div className="relative" ref={exportMenuRef}>
                 <button
                   onClick={() => setShowExportMenu((v) => !v)}
-                  className={`p-1.5 rounded-lg ${theme.input} transition-colors`}
+                  className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${theme.input}`}
                   title="Export logs"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -471,7 +471,7 @@ const LogPanel = ({
               {/* Auto-scroll */}
               <button
                 onClick={() => setAutoScroll(!autoScroll)}
-              className={`p-1.5 rounded-lg transition-colors ${autoScroll ? accentActive : theme.input}`}
+              className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${autoScroll ? accentActive : theme.input}`}
               title="Auto-scroll"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -483,7 +483,7 @@ const LogPanel = ({
               {!onClosePanel && (
                 <button
                   onClick={onOpenSplit}
-                  className={`hidden md:flex p-1.5 rounded-lg transition-colors ${splitView ? accentActive : theme.input}`}
+                  className={`hidden md:flex p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${splitView ? accentActive : theme.input}`}
                   title="Open split view"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -495,7 +495,7 @@ const LogPanel = ({
               {onClosePanel && (
                 <button
                   onClick={onClosePanel}
-                  className={`hidden md:flex p-1.5 rounded-lg transition-colors ${theme.input} hover:text-red-400 hover:bg-red-500/10`}
+                  className={`hidden md:flex p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${theme.input} hover:text-red-400 hover:bg-red-500/10`}
                   title="Close this panel"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -689,7 +689,7 @@ const LogPanel = ({
                   <button
                     key={r.value}
                     onClick={() => setTimeRange(r.value)}
-                    className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                    className={`px-3 py-1 rounded-full text-xs transition-all duration-150 hover:scale-105 active:scale-95 ${
                       timeRange === r.value ? accentActive : `${theme.input} ${theme.textMuted}`
                     }`}
                   >
@@ -768,7 +768,7 @@ const LogPanel = ({
             <button
               key={r.value}
               onClick={() => setTimeRange(r.value)}
-              className={`px-2.5 py-0.5 rounded-full text-xs transition-colors ${
+              className={`px-2.5 py-0.5 rounded-full text-xs transition-all duration-150 hover:scale-105 active:scale-95 ${
                 timeRange === r.value ? accentActive : `${theme.input} ${theme.textMuted}`
               }`}
             >
