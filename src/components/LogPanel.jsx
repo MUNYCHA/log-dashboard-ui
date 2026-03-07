@@ -338,8 +338,8 @@ const LogPanel = ({
               )}
             </div>
 
-            {/* lg+ only: dropdowns inline in row 1. On md they move to row 2. */}
-            <div className="hidden lg:flex items-center gap-1.5 flex-shrink-0">
+            {/* Dropdowns hidden on all desktop sizes — they live in the time range row below */}
+            <div className="hidden items-center gap-1.5 flex-shrink-0">
               {/* Server dropdown */}
               <div className="relative">
                 <button
@@ -709,8 +709,8 @@ const LogPanel = ({
 
         {/* Time range + dropdowns row — desktop */}
         <div className="hidden md:flex items-center gap-2 mt-2 flex-wrap">
-          {/* Server + path dropdowns (md only — on lg+ they live in row 1) */}
-          <div className="flex lg:hidden items-center gap-1.5 flex-shrink-0">
+          {/* Server + path dropdowns — always shown here on desktop */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <div className="relative">
               <button
                 ref={serverButtonRef}
