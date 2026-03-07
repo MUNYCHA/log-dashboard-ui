@@ -14,26 +14,6 @@ const TIME_RANGES = [
 ];
 const TIME_RANGE_MS = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
 
-const playAlertSound = (audioCtx) => {
-  try {
-    if (!audioCtx) return;
-    // Resume context if suspended (required in some browsers)
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + 0.35);
-  } catch {
-    // Audio unavailable — skip sound
-  }
-};
-
 const downloadFile = (content, filename, mimeType) => {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
@@ -74,13 +54,17 @@ const LogPanel = ({
   // selectedPath is tied to the current topic — auto-clears when topic changes
   const [pathForTopic, setPathForTopic] = useState({ topic: null, path: null });
   const selectedPath = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
+  const [prevTopic, setPrevTopic] = useState(selectedTopic);
+  if (prevTopic !== selectedTopic) {
+    setPrevTopic(selectedTopic);
+    setAutoScroll(true);
+  }
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [keywords, setKeywords] = useState([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordMode, setKeywordMode] = useState('or');
   const [isRegex, setIsRegex] = useState(false);
   const [timeRange, setTimeRange] = useState('all');
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
@@ -89,9 +73,7 @@ const LogPanel = ({
   const scrollRef = useRef(null);
   const serverButtonRef = useRef(null);
   const pathButtonRef = useRef(null);
-  const lastNotifiedTsRef = useRef(null);
   const exportMenuRef = useRef(null);
-  const audioCtxRef = useRef(null);
 
   // Ticker for relative timestamps (every 30s)
   useEffect(() => {
@@ -118,8 +100,8 @@ const LogPanel = ({
     setAtTop(scrollTop < 50);
     const nearBottom = scrollTop + clientHeight >= scrollHeight - 100;
     setAtBottom(nearBottom);
-    if (!nearBottom) setAutoScroll(false);
-  }, []);
+    if (!nearBottom && isActivePanel) setAutoScroll(false);
+  }, [isActivePanel]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -212,31 +194,6 @@ const LogPanel = ({
     }
   }, [filteredLogs, autoScroll]);
 
-  // Reset notification baseline when topic changes (ref-only, no setState — safe in effect)
-  useEffect(() => {
-    lastNotifiedTsRef.current = null;
-  }, [selectedTopic]);
-
-  // Browser notifications when keyword-matched logs arrive
-  useEffect(() => {
-    if (!notificationsEnabled || filteredLogs.length === 0) return;
-    const newestLog = filteredLogs[filteredLogs.length - 1];
-    const ts = new Date(newestLog.timestamp).getTime();
-    if (keywords.length > 0 && lastNotifiedTsRef.current !== null && ts > lastNotifiedTsRef.current) {
-      const newLogs = filteredLogs.filter((l) => new Date(l.timestamp).getTime() > lastNotifiedTsRef.current);
-      if (newLogs.length > 0) {
-        playAlertSound(audioCtxRef.current);
-        if (Notification.permission === 'granted') {
-          new Notification(`[${selectedTopic}] ${newLogs.length} keyword match${newLogs.length > 1 ? 'es' : ''}`, {
-            body: newLogs.slice(0, 3).map((l) => l.message.slice(0, 80)).join('\n'),
-            tag: 'logstream-alert',
-          });
-        }
-      }
-    }
-    lastNotifiedTsRef.current = ts;
-  }, [filteredLogs, notificationsEnabled, selectedTopic, keywords]);
-
   // Handlers
   const handleServerSelect = (server) => {
     onServerSelect(server);
@@ -257,34 +214,6 @@ const LogPanel = ({
   };
 
   const handleClearPath = () => setPathForTopic({ topic: selectedTopic, path: null });
-
-  const toggleNotifications = async () => {
-    if (notificationsEnabled) {
-      setNotificationsEnabled(false);
-      return;
-    }
-    // Create AudioContext on user gesture so browser autoplay policy allows sound
-    if (!audioCtxRef.current) {
-      try {
-        const AudioCtx = window.AudioContext || window['webkitAudioContext'];
-        audioCtxRef.current = new AudioCtx();
-      } catch {
-        // Audio not available
-      }
-    }
-    if (!('Notification' in window)) {
-      setNotificationsEnabled(true); // sound-only mode
-      return;
-    }
-    if (Notification.permission === 'granted') {
-      setNotificationsEnabled(true);
-    } else if (Notification.permission === 'default') {
-      await Notification.requestPermission();
-      setNotificationsEnabled(true); // enable sound even if notification denied
-    } else {
-      setNotificationsEnabled(true); // blocked — still allow sound
-    }
-  };
 
   const exportLogs = (format) => {
     const safeTopic = selectedTopic.replace(/[^a-z0-9]/gi, '_');
@@ -321,7 +250,10 @@ const LogPanel = ({
   // ─── Empty state ───────────────────────────────────────────────────────────
   if (!selectedTopic) {
     return (
-      <div className={`flex-1 flex flex-col min-w-0 ${theme.background}`}>
+      <div
+        className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer' : ''}`}
+        onClick={splitView && !isActivePanel ? onSetActive : undefined}
+      >
         <div className={`md:hidden flex items-center px-3 py-3 border-b ${theme.border} ${theme.header}`}>
           <button onClick={onOpenSidebar} className={`p-2 rounded-lg ${theme.input}`} aria-label="Open sidebar">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,7 +282,7 @@ const LogPanel = ({
   // ─── Main panel ────────────────────────────────────────────────────────────
   return (
     <div
-      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && isActivePanel ? `ring-1 inset-0 ${darkMode ? 'ring-green-500/40' : 'ring-blue-400/40'}` : ''}`}
+      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-70' : ''} ${splitView && isActivePanel ? `ring-1 ${darkMode ? 'ring-green-500/60' : 'ring-blue-400/60'}` : ''}`}
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
@@ -493,18 +425,6 @@ const LogPanel = ({
                 )}
               </button>
 
-              {/* Notifications */}
-              <button
-                onClick={toggleNotifications}
-                className={`p-1.5 rounded-lg transition-colors ${notificationsEnabled ? accentActive : theme.input}`}
-                title={notificationsEnabled ? "Disable keyword alerts" : "Enable keyword alerts"}
-              >
-                <svg className="w-4 h-4" fill={notificationsEnabled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </button>
-
               {/* Export */}
               <div className="relative" ref={exportMenuRef}>
                 <button
@@ -547,7 +467,7 @@ const LogPanel = ({
               {/* Split view — lg+ only */}
               <button
                 onClick={onToggleSplitView}
-                className={`hidden lg:flex p-1.5 rounded-lg transition-colors ${splitView ? accentActive : theme.input}`}
+                className={`hidden md:flex p-1.5 rounded-lg transition-colors ${splitView ? accentActive : theme.input}`}
                 title={splitView ? "Exit split view" : "Split view"}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -708,12 +628,6 @@ const LogPanel = ({
                   className={`flex-1 p-2 rounded-lg text-sm flex items-center justify-center space-x-1 ${autoScroll ? accentActive : theme.input}`}
                 >
                   <span>Auto-scroll</span>
-                </button>
-                <button
-                  onClick={toggleNotifications}
-                  className={`flex-1 p-2 rounded-lg text-sm flex items-center justify-center space-x-1 ${notificationsEnabled ? accentActive : theme.input}`}
-                >
-                  <span>🔔 Alerts</span>
                 </button>
                 <button
                   onClick={() => exportLogs('json')}
