@@ -3,6 +3,7 @@ import ServerDropdown from "./ServerDropdown";
 import PathDropdown from "./PathDropdown";
 import LogEntry from "./LogEntry";
 import ThemeToggle from "./ThemeToggle";
+import KeywordFilter from "./KeywordFilter";
 
 const LogPanel = ({
   selectedTopic,
@@ -11,6 +12,7 @@ const LogPanel = ({
   onServerSelect,
   onClearServer,
   onClearLogs,
+  isConnected,
   theme,
   darkMode,
   onThemeToggle,
@@ -23,6 +25,8 @@ const LogPanel = ({
   const [pathSearchTerm, setPathSearchTerm] = useState("");
   const [selectedPath, setSelectedPath] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [keywords, setKeywords] = useState([]);
+  const [keywordInput, setKeywordInput] = useState('');
 
   const scrollRef = useRef(null);
   const serverButtonRef = useRef(null);
@@ -94,12 +98,25 @@ const LogPanel = ({
         log.serverName.toLowerCase().includes(logSearchTerm.toLowerCase()) ||
         log.path.toLowerCase().includes(logSearchTerm.toLowerCase());
 
-      return matchesSearch;
+      if (!matchesSearch) return false;
+
+      // Keyword filter — includes uncommitted input text as a live keyword (OR logic, case-insensitive)
+      const pendingInput = keywordInput.trim().toLowerCase();
+      const activeKeywords = [
+        ...keywords.map((k) => k.text),
+        ...(pendingInput ? [pendingInput] : []),
+      ];
+      if (activeKeywords.length > 0) {
+        const haystack = log.message.toLowerCase();
+        if (!activeKeywords.some((kw) => haystack.includes(kw))) return false;
+      }
+
+      return true;
     });
 
     // Create a new array with spread, then reverse
     return [...filtered].reverse();
-  }, [selectedTopic, logsByTopic, selectedServer, selectedPath, logSearchTerm]);
+  }, [selectedTopic, logsByTopic, selectedServer, selectedPath, logSearchTerm, keywords, keywordInput]);
   
   useEffect(() => {
     if (autoScroll && scrollRef.current) {
@@ -129,9 +146,12 @@ const LogPanel = ({
     setSelectedPath(null);
   };
 
-  // Helper to get filename from path
-  const getFileName = (path) => {
-    return path?.split("/").pop() || path;
+  // Show last two path segments with ellipsis prefix when path is deeper
+  const getShortPath = (path) => {
+    if (!path) return path;
+    const parts = path.split("/").filter(Boolean);
+    if (parts.length <= 2) return path;
+    return `\u2026/${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
   };
 
   if (!selectedTopic) {
@@ -250,7 +270,7 @@ const LogPanel = ({
                   }
                 >
                   <span className="truncate">
-                    {selectedPath ? getFileName(selectedPath) : "All Paths"}
+                    {selectedPath ? getShortPath(selectedPath) : "All Paths"}
                   </span>
                   <svg
                     className={`w-4 h-4 transition-transform flex-shrink-0 ${showPathDropdown ? "rotate-180" : ""}`}
@@ -319,6 +339,7 @@ const LogPanel = ({
                   onClearLogs(selectedTopic);
                   handleClearServer();
                   handleClearPath();
+                  setKeywords([]);
                 }}
                 className={`p-2 rounded-lg ${theme.input} hover:text-red-400 
                          hover:bg-red-500/10 transition-colors`}
@@ -427,7 +448,7 @@ const LogPanel = ({
                   disabled={!selectedServer}
                 >
                   <span className="truncate">
-                    {selectedPath ? getFileName(selectedPath) : "All Paths"}
+                    {selectedPath ? getShortPath(selectedPath) : "All Paths"}
                   </span>
                   <svg
                     className={`w-4 h-4 transition-transform ${showPathDropdown ? "rotate-180" : ""}`}
@@ -491,17 +512,36 @@ const LogPanel = ({
 
         {/* Search input - same for both layouts */}
         <div className="mt-2 md:mt-3">
-          <input
-            type="text"
-            placeholder="Search in logs (message, server, or path)..."
-            className={`w-full ${theme.input} rounded-lg px-3 sm:px-4 py-2 text-sm focus:outline-none 
-                     focus:ring-2 ${darkMode ? "focus:ring-green-500/50" : "focus:ring-blue-500/50"} focus:border-transparent`}
-            value={logSearchTerm}
-            onChange={(e) => setLogSearchTerm(e.target.value)}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search in logs (message, server, or path)..."
+              className={`w-full ${theme.input} rounded-lg px-3 sm:px-4 py-2 pr-9 text-sm focus:outline-none
+                       focus:ring-2 ${darkMode ? "focus:ring-green-500/50" : "focus:ring-blue-500/50"} focus:border-transparent`}
+              value={logSearchTerm}
+              onChange={(e) => setLogSearchTerm(e.target.value)}
+            />
+            <svg className={`absolute right-3 top-2.5 w-4 h-4 ${theme.textMuted}`}
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          {/* Keyword filter */}
+          <KeywordFilter
+            keywords={keywords}
+            inputValue={keywordInput}
+            onInputChange={setKeywordInput}
+            onAdd={(kw) => setKeywords((prev) => [...prev, kw])}
+            onRemove={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
+            onClearAll={() => { setKeywords([]); setKeywordInput(''); }}
+            theme={theme}
+            darkMode={darkMode}
           />
 
           {/* Active filters */}
-          {(selectedServer || selectedPath || logSearchTerm) && (
+          {(selectedServer || selectedPath || logSearchTerm || keywords.length > 0) && (
             <div className="flex items-center flex-wrap gap-2 text-xs mt-2">
               <span className={theme.textMuted}>Active filters:</span>
 
@@ -527,7 +567,7 @@ const LogPanel = ({
                   className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full 
                                ${darkMode ? "bg-purple-500/20 text-purple-400" : "bg-purple-500/20 text-purple-600"}`}
                 >
-                  <span className="max-w-[100px] sm:max-w-[150px] truncate">Path: {getFileName(selectedPath)}</span>
+                  <span className="max-w-[100px] sm:max-w-[150px] truncate">Path: {getShortPath(selectedPath)}</span>
                   <button
                     onClick={handleClearPath}
                     className="hover:text-red-400 ml-1 flex-shrink-0"
@@ -565,7 +605,7 @@ const LogPanel = ({
         <div className="p-3 sm:p-4 md:p-6 space-y-2">
           {filteredLogs.length > 0 ? (
             filteredLogs.map((log, i) => (
-              <LogEntry key={i} log={log} theme={theme} darkMode={darkMode} />
+              <LogEntry key={i} log={log} theme={theme} darkMode={darkMode} keywords={keywords} />
             ))
           ) : (
             <div
@@ -587,7 +627,7 @@ const LogPanel = ({
               <p className="text-lg">No logs to display</p>
               <p className="text-sm px-4 text-center">
                 {selectedServer && selectedPath
-                  ? `No logs from "${selectedServer}" with path "${getFileName(selectedPath)}"`
+                  ? `No logs from "${selectedServer}" with path "${getShortPath(selectedPath)}"`
                   : selectedServer
                     ? `No logs from "${selectedServer}"`
                     : "Waiting for incoming logs..."}
@@ -624,9 +664,13 @@ const LogPanel = ({
       >
         <div className="flex items-center flex-wrap gap-2 sm:gap-4">
           <div className="flex items-center space-x-2">
-            <span>Connected</span>
+            <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
             <span
-              className={`w-1.5 h-1.5 ${darkMode ? "bg-green-400" : "bg-blue-500"} rounded-full animate-pulse`}
+              className={`w-1.5 h-1.5 rounded-full ${
+                isConnected
+                  ? `${darkMode ? 'bg-green-400' : 'bg-blue-500'} animate-pulse`
+                  : 'bg-red-500'
+              }`}
             />
           </div>
           {selectedServer && (
@@ -660,7 +704,7 @@ const LogPanel = ({
                          hover:bg-red-500/20 hover:text-red-400 transition-colors group`}
               >
                 <span className="max-w-[80px] sm:max-w-[120px] truncate">
-                  {getFileName(selectedPath)}
+                  {getShortPath(selectedPath)}
                 </span>
                 <svg
                   className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"

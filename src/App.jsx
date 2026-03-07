@@ -3,38 +3,26 @@ import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import Sidebar from './components/Sidebar';
 import LogPanel from './components/LogPanel';
-// Remove ThemeToggle import from here since it's now in LogPanel
-// import ThemeToggle from './components/ThemeToggle';
+import config from './config';
 
 export default function App() {
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [selectedServer, setSelectedServer] = useState(null);
-  const [topicSearchTerm, setTopicSearchTerm] = useState("");
+  const [topicSearchTerm, setTopicSearchTerm] = useState('');
   const [darkMode, setDarkMode] = useState(true);
 
-  const { logsByTopic, topics, clearLogs } = useWebSocket("ws://localhost:8080/ws/logs");
+  const { logsByTopic, topics, isConnected, clearLogs } = useWebSocket(config.ws.url);
   const theme = darkMode ? styles.dark : styles.light;
 
   const handleTopicSelect = (topic) => {
     setSelectedTopic(topic);
     setSelectedServer(null);
-    setTopicSearchTerm("");
-  };
-
-  const handleServerSelect = (server) => {
-    setSelectedServer(server);
-  };
-
-  const handleClearServer = () => {
-    setSelectedServer(null);
+    setTopicSearchTerm('');
   };
 
   return (
     <div className={`flex h-screen ${theme.background} ${theme.text} transition-colors duration-200`}>
-      {/* Remove the standalone ThemeToggle from here */}
-      {/* <ThemeToggle darkMode={darkMode} onToggle={() => setDarkMode(!darkMode)} /> */}
-      
-      <Sidebar 
+      <Sidebar
         topics={topics}
         logsByTopic={logsByTopic}
         selectedTopic={selectedTopic}
@@ -45,16 +33,17 @@ export default function App() {
         darkMode={darkMode}
       />
 
-      <LogPanel 
+      <LogPanel
         selectedTopic={selectedTopic}
         logsByTopic={logsByTopic}
         selectedServer={selectedServer}
-        onServerSelect={handleServerSelect}
-        onClearServer={handleClearServer}
+        onServerSelect={setSelectedServer}
+        onClearServer={() => setSelectedServer(null)}
         onClearLogs={clearLogs}
+        isConnected={isConnected}
         theme={theme}
         darkMode={darkMode}
-        onThemeToggle={() => setDarkMode(!darkMode)} // Add this line
+        onThemeToggle={() => setDarkMode((d) => !d)}
       />
     </div>
   );

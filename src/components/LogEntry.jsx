@@ -1,41 +1,65 @@
 import React from 'react';
-import { formatTimestamp } from '../utils/logUtils'; // Removed getLogLevelColor
+import { formatTimestamp } from '../utils/logUtils';
 
-const LogEntry = ({ 
-  log, 
-  theme, 
-  darkMode 
-}) => {
+/**
+ * Splits a message string by active keywords and wraps matches
+ * in colored <mark> spans using inline styles (supports arbitrary hex colors).
+ * Case-insensitive.
+ */
+const highlightMessage = (message, keywords) => {
+  if (!keywords || keywords.length === 0) return message;
+
+  const escaped = keywords.map((kw) =>
+    kw.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+  );
+  const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
+  const parts = message.split(regex);
+
+  return parts.map((part, i) => {
+    const match = keywords.find((kw) => kw.text.toLowerCase() === part.toLowerCase());
+    if (!match) return part;
+    return (
+      <mark
+        key={i}
+        className="rounded px-0.5 not-italic font-semibold"
+        style={{ backgroundColor: `${match.color}30`, color: match.color }}
+      >
+        {part}
+      </mark>
+    );
+  });
+};
+
+const LogEntry = ({ log, theme, darkMode, keywords }) => {
   return (
-    <div 
-      className={`group py-2 px-3 rounded-lg ${theme.logEntry} transition-colors 
-               border ${theme.border}`}
+    <div
+      className={`group py-2 px-3 rounded-lg ${theme.logEntry} transition-colors border ${theme.border}`}
     >
       <div className="flex items-start space-x-3">
         {/* Timestamp */}
         <span className={`${darkMode ? 'text-purple-400' : 'text-purple-600'} text-xs whitespace-nowrap font-mono`}>
           [{formatTimestamp(log.timestamp)}]
         </span>
-        
+
         {/* Server name */}
         <span className={`${darkMode ? 'text-amber-400' : 'text-amber-700'} font-medium whitespace-nowrap`}>
           {log.serverName}
         </span>
-        
-        {/* Message */}
+
+        {/* Message — keywords highlighted */}
         <span className={`${darkMode ? 'text-emerald-300' : 'text-emerald-700'} break-all flex-1`}>
-          {log.message}
+          {highlightMessage(log.message, keywords)}
         </span>
 
         {/* Copy button */}
         <button
           onClick={() => navigator.clipboard.writeText(log.message)}
-          className={`opacity-0 group-hover:opacity-100 transition-opacity 
+          className={`opacity-0 group-hover:opacity-100 transition-opacity
                    ${theme.textMuted} hover:${theme.textSecondary}`}
           title="Copy message"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
           </svg>
         </button>
