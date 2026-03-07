@@ -14,6 +14,25 @@ const TIME_RANGES = [
 ];
 const TIME_RANGE_MS = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
 
+const playAlertSound = () => {
+  try {
+    const AudioCtx = window.AudioContext || window['webkitAudioContext'];
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.35);
+  } catch {
+    // Audio context unavailable — skip sound
+  }
+};
+
 const downloadFile = (content, filename, mimeType) => {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
@@ -201,14 +220,17 @@ const LogPanel = ({
     if (!notificationsEnabled || filteredLogs.length === 0) return;
     const newestLog = filteredLogs[filteredLogs.length - 1];
     const ts = new Date(newestLog.timestamp).getTime();
-    if (keywords.length > 0 && lastNotifiedTsRef.current !== null && ts > lastNotifiedTsRef.current && Notification.permission === 'granted') {
+    if (keywords.length > 0 && lastNotifiedTsRef.current !== null && ts > lastNotifiedTsRef.current) {
       const newLogs = filteredLogs.filter((l) => new Date(l.timestamp).getTime() > lastNotifiedTsRef.current);
-      newLogs.forEach((log) => {
-        new Notification(`[${selectedTopic}] ${log.serverName}`, {
-          body: log.message.slice(0, 120),
-          tag: 'logstream-alert',
-        });
-      });
+      if (newLogs.length > 0) {
+        playAlertSound();
+        if (Notification.permission === 'granted') {
+          new Notification(`[${selectedTopic}] ${newLogs.length} keyword match${newLogs.length > 1 ? 'es' : ''}`, {
+            body: newLogs.slice(0, 3).map((l) => l.message.slice(0, 80)).join('\n'),
+            tag: 'logstream-alert',
+          });
+        }
+      }
     }
     lastNotifiedTsRef.current = ts;
   }, [filteredLogs, notificationsEnabled, selectedTopic, keywords]);
@@ -315,178 +337,186 @@ const LogPanel = ({
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className={`border-b ${theme.border} px-3 sm:px-4 md:px-5 py-3 ${theme.header} backdrop-blur-xl flex-shrink-0`}>
 
-        {/* DESKTOP layout */}
-        <div className="hidden md:flex items-center gap-2">
-          {/* Topic + count */}
-          <div className="flex items-center space-x-3 flex-shrink-0">
-            {splitView && (
-              <button
-                onClick={onSetActive}
-                className={`w-5 h-5 rounded-full flex-shrink-0 border-2 transition-colors ${
-                  isActivePanel
-                    ? darkMode ? 'border-green-400 bg-green-400' : 'border-blue-500 bg-blue-500'
-                    : `border-gray-500 ${theme.input}`
-                }`}
-                title={isActivePanel ? 'Active panel' : 'Click to make active'}
-              />
-            )}
-            <h2 className="text-base font-semibold whitespace-nowrap">
-              <span className={`${darkMode ? "bg-gradient-to-r from-green-400 to-emerald-400" : "bg-gradient-to-r from-blue-500 to-indigo-500"} bg-clip-text text-transparent`}>
-                {selectedTopic}
-              </span>
-            </h2>
-            <span className={`text-xs ${theme.card} px-2.5 py-0.5 rounded-full ${theme.textMuted} whitespace-nowrap`}>
-              {filteredLogs?.length || 0} logs
-            </span>
-            {logRates?.[selectedTopic] > 0 && (
-              <span className={`text-xs ${theme.textMuted} whitespace-nowrap`}>
-                {logRates[selectedTopic]}/s
-              </span>
-            )}
-          </div>
+        {/* DESKTOP layout — md: two rows, lg+: single row */}
+        <div className="hidden md:block">
 
-          {/* Server dropdown */}
-          <div className="relative flex-shrink-0">
-            <button
-              ref={serverButtonRef}
-              onClick={() => setShowServerDropdown(!showServerDropdown)}
-              className={`px-3 py-1.5 rounded-lg ${theme.input} text-sm flex items-center space-x-2 max-w-[180px] justify-between
-                        ${selectedServer ? (darkMode ? "border-green-400/50" : "border-blue-400/50") : ""}
-                        cursor-pointer hover:bg-opacity-80 transition-colors`}
-              type="button"
-            >
-              <span className="truncate">{selectedServer || "All Servers"}</span>
-              <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${showServerDropdown ? "rotate-180" : ""}`}
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <ServerDropdown
-              isOpen={showServerDropdown} onClose={() => setShowServerDropdown(false)}
-              servers={filteredServers} selectedServer={selectedServer}
-              onServerSelect={handleServerSelect} onClearServer={handleClearServer}
-              searchTerm={serverSearchTerm} onSearchChange={setServerSearchTerm}
-              theme={theme} darkMode={darkMode}
-            />
-          </div>
+          {/* Row 1 (md): topic + right controls — on lg+ this becomes part of a single flex row */}
+          <div className="flex items-center gap-2">
 
-          {/* Path dropdown */}
-          <div className="relative flex-shrink-0">
-            <button
-              ref={pathButtonRef}
-              onClick={() => selectedServer && setShowPathDropdown(!showPathDropdown)}
-              className={`px-3 py-1.5 rounded-lg ${theme.input} text-sm flex items-center space-x-2 max-w-[180px] justify-between
-                        ${!selectedServer ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-opacity-80"}
-                        ${selectedPath ? (darkMode ? "border-purple-400/50" : "border-purple-500/50") : ""}`}
-              type="button" disabled={!selectedServer}
-              title={!selectedServer ? "Select a server first" : "Filter by path"}
-            >
-              <span className="truncate">{selectedPath ? getShortPath(selectedPath) : "All Paths"}</span>
-              <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${showPathDropdown ? "rotate-180" : ""}`}
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {selectedServer && (
-              <PathDropdown
-                isOpen={showPathDropdown} onClose={() => setShowPathDropdown(false)}
-                paths={filteredPaths} selectedPath={selectedPath}
-                onPathSelect={handlePathSelect} onClearPath={handleClearPath}
-                searchTerm={pathSearchTerm} onSearchChange={setPathSearchTerm}
-                theme={theme} darkMode={darkMode}
-              />
-            )}
-          </div>
-
-          {/* Search + regex toggle */}
-          <div className="relative flex-1 min-w-0">
-            <input
-              type="text"
-              placeholder={isRegex ? "Regex pattern..." : "Search logs..."}
-              className={`w-full ${theme.input} rounded-lg px-3 py-1.5 pr-16 text-sm focus:outline-none
-                       focus:ring-2 ${regexError ? 'focus:ring-red-500/50 border-red-500/50' : darkMode ? "focus:ring-green-500/50" : "focus:ring-blue-500/50"} focus:border-transparent`}
-              value={logSearchTerm}
-              onChange={(e) => setLogSearchTerm(e.target.value)}
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              {regexError && <span className="text-red-400 text-xs">!</span>}
-              <button
-                onClick={() => setIsRegex((v) => !v)}
-                className={`text-xs px-1.5 py-0.5 rounded font-mono transition-colors ${
-                  isRegex
-                    ? darkMode ? 'bg-green-500/30 text-green-300' : 'bg-blue-500/20 text-blue-600'
-                    : `${theme.textMuted} hover:${theme.textSecondary}`
-                }`}
-                title="Toggle regex search"
-              >.*</button>
-              <svg className={`w-3.5 h-3.5 ${theme.textMuted}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Right controls */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {/* Pause */}
-            <button
-              onClick={togglePause}
-              className={`p-1.5 rounded-lg transition-colors ${isPaused ? accentPaused : theme.input}`}
-              title={isPaused ? "Resume stream" : "Pause stream"}
-            >
-              {isPaused ? (
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6" />
-                </svg>
+            {/* Topic + count + rate */}
+            <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+              {splitView && (
+                <button
+                  onClick={onSetActive}
+                  className={`w-4 h-4 rounded-full flex-shrink-0 border-2 transition-colors ${
+                    isActivePanel
+                      ? darkMode ? 'border-green-400 bg-green-400' : 'border-blue-500 bg-blue-500'
+                      : `border-gray-500 ${theme.input}`
+                  }`}
+                  title={isActivePanel ? 'Active panel' : 'Click to make active'}
+                />
               )}
-            </button>
+              <h2 className="text-sm lg:text-base font-semibold truncate max-w-[100px] lg:max-w-[200px]">
+                <span className={`${darkMode ? "bg-gradient-to-r from-green-400 to-emerald-400" : "bg-gradient-to-r from-blue-500 to-indigo-500"} bg-clip-text text-transparent`}>
+                  {selectedTopic}
+                </span>
+              </h2>
+              <span className={`text-xs ${theme.card} px-2 py-0.5 rounded-full ${theme.textMuted} whitespace-nowrap flex-shrink-0`}>
+                {filteredLogs?.length || 0}
+              </span>
+              {logRates?.[selectedTopic] > 0 && (
+                <span className={`hidden lg:inline text-xs ${theme.textMuted} whitespace-nowrap`}>
+                  {logRates[selectedTopic]}/s
+                </span>
+              )}
+            </div>
 
-            {/* Notifications */}
-            <button
-              onClick={toggleNotifications}
-              className={`p-1.5 rounded-lg transition-colors ${notificationsEnabled ? accentActive : theme.input}`}
-              title={notificationsEnabled ? "Disable keyword alerts" : "Enable keyword alerts (browser notification)"}
-            >
-              <svg className="w-4 h-4" fill={notificationsEnabled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-            </button>
+            {/* md: Server + Path dropdowns inline with topic on first row */}
+            {/* lg+: also inline here, search comes after */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {/* Server dropdown */}
+              <div className="relative">
+                <button
+                  ref={serverButtonRef}
+                  onClick={() => setShowServerDropdown(!showServerDropdown)}
+                  className={`px-2 lg:px-3 py-1.5 rounded-lg ${theme.input} text-sm flex items-center gap-1.5 max-w-[110px] lg:max-w-[160px] justify-between
+                            ${selectedServer ? (darkMode ? "border-green-400/50" : "border-blue-400/50") : ""}
+                            cursor-pointer hover:bg-opacity-80 transition-colors`}
+                  type="button"
+                >
+                  <span className="truncate text-xs lg:text-sm">{selectedServer || "All Servers"}</span>
+                  <svg className={`w-3 h-3 flex-shrink-0 transition-transform ${showServerDropdown ? "rotate-180" : ""}`}
+                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <ServerDropdown
+                  isOpen={showServerDropdown} onClose={() => setShowServerDropdown(false)}
+                  servers={filteredServers} selectedServer={selectedServer}
+                  onServerSelect={handleServerSelect} onClearServer={handleClearServer}
+                  searchTerm={serverSearchTerm} onSearchChange={setServerSearchTerm}
+                  theme={theme} darkMode={darkMode}
+                />
+              </div>
 
-            {/* Export */}
-            <div className="relative" ref={exportMenuRef}>
+              {/* Path dropdown */}
+              <div className="relative">
+                <button
+                  ref={pathButtonRef}
+                  onClick={() => selectedServer && setShowPathDropdown(!showPathDropdown)}
+                  className={`px-2 lg:px-3 py-1.5 rounded-lg ${theme.input} text-sm flex items-center gap-1.5 max-w-[110px] lg:max-w-[160px] justify-between
+                            ${!selectedServer ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-opacity-80"}
+                            ${selectedPath ? (darkMode ? "border-purple-400/50" : "border-purple-500/50") : ""}`}
+                  type="button" disabled={!selectedServer}
+                  title={!selectedServer ? "Select a server first" : "Filter by path"}
+                >
+                  <span className="truncate text-xs lg:text-sm">{selectedPath ? getShortPath(selectedPath) : "All Paths"}</span>
+                  <svg className={`w-3 h-3 flex-shrink-0 transition-transform ${showPathDropdown ? "rotate-180" : ""}`}
+                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {selectedServer && (
+                  <PathDropdown
+                    isOpen={showPathDropdown} onClose={() => setShowPathDropdown(false)}
+                    paths={filteredPaths} selectedPath={selectedPath}
+                    onPathSelect={handlePathSelect} onClearPath={handleClearPath}
+                    searchTerm={pathSearchTerm} onSearchChange={setPathSearchTerm}
+                    theme={theme} darkMode={darkMode}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Search — hidden on md (shown in row 2), visible on lg+ */}
+            <div className="relative flex-1 min-w-0 hidden lg:block">
+              <input
+                type="text"
+                placeholder={isRegex ? "Regex pattern..." : "Search logs..."}
+                className={`w-full ${theme.input} rounded-lg px-3 py-1.5 pr-14 text-sm focus:outline-none
+                         focus:ring-2 ${regexError ? 'focus:ring-red-500/50 border-red-500/50' : darkMode ? "focus:ring-green-500/50" : "focus:ring-blue-500/50"} focus:border-transparent`}
+                value={logSearchTerm}
+                onChange={(e) => setLogSearchTerm(e.target.value)}
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {regexError && <span className="text-red-400 text-xs">!</span>}
+                <button
+                  onClick={() => setIsRegex((v) => !v)}
+                  className={`text-xs px-1.5 py-0.5 rounded font-mono transition-colors ${
+                    isRegex
+                      ? darkMode ? 'bg-green-500/30 text-green-300' : 'bg-blue-500/20 text-blue-600'
+                      : `${theme.textMuted} hover:${theme.textSecondary}`
+                  }`}
+                  title="Toggle regex search"
+                >.*</button>
+                <svg className={`w-3.5 h-3.5 ${theme.textMuted}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Right controls */}
+            <div className="flex items-center gap-0.5 lg:gap-1 flex-shrink-0 ml-auto">
+              {/* Pause */}
               <button
-                onClick={() => setShowExportMenu((v) => !v)}
-                className={`p-1.5 rounded-lg ${theme.input} transition-colors`}
-                title="Export logs"
+                onClick={togglePause}
+                className={`p-1.5 rounded-lg transition-colors ${isPaused ? accentPaused : theme.input}`}
+                title={isPaused ? "Resume stream" : "Pause stream"}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isPaused ? (
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6" />
+                  </svg>
+                )}
+              </button>
+
+              {/* Notifications */}
+              <button
+                onClick={toggleNotifications}
+                className={`p-1.5 rounded-lg transition-colors ${notificationsEnabled ? accentActive : theme.input}`}
+                title={notificationsEnabled ? "Disable keyword alerts" : "Enable keyword alerts"}
+              >
+                <svg className="w-4 h-4" fill={notificationsEnabled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </button>
-              {showExportMenu && (
-                <div className={`absolute right-0 top-9 z-50 w-32 rounded-lg shadow-xl border ${theme.border} ${theme.card} overflow-hidden`}>
-                  <button onClick={() => exportLogs('json')} className={`w-full text-left px-4 py-2 text-sm ${theme.hover} ${theme.textSecondary}`}>
-                    Export JSON
-                  </button>
-                  <button onClick={() => exportLogs('csv')} className={`w-full text-left px-4 py-2 text-sm ${theme.hover} ${theme.textSecondary}`}>
-                    Export CSV
-                  </button>
-                </div>
-              )}
-            </div>
 
-            <div className={`w-px h-4 ${theme.border} bg-current opacity-30`} />
+              {/* Export */}
+              <div className="relative" ref={exportMenuRef}>
+                <button
+                  onClick={() => setShowExportMenu((v) => !v)}
+                  className={`p-1.5 rounded-lg ${theme.input} transition-colors`}
+                  title="Export logs"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+                {showExportMenu && (
+                  <div className={`absolute right-0 top-9 z-50 w-32 rounded-lg shadow-xl border ${theme.border} ${theme.card} overflow-hidden`}>
+                    <button onClick={() => exportLogs('json')} className={`w-full text-left px-4 py-2 text-sm ${theme.hover} ${theme.textSecondary}`}>
+                      Export JSON
+                    </button>
+                    <button onClick={() => exportLogs('csv')} className={`w-full text-left px-4 py-2 text-sm ${theme.hover} ${theme.textSecondary}`}>
+                      Export CSV
+                    </button>
+                  </div>
+                )}
+              </div>
 
-            <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
+              <div className={`w-px h-4 bg-current opacity-20`} />
 
-            {/* Auto-scroll */}
-            <button
-              onClick={() => setAutoScroll(!autoScroll)}
+              <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
+
+              {/* Auto-scroll */}
+              <button
+                onClick={() => setAutoScroll(!autoScroll)}
               className={`p-1.5 rounded-lg transition-colors ${autoScroll ? accentActive : theme.input}`}
               title="Auto-scroll"
             >
@@ -495,28 +525,58 @@ const LogPanel = ({
               </svg>
             </button>
 
-            {/* Split view */}
-            <button
-              onClick={onToggleSplitView}
-              className={`p-1.5 rounded-lg transition-colors ${splitView ? accentActive : theme.input}`}
-              title={splitView ? "Exit split view" : "Split view"}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
-              </svg>
-            </button>
+              {/* Split view — lg+ only */}
+              <button
+                onClick={onToggleSplitView}
+                className={`hidden lg:flex p-1.5 rounded-lg transition-colors ${splitView ? accentActive : theme.input}`}
+                title={splitView ? "Exit split view" : "Split view"}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                </svg>
+              </button>
 
-            {/* Clear */}
-            <button
-              onClick={() => { onClearLogs(selectedTopic); handleClearServer(); handleClearPath(); setKeywords([]); }}
-              className={`p-1.5 rounded-lg ${theme.input} hover:text-red-400 hover:bg-red-500/10 transition-colors`}
-              title="Clear logs"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+              {/* Clear */}
+              <button
+                onClick={() => { onClearLogs(selectedTopic); handleClearServer(); handleClearPath(); setKeywords([]); }}
+                className={`p-1.5 rounded-lg ${theme.input} hover:text-red-400 hover:bg-red-500/10 transition-colors`}
+                title="Clear logs"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Row 2 (md only): search full width — hidden on lg+ (search is in row 1) */}
+          <div className="flex lg:hidden mt-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder={isRegex ? "Regex pattern..." : "Search logs..."}
+                className={`w-full ${theme.input} rounded-lg px-3 py-1.5 pr-14 text-sm focus:outline-none
+                         focus:ring-2 ${regexError ? 'focus:ring-red-500/50 border-red-500/50' : darkMode ? "focus:ring-green-500/50" : "focus:ring-blue-500/50"} focus:border-transparent`}
+                value={logSearchTerm}
+                onChange={(e) => setLogSearchTerm(e.target.value)}
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {regexError && <span className="text-red-400 text-xs">!</span>}
+                <button
+                  onClick={() => setIsRegex((v) => !v)}
+                  className={`text-xs px-1.5 py-0.5 rounded font-mono transition-colors ${
+                    isRegex
+                      ? darkMode ? 'bg-green-500/30 text-green-300' : 'bg-blue-500/20 text-blue-600'
+                      : `${theme.textMuted} hover:${theme.textSecondary}`
+                  }`}
+                  title="Toggle regex search"
+                >.*</button>
+                <svg className={`w-3.5 h-3.5 ${theme.textMuted}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 
