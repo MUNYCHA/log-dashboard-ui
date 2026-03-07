@@ -191,16 +191,17 @@ const LogPanel = ({
     return [...filtered].reverse();
   }, [selectedTopic, logsByTopic, selectedServer, selectedPath, logSearchTerm, isRegex, regexError, timeRange, now, keywords, keywordInput, keywordMode]);
 
-  // Freeze display when paused
-  useEffect(() => {
-    if (isPaused) {
+  const displayedLogs = frozenLogs ?? filteredLogs;
+
+  // Wrap togglePause to snapshot/release displayed logs in the event handler
+  const handleTogglePause = () => {
+    if (!isPaused) {
       setFrozenLogs(filteredLogs);
     } else {
       setFrozenLogs(null);
     }
-  }, [isPaused]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const displayedLogs = frozenLogs ?? filteredLogs;
+    togglePause();
+  };
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -359,7 +360,7 @@ const LogPanel = ({
             <div className="flex items-center gap-0.5 lg:gap-1 flex-shrink-0 ml-auto">
               {/* Pause */}
               <button
-                onClick={togglePause}
+                onClick={handleTogglePause}
                 className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${isPaused ? accentPaused : theme.input}`}
                 title={isPaused ? "Resume stream" : "Pause stream"}
               >
@@ -579,7 +580,7 @@ const LogPanel = ({
               {/* Mobile action buttons */}
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
-                  onClick={togglePause}
+                  onClick={handleTogglePause}
                   className={`flex-1 p-2 rounded-lg text-sm flex items-center justify-center space-x-1 ${isPaused ? accentPaused : theme.input}`}
                 >
                   <span>{isPaused ? '▶ Resume' : '⏸ Pause'}</span>
