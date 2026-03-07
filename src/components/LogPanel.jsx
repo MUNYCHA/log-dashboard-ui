@@ -201,7 +201,7 @@ const LogPanel = ({
     if (!notificationsEnabled || filteredLogs.length === 0) return;
     const newestLog = filteredLogs[filteredLogs.length - 1];
     const ts = new Date(newestLog.timestamp).getTime();
-    if (lastNotifiedTsRef.current !== null && ts > lastNotifiedTsRef.current && Notification.permission === 'granted') {
+    if (keywords.length > 0 && lastNotifiedTsRef.current !== null && ts > lastNotifiedTsRef.current && Notification.permission === 'granted') {
       const newLogs = filteredLogs.filter((l) => new Date(l.timestamp).getTime() > lastNotifiedTsRef.current);
       newLogs.forEach((log) => {
         new Notification(`[${selectedTopic}] ${log.serverName}`, {
@@ -211,7 +211,7 @@ const LogPanel = ({
       });
     }
     lastNotifiedTsRef.current = ts;
-  }, [filteredLogs, notificationsEnabled, selectedTopic]);
+  }, [filteredLogs, notificationsEnabled, selectedTopic, keywords]);
 
   // Handlers
   const handleServerSelect = (server) => {
