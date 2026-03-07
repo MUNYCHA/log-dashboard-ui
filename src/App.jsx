@@ -31,8 +31,17 @@ export default function App() {
     setSidebarOpen(false);
   };
 
-  const handleToggleSplitView = () => {
-    setSplitView((v) => !v);
+  const handleOpenSplit = () => {
+    setSelectedTopic2(null);
+    setSelectedServer2(null);
+    setSplitView(true);
+    setActivePanel(2);
+  };
+
+  const handleClosePanel2 = () => {
+    setSplitView(false);
+    setSelectedTopic2(null);
+    setSelectedServer2(null);
     setActivePanel(1);
   };
 
@@ -48,7 +57,7 @@ export default function App() {
     onThemeToggle: () => setDarkMode((d) => !d),
     onOpenSidebar: () => setSidebarOpen(true),
     splitView,
-    onToggleSplitView: handleToggleSplitView,
+    onOpenSplit: handleOpenSplit,
   };
 
   return (
@@ -100,9 +109,9 @@ export default function App() {
               onServerSelect={setSelectedServer2}
               onClearServer={() => setSelectedServer2(null)}
               onClearLogs={clearLogs}
-              panelId={2}
               isActivePanel={activePanel === 2}
               onSetActive={() => setActivePanel(2)}
+              onClosePanel={handleClosePanel2}
             />
           </>
         )}

@@ -41,7 +41,8 @@ const LogPanel = ({
   onThemeToggle,
   onOpenSidebar,
   splitView,
-  onToggleSplitView,
+  onOpenSplit,
+  onClosePanel,
   isActivePanel,
   onSetActive,
 }) => {
@@ -464,16 +465,30 @@ const LogPanel = ({
               </svg>
             </button>
 
-              {/* Split view — lg+ only */}
-              <button
-                onClick={onToggleSplitView}
-                className={`hidden md:flex p-1.5 rounded-lg transition-colors ${splitView ? accentActive : theme.input}`}
-                title={splitView ? "Exit split view" : "Split view"}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
-                </svg>
-              </button>
+              {/* Split view open (panel 1 only) */}
+              {!onClosePanel && (
+                <button
+                  onClick={onOpenSplit}
+                  className={`hidden md:flex p-1.5 rounded-lg transition-colors ${splitView ? accentActive : theme.input}`}
+                  title="Open split view"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                  </svg>
+                </button>
+              )}
+              {/* Close panel (panel 2 only) */}
+              {onClosePanel && (
+                <button
+                  onClick={onClosePanel}
+                  className={`hidden md:flex p-1.5 rounded-lg transition-colors ${theme.input} hover:text-red-400 hover:bg-red-500/10`}
+                  title="Close this panel"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
 
               {/* Clear */}
               <button
