@@ -192,9 +192,9 @@ const LogPanel = ({
         {/* Desktop Layout - visible on md screens and up */}
         <div className="hidden md:block">
           {/* Single row with all controls for desktop */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             {/* Left side: Topic and log count */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 flex-shrink-0">
               <h2 className="text-lg font-semibold">
                 <span
                   className={`${darkMode ? "bg-gradient-to-r from-green-400 to-emerald-400" : "bg-gradient-to-r from-blue-500 to-indigo-500"} bg-clip-text text-transparent`}
@@ -210,7 +210,7 @@ const LogPanel = ({
             </div>
 
             {/* Middle: Server and Path dropdowns */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 flex-shrink-0">
               {/* Server Dropdown */}
               <div className="relative">
                 <button
@@ -304,8 +304,25 @@ const LogPanel = ({
               </div>
             </div>
 
+            {/* Search input - desktop */}
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Search logs..."
+                className={`w-full ${theme.input} rounded-lg px-3 py-1.5 pr-9 text-sm focus:outline-none
+                         focus:ring-2 ${darkMode ? "focus:ring-green-500/50" : "focus:ring-blue-500/50"} focus:border-transparent`}
+                value={logSearchTerm}
+                onChange={(e) => setLogSearchTerm(e.target.value)}
+              />
+              <svg className={`absolute right-3 top-2 w-4 h-4 ${theme.textMuted}`}
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
             {/* Right side: Controls */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0">
               <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
 
               <button
@@ -510,8 +527,8 @@ const LogPanel = ({
           )}
         </div>
 
-        {/* Search input - same for both layouts */}
-        <div className="mt-2 md:mt-3">
+        {/* Search input - mobile only */}
+        <div className="mt-2 md:hidden">
           <div className="relative">
             <input
               type="text"
@@ -527,7 +544,10 @@ const LogPanel = ({
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
+        </div>
 
+        {/* Keyword filter + active filters */}
+        <div className="mt-2">
           {/* Keyword filter */}
           <KeywordFilter
             keywords={keywords}
