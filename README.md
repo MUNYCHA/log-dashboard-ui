@@ -1,16 +1,82 @@
-# React + Vite
+# LogStream
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A real-time log monitoring dashboard built with React + Vite. Connects to a WebSocket server and streams live logs grouped by topic, server, and file path.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Real-time log streaming** via WebSocket
+- **Topic sidebar** — browse and search active log topics with live counts
+- **Server filter** — filter logs by server name
+- **Path filter** — filter logs by file path (shows `…/parent/file` for long paths)
+- **Log search** — search across message, server, and path
+- **Keyword filter** — add multiple keywords with custom colors; matching words are highlighted in the log message
+- **Dark / light mode** toggle
+- **Auto-scroll** to latest logs
+- **Copy** any log message to clipboard
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19
+- Vite 7
+- Tailwind CSS 4
+- Framer Motion
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 1. Configure environment
+
+Copy `.env.example` to `.env` and set your WebSocket server URL:
+
+```
+VITE_WS_URL=ws://localhost:8080/ws/logs
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Run development server
+
+```bash
+npm run dev
+```
+
+### 4. Build for production
+
+```bash
+npm run build
+```
+
+## WebSocket Message Protocol
+
+The server must send two message types:
+
+| Type | Shape | Description |
+|------|-------|-------------|
+| Topic list | `string[]` | Sent once on connect — list of topic names |
+| Log entry | `{ topic, serverName, path, message, timestamp }` | One log entry per message |
+
+## Project Structure
+
+```
+src/
+  config.js                  # Reads VITE_WS_URL from env
+  constants/
+    theme.js                 # Dark / light theme tokens
+    keywordColors.js         # Keyword highlight color definitions
+  hooks/
+    useWebSocket.js          # WebSocket connection + log state
+  utils/
+    logUtils.js              # Timestamp formatting, server helpers
+  components/
+    Sidebar.jsx              # Topic list with search
+    LogPanel.jsx             # Main log view, filters, search
+    LogEntry.jsx             # Single log row with keyword highlighting
+    FilterDropdown.jsx       # Shared searchable dropdown
+    ServerDropdown.jsx       # Server filter (wraps FilterDropdown)
+    PathDropdown.jsx         # Path filter (wraps FilterDropdown)
+    KeywordFilter.jsx        # Keyword chip input with color picker
+    ThemeToggle.jsx          # Dark / light mode button
+```
