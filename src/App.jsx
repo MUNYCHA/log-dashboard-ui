@@ -10,6 +10,7 @@ export default function App() {
   const [selectedServer, setSelectedServer] = useState(null);
   const [topicSearchTerm, setTopicSearchTerm] = useState('');
   const [darkMode, setDarkMode] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { logsByTopic, topics, isConnected, clearLogs } = useWebSocket(config.ws.url);
   const theme = darkMode ? styles.dark : styles.light;
@@ -18,10 +19,19 @@ export default function App() {
     setSelectedTopic(topic);
     setSelectedServer(null);
     setTopicSearchTerm('');
+    setSidebarOpen(false);
   };
 
   return (
-    <div className={`flex h-screen ${theme.background} ${theme.text} transition-colors duration-200`}>
+    <div className={`flex h-screen overflow-hidden ${theme.background} ${theme.text} transition-colors duration-200`}>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <Sidebar
         topics={topics}
         logsByTopic={logsByTopic}
@@ -31,6 +41,8 @@ export default function App() {
         onTopicSearchChange={setTopicSearchTerm}
         theme={theme}
         darkMode={darkMode}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
       <LogPanel
@@ -44,6 +56,7 @@ export default function App() {
         theme={theme}
         darkMode={darkMode}
         onThemeToggle={() => setDarkMode((d) => !d)}
+        onOpenSidebar={() => setSidebarOpen(true)}
       />
     </div>
   );

@@ -1,19 +1,29 @@
 import React from 'react';
 import { getServersForTopic } from '../utils/logUtils';
 
-const Sidebar = ({ 
-  topics, 
-  logsByTopic, 
-  selectedTopic, 
+const Sidebar = ({
+  topics,
+  logsByTopic,
+  selectedTopic,
   onTopicSelect,
   topicSearchTerm,
   onTopicSearchChange,
   theme,
-  darkMode
+  darkMode,
+  isOpen,
+  onClose,
 }) => {
   return (
-    <div className={`w-96 flex flex-col border-r ${theme.border} ${theme.sidebar} backdrop-blur-xl`}>
-      <div className={`p-5 border-b ${theme.border}`}>
+    <div
+      className={`
+        flex flex-col flex-shrink-0 border-r ${theme.border} ${theme.sidebar} backdrop-blur-xl
+        fixed inset-y-0 left-0 z-50 w-72
+        transform transition-transform duration-300 ease-in-out
+        md:relative md:translate-x-0 md:z-auto md:w-64 lg:w-72
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}
+    >
+      <div className={`p-4 border-b ${theme.border} flex-shrink-0`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className={`w-2 h-2 ${darkMode ? 'bg-green-400' : 'bg-blue-500'} rounded-full animate-pulse`} />
@@ -21,25 +31,34 @@ const Sidebar = ({
               Log Topics
             </h1>
           </div>
-          <span className={`text-xs ${theme.textMuted}`}>
-            {topics.length} active
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className={`text-xs ${theme.textMuted}`}>{topics.length} active</span>
+            <button
+              onClick={onClose}
+              className={`md:hidden p-1.5 rounded-lg ${theme.input}`}
+              aria-label="Close sidebar"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className={`p-3 border-b ${theme.border}`}>
+      <div className={`p-3 border-b ${theme.border} flex-shrink-0`}>
         <div className="relative">
           <input
             type="text"
             placeholder="Search topics..."
-            className={`w-full ${theme.input} rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 
+            className={`w-full ${theme.input} rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2
                      ${darkMode ? 'focus:ring-green-500/50' : 'focus:ring-blue-500/50'} focus:border-transparent transition-all`}
             value={topicSearchTerm}
             onChange={(e) => onTopicSearchChange(e.target.value)}
           />
-          <svg className={`absolute right-3 top-2.5 w-4 h-4 ${theme.textMuted}`} 
+          <svg className={`absolute right-3 top-2.5 w-4 h-4 ${theme.textMuted}`}
                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
@@ -52,26 +71,24 @@ const Sidebar = ({
             const logCount = logsByTopic[topic]?.length || 0;
             const lastLog = logsByTopic[topic]?.[0];
             const servers = getServersForTopic(topic, logsByTopic);
-            
+
             return (
               <div key={topic}>
                 <button
                   onClick={() => onTopicSelect(topic)}
-                  className={`w-full text-left px-5 py-4 border-b ${theme.border} 
+                  className={`w-full text-left px-4 py-3 border-b ${theme.border}
                            ${theme.hover} transition-all duration-200 group
-                           ${selectedTopic === topic 
-                             ? theme.selected
-                             : ""}`}
+                           ${selectedTopic === topic ? theme.selected : ""}`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        selectedTopic === topic 
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                        selectedTopic === topic
                           ? darkMode ? 'bg-green-400' : 'bg-blue-500'
                           : darkMode ? 'bg-gray-600' : 'bg-gray-400'
                       }`} />
-                      <span className={`font-medium ${
-                        selectedTopic === topic 
+                      <span className={`font-medium truncate ${
+                        selectedTopic === topic
                           ? darkMode ? 'text-green-400' : 'text-blue-600'
                           : theme.textSecondary
                       }`}>
@@ -79,18 +96,18 @@ const Sidebar = ({
                       </span>
                     </div>
                     {logCount > 0 && (
-                      <span className={`text-xs ${theme.card} px-2 py-1 rounded-full ${theme.textMuted}
+                      <span className={`text-xs ${theme.card} px-2 py-1 rounded-full ${theme.textMuted} flex-shrink-0 ml-2
                                      group-hover:bg-opacity-70 transition-colors`}>
                         {logCount}
                       </span>
                     )}
                   </div>
-                  
+
                   {servers.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       <span className={`text-xs ${theme.textMuted} mr-1`}>Servers:</span>
                       {servers.slice(0, 3).map(server => (
-                        <span key={server} 
+                        <span key={server}
                               className={`text-xs px-1.5 py-0.5 rounded ${theme.serverBadge}`}>
                           {server}
                         </span>
@@ -100,9 +117,9 @@ const Sidebar = ({
                       )}
                     </div>
                   )}
-                  
+
                   {lastLog && (
-                    <p className={`text-xs ${theme.textMuted} mt-2 truncate max-w-[250px]`}>
+                    <p className={`text-xs ${theme.textMuted} mt-2 truncate`}>
                       {lastLog.message}
                     </p>
                   )}

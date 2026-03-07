@@ -16,6 +16,7 @@ const LogPanel = ({
   theme,
   darkMode,
   onThemeToggle,
+  onOpenSidebar,
 }) => {
   const [logSearchTerm, setLogSearchTerm] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
@@ -157,10 +158,22 @@ const LogPanel = ({
   if (!selectedTopic) {
     return (
       <div className={`flex-1 flex flex-col ${theme.background}`}>
-        <div
-          className={`flex-1 flex items-center justify-center ${theme.textMuted}`}
-        >
-          <div className="text-center">
+        {/* Mobile top bar when no topic selected */}
+        <div className={`md:hidden flex items-center px-3 py-3 border-b ${theme.border} ${theme.header}`}>
+          <button
+            onClick={onOpenSidebar}
+            className={`p-2 rounded-lg ${theme.input}`}
+            aria-label="Open sidebar"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <span className={`ml-3 text-sm ${theme.textMuted}`}>Select a topic</span>
+        </div>
+        <div className={`flex-1 flex items-center justify-center ${theme.textMuted}`}>
+          <div className="text-center px-4">
             <svg
               className="w-12 h-12 mb-4 mx-auto"
               fill="none"
@@ -175,9 +188,13 @@ const LogPanel = ({
               />
             </svg>
             <p className="text-lg">Select a topic to view logs</p>
-            <p className="text-sm">
-              Choose from the sidebar to start monitoring
-            </p>
+            <p className="text-sm">Choose from the sidebar to start monitoring</p>
+            <button
+              onClick={onOpenSidebar}
+              className={`md:hidden mt-4 px-4 py-2 rounded-lg ${theme.input} text-sm`}
+            >
+              Open Topics
+            </button>
           </div>
         </div>
       </div>
@@ -382,10 +399,20 @@ const LogPanel = ({
 
         {/* Mobile Layout - visible on smaller screens */}
         <div className="md:hidden">
-          {/* Top row: Topic and mobile menu button */}
+          {/* Top row: Sidebar toggle, Topic, mobile menu button */}
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-2">
-              <h2 className="text-base font-semibold truncate max-w-[150px]">
+            <div className="flex items-center space-x-2 min-w-0">
+              <button
+                onClick={onOpenSidebar}
+                className={`p-2 rounded-lg ${theme.input} flex-shrink-0`}
+                aria-label="Open sidebar"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h2 className="text-base font-semibold truncate max-w-[130px]">
                 <span
                   className={`${darkMode ? "bg-gradient-to-r from-green-400 to-emerald-400" : "bg-gradient-to-r from-blue-500 to-indigo-500"} bg-clip-text text-transparent`}
                 >
@@ -393,22 +420,22 @@ const LogPanel = ({
                 </span>
               </h2>
               <span
-                className={`text-xs ${theme.card} px-2 py-0.5 rounded-full ${theme.textMuted}`}
+                className={`text-xs ${theme.card} px-2 py-0.5 rounded-full ${theme.textMuted} flex-shrink-0`}
               >
                 {filteredLogs?.length || 0}
               </span>
             </div>
-            
-            <div className="flex items-center space-x-1">
+
+            <div className="flex items-center space-x-1 flex-shrink-0">
               <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
-              
+
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className={`p-2 rounded-lg ${theme.input}`}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                        d="M4 6h16M4 12h16M4 18h16" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
                 </svg>
               </button>
             </div>
