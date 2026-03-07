@@ -14,22 +14,23 @@ const TIME_RANGES = [
 ];
 const TIME_RANGE_MS = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
 
-const playAlertSound = () => {
+const playAlertSound = (audioCtx) => {
   try {
-    const AudioCtx = window.AudioContext || window['webkitAudioContext'];
-    const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    if (!audioCtx) return;
+    // Resume context if suspended (required in some browsers)
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(audioCtx.destination);
     osc.type = 'sine';
     osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.35);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.35);
   } catch {
-    // Audio context unavailable — skip sound
+    // Audio unavailable — skip sound
   }
 };
 
@@ -90,6 +91,7 @@ const LogPanel = ({
   const pathButtonRef = useRef(null);
   const lastNotifiedTsRef = useRef(null);
   const exportMenuRef = useRef(null);
+  const audioCtxRef = useRef(null);
 
   // Ticker for relative timestamps (every 30s)
   useEffect(() => {
@@ -223,7 +225,7 @@ const LogPanel = ({
     if (keywords.length > 0 && lastNotifiedTsRef.current !== null && ts > lastNotifiedTsRef.current) {
       const newLogs = filteredLogs.filter((l) => new Date(l.timestamp).getTime() > lastNotifiedTsRef.current);
       if (newLogs.length > 0) {
-        playAlertSound();
+        playAlertSound(audioCtxRef.current);
         if (Notification.permission === 'granted') {
           new Notification(`[${selectedTopic}] ${newLogs.length} keyword match${newLogs.length > 1 ? 'es' : ''}`, {
             body: newLogs.slice(0, 3).map((l) => l.message.slice(0, 80)).join('\n'),
@@ -257,13 +259,30 @@ const LogPanel = ({
   const handleClearPath = () => setPathForTopic({ topic: selectedTopic, path: null });
 
   const toggleNotifications = async () => {
-    if (notificationsEnabled) { setNotificationsEnabled(false); return; }
-    if (!('Notification' in window)) return;
+    if (notificationsEnabled) {
+      setNotificationsEnabled(false);
+      return;
+    }
+    // Create AudioContext on user gesture so browser autoplay policy allows sound
+    if (!audioCtxRef.current) {
+      try {
+        const AudioCtx = window.AudioContext || window['webkitAudioContext'];
+        audioCtxRef.current = new AudioCtx();
+      } catch {
+        // Audio not available
+      }
+    }
+    if (!('Notification' in window)) {
+      setNotificationsEnabled(true); // sound-only mode
+      return;
+    }
     if (Notification.permission === 'granted') {
       setNotificationsEnabled(true);
     } else if (Notification.permission === 'default') {
-      const perm = await Notification.requestPermission();
-      if (perm === 'granted') setNotificationsEnabled(true);
+      await Notification.requestPermission();
+      setNotificationsEnabled(true); // enable sound even if notification denied
+    } else {
+      setNotificationsEnabled(true); // blocked — still allow sound
     }
   };
 
