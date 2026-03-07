@@ -46,6 +46,7 @@ const LogPanel = ({
   isActivePanel,
   onSetActive,
 }) => {
+  const [frozenLogs, setFrozenLogs] = useState(null);
   const [logSearchTerm, setLogSearchTerm] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
   const [showServerDropdown, setShowServerDropdown] = useState(false);
@@ -190,12 +191,23 @@ const LogPanel = ({
     return [...filtered].reverse();
   }, [selectedTopic, logsByTopic, selectedServer, selectedPath, logSearchTerm, isRegex, regexError, timeRange, now, keywords, keywordInput, keywordMode]);
 
+  // Freeze display when paused
+  useEffect(() => {
+    if (isPaused) {
+      setFrozenLogs(filteredLogs);
+    } else {
+      setFrozenLogs(null);
+    }
+  }, [isPaused]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const displayedLogs = frozenLogs ?? filteredLogs;
+
   // Auto-scroll to bottom
   useEffect(() => {
-    if (autoScroll && scrollRef.current) {
+    if (!isPaused && autoScroll && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [filteredLogs, autoScroll]);
+  }, [filteredLogs, autoScroll, isPaused]);
 
   // Handlers
   const handleServerSelect = (server) => {
@@ -225,10 +237,10 @@ const LogPanel = ({
     const ts = new Date().toISOString().replace(/[:.]/g, '-');
     const base = `${safeTopic}_${ts}`;
     if (format === 'json') {
-      downloadFile(JSON.stringify(filteredLogs, null, 2), `${base}.json`, 'application/json');
+      downloadFile(JSON.stringify(displayedLogs, null, 2), `${base}.json`, 'application/json');
     } else {
       const cols = ['timestamp', 'serverName', 'path', 'message'];
-      const rows = filteredLogs.map((log) =>
+      const rows = displayedLogs.map((log) =>
         cols.map((c) => `"${String(log[c] || '').replace(/"/g, '""')}"`).join(',')
       );
       downloadFile([cols.join(','), ...rows].join('\n'), `${base}.csv`, 'text/csv');
@@ -333,7 +345,7 @@ const LogPanel = ({
                 </span>
               </h2>
               <span className={`text-xs ${theme.card} px-2 py-0.5 rounded-full ${theme.textMuted} whitespace-nowrap flex-shrink-0`}>
-                {filteredLogs?.length || 0}
+                {displayedLogs?.length || 0}
               </span>
               {logRates?.[selectedTopic] > 0 && (
                 <span className={`hidden lg:inline text-xs ${theme.textMuted} whitespace-nowrap`}>
@@ -393,13 +405,13 @@ const LogPanel = ({
               {/* Auto-scroll */}
               <button
                 onClick={() => setAutoScroll(!autoScroll)}
-              className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${autoScroll ? accentActive : theme.input}`}
-              title="Auto-scroll"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            </button>
+                className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${autoScroll ? accentActive : theme.input}`}
+                title="Auto-scroll"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </button>
 
               {/* Split view open (panel 1 only) */}
               {!onClosePanel && (
@@ -447,7 +459,7 @@ const LogPanel = ({
                 type="text"
                 placeholder={isRegex ? "Regex pattern..." : "Search logs..."}
                 className={`w-full ${theme.input} rounded-lg px-3 py-1.5 pr-14 text-sm focus:outline-none
-                         focus:ring-2 ${regexError ? 'focus:ring-red-500/50 border-red-500/50' : darkMode ? "focus:ring-green-500/50" : "focus:ring-blue-500/50"} focus:border-transparent`}
+                         focus:ring-2 ${regexError ? 'focus:ring-red-500/50 border-red-500/50' : darkMode ? "focus:ring-green-500/50" : "focus:ring-indigo-500/50"} focus:border-transparent`}
                 value={logSearchTerm}
                 onChange={(e) => setLogSearchTerm(e.target.value)}
               />
@@ -485,7 +497,7 @@ const LogPanel = ({
                 </span>
               </h2>
               <span className={`text-xs ${theme.card} px-2 py-0.5 rounded-full ${theme.textMuted} flex-shrink-0`}>
-                {filteredLogs?.length || 0}
+                {displayedLogs?.length || 0}
               </span>
             </div>
             <div className="flex items-center space-x-1 flex-shrink-0">
@@ -608,7 +620,7 @@ const LogPanel = ({
               type="text"
               placeholder={isRegex ? "Regex pattern..." : "Search logs..."}
               className={`w-full ${theme.input} rounded-lg px-3 py-2 pr-16 text-sm focus:outline-none
-                       focus:ring-2 ${regexError ? 'focus:ring-red-500/50' : darkMode ? "focus:ring-green-500/50" : "focus:ring-blue-500/50"} focus:border-transparent`}
+                       focus:ring-2 ${regexError ? 'focus:ring-red-500/50' : darkMode ? "focus:ring-green-500/50" : "focus:ring-indigo-500/50"} focus:border-transparent`}
               value={logSearchTerm}
               onChange={(e) => setLogSearchTerm(e.target.value)}
             />
@@ -758,11 +770,11 @@ const LogPanel = ({
           <div className="p-3 sm:p-4 md:p-5 space-y-2">
             {isPaused && (
               <div className={`text-center py-2 px-4 rounded-lg text-xs ${accentPaused} mb-2`}>
-                Stream paused — new logs are buffered
+                Stream paused — display frozen, new logs still incoming
               </div>
             )}
-            {filteredLogs.length > 0 ? (
-              filteredLogs.map((log, i) => (
+            {displayedLogs.length > 0 ? (
+              displayedLogs.map((log, i) => (
                 <LogEntry key={i} log={log} theme={theme} darkMode={darkMode} keywords={keywords} now={now} />
               ))
             ) : (
@@ -830,7 +842,7 @@ const LogPanel = ({
           <div className="flex items-center space-x-1.5">
             <span className={`w-1.5 h-1.5 rounded-full ${
               isConnected
-                ? `${darkMode ? 'bg-green-400' : 'bg-blue-500'} animate-pulse`
+                ? `${darkMode ? 'bg-green-400' : 'bg-indigo-500'} animate-pulse`
                 : isReconnecting
                   ? 'bg-amber-400 animate-pulse'
                   : 'bg-red-500'

@@ -15,8 +15,10 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [splitView, setSplitView] = useState(false);
   const [activePanel, setActivePanel] = useState(1);
+  const [isPaused1, setIsPaused1] = useState(false);
+  const [isPaused2, setIsPaused2] = useState(false);
 
-  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, isPaused, togglePause, logRates } = useWebSocket(config.ws.url);
+  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates } = useWebSocket(config.ws.url);
   const theme = darkMode ? styles.dark : styles.light;
 
   const handleTopicSelect = (topic) => {
@@ -43,14 +45,13 @@ export default function App() {
     setSelectedTopic2(null);
     setSelectedServer2(null);
     setActivePanel(1);
+    setIsPaused2(false);
   };
 
   const sharedProps = {
     logsByTopic,
     isConnected,
     isReconnecting,
-    isPaused,
-    togglePause,
     logRates,
     theme,
     darkMode,
@@ -94,6 +95,8 @@ export default function App() {
           onClearServer={() => setSelectedServer(null)}
           onClearLogs={clearLogs}
           panelId={1}
+          isPaused={isPaused1}
+          togglePause={() => setIsPaused1((p) => !p)}
           isActivePanel={!splitView || activePanel === 1}
           onSetActive={() => setActivePanel(1)}
         />
@@ -109,6 +112,8 @@ export default function App() {
               onServerSelect={setSelectedServer2}
               onClearServer={() => setSelectedServer2(null)}
               onClearLogs={clearLogs}
+              isPaused={isPaused2}
+              togglePause={() => setIsPaused2((p) => !p)}
               isActivePanel={activePanel === 2}
               onSetActive={() => setActivePanel(2)}
               onClosePanel={handleClosePanel2}
