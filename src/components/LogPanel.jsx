@@ -339,33 +339,6 @@ const LogPanel = ({
             </div>
 
 
-            {/* Search — hidden on md (shown in row 2), visible on lg+ */}
-            <div className="relative flex-1 min-w-0 hidden lg:block">
-              <input
-                type="text"
-                placeholder={isRegex ? "Regex pattern..." : "Search logs..."}
-                className={`w-full ${theme.input} rounded-lg px-3 py-1.5 pr-14 text-sm focus:outline-none
-                         focus:ring-2 ${regexError ? 'focus:ring-red-500/50 border-red-500/50' : darkMode ? "focus:ring-green-500/50" : "focus:ring-blue-500/50"} focus:border-transparent`}
-                value={logSearchTerm}
-                onChange={(e) => setLogSearchTerm(e.target.value)}
-              />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                {regexError && <span className="text-red-400 text-xs">!</span>}
-                <button
-                  onClick={() => setIsRegex((v) => !v)}
-                  className={`text-xs px-1.5 py-0.5 rounded font-mono transition-colors ${
-                    isRegex
-                      ? darkMode ? 'bg-green-500/30 text-green-300' : 'bg-indigo-500/20 text-indigo-600'
-                      : `${theme.textMuted} hover:${theme.textSecondary}`
-                  }`}
-                  title="Toggle regex search"
-                >.*</button>
-                <svg className={`w-3.5 h-3.5 ${theme.textMuted}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-            </div>
-
             {/* Right controls */}
             <div className="flex items-center gap-0.5 lg:gap-1 flex-shrink-0 ml-auto">
               {/* Pause */}
@@ -463,8 +436,8 @@ const LogPanel = ({
             </div>
           </div>
 
-          {/* Row 2 (md only): search — hidden on lg+ */}
-          <div className="flex lg:hidden mt-2">
+          {/* Row 2: search — full width, all desktop sizes */}
+          <div className="flex mt-2">
             <div className="relative flex-1 min-w-0">
               <input
                 type="text"
