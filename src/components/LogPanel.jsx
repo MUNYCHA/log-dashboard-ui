@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import ServerDropdown from "./ServerDropdown";
 import PathDropdown from "./PathDropdown";
 import LogEntry from "./LogEntry";
@@ -44,7 +44,6 @@ const LogPanel = ({
   onToggleSplitView,
   isActivePanel,
   onSetActive,
-  panelId,
 }) => {
   const [logSearchTerm, setLogSearchTerm] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
@@ -52,7 +51,9 @@ const LogPanel = ({
   const [showPathDropdown, setShowPathDropdown] = useState(false);
   const [serverSearchTerm, setServerSearchTerm] = useState("");
   const [pathSearchTerm, setPathSearchTerm] = useState("");
-  const [selectedPath, setSelectedPath] = useState(null);
+  // selectedPath is tied to the current topic — auto-clears when topic changes
+  const [pathForTopic, setPathForTopic] = useState({ topic: null, path: null });
+  const selectedPath = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [keywords, setKeywords] = useState([]);
   const [keywordInput, setKeywordInput] = useState('');
@@ -63,7 +64,7 @@ const LogPanel = ({
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   const scrollRef = useRef(null);
   const serverButtonRef = useRef(null);
@@ -88,11 +89,6 @@ const LogPanel = ({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Reset path when topic changes
-  useEffect(() => {
-    setSelectedPath(null);
-    lastNotifiedTsRef.current = null;
-  }, [selectedTopic]);
 
   // Scroll tracking — update atTop/atBottom, disable autoScroll when scrolling up
   const handleScroll = useCallback(() => {
@@ -147,7 +143,7 @@ const LogPanel = ({
   // Main log filter
   const filteredLogs = useMemo(() => {
     if (!selectedTopic || !logsByTopic[selectedTopic]) return [];
-    const cutoff = timeRange !== 'all' ? Date.now() - TIME_RANGE_MS[timeRange] : null;
+    const cutoff = timeRange !== 'all' ? now - TIME_RANGE_MS[timeRange] : null;
 
     const filtered = logsByTopic[selectedTopic].filter((log) => {
       if (selectedServer && log.serverName !== selectedServer) return false;
@@ -186,7 +182,7 @@ const LogPanel = ({
     });
 
     return [...filtered].reverse();
-  }, [selectedTopic, logsByTopic, selectedServer, selectedPath, logSearchTerm, isRegex, regexError, timeRange, keywords, keywordInput, keywordMode]);
+  }, [selectedTopic, logsByTopic, selectedServer, selectedPath, logSearchTerm, isRegex, regexError, timeRange, now, keywords, keywordInput, keywordMode]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -194,6 +190,11 @@ const LogPanel = ({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [filteredLogs, autoScroll]);
+
+  // Reset notification baseline when topic changes (ref-only, no setState — safe in effect)
+  useEffect(() => {
+    lastNotifiedTsRef.current = null;
+  }, [selectedTopic]);
 
   // Browser notifications when keyword-matched logs arrive
   useEffect(() => {
@@ -215,23 +216,23 @@ const LogPanel = ({
   // Handlers
   const handleServerSelect = (server) => {
     onServerSelect(server);
-    setSelectedPath(null);
+    setPathForTopic({ topic: selectedTopic, path: null });
     setShowServerDropdown(false);
     setServerSearchTerm("");
   };
 
   const handlePathSelect = (path) => {
-    setSelectedPath(path);
+    setPathForTopic({ topic: selectedTopic, path });
     setShowPathDropdown(false);
     setPathSearchTerm("");
   };
 
   const handleClearServer = () => {
     onClearServer();
-    setSelectedPath(null);
+    setPathForTopic({ topic: selectedTopic, path: null });
   };
 
-  const handleClearPath = () => setSelectedPath(null);
+  const handleClearPath = () => setPathForTopic({ topic: selectedTopic, path: null });
 
   const toggleNotifications = async () => {
     if (notificationsEnabled) { setNotificationsEnabled(false); return; }
