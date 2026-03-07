@@ -216,7 +216,7 @@ const LogPanel = ({
                 <button
                   ref={serverButtonRef}
                   onClick={() => setShowServerDropdown(!showServerDropdown)}
-                  className={`px-3 py-1.5 rounded-lg ${theme.input} text-sm flex items-center space-x-2 min-w-[160px] justify-between
+                  className={`px-3 py-1.5 rounded-lg ${theme.input} text-sm flex items-center space-x-2 max-w-[200px] justify-between
                             ${selectedServer ? (darkMode ? "border-green-400/50" : "border-blue-400/50") : ""}
                             cursor-pointer hover:bg-opacity-80 transition-colors`}
                   type="button"
@@ -260,7 +260,7 @@ const LogPanel = ({
                   onClick={() =>
                     selectedServer && setShowPathDropdown(!showPathDropdown)
                   }
-                  className={`px-3 py-1.5 rounded-lg ${theme.input} text-sm flex items-center space-x-2 min-w-[160px] justify-between
+                  className={`px-3 py-1.5 rounded-lg ${theme.input} text-sm flex items-center space-x-2 max-w-[200px] justify-between
                             ${!selectedServer ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-opacity-80"}
                             ${selectedPath ? (darkMode ? "border-purple-400/50" : "border-purple-500/50") : ""}`}
                   type="button"
