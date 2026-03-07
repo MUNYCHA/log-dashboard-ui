@@ -12,6 +12,7 @@ const Sidebar = ({
   darkMode,
   isOpen,
   onClose,
+  logRates,
 }) => {
   return (
     <div
@@ -95,12 +96,18 @@ const Sidebar = ({
                         {topic}
                       </span>
                     </div>
-                    {logCount > 0 && (
-                      <span className={`text-xs ${theme.card} px-2 py-1 rounded-full ${theme.textMuted} flex-shrink-0 ml-2
-                                     group-hover:bg-opacity-70 transition-colors`}>
-                        {logCount}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                      {logRates?.[topic] > 0 && (
+                        <span className={`text-xs ${darkMode ? 'text-green-400' : 'text-blue-500'} font-mono`}>
+                          {logRates[topic]}/s
+                        </span>
+                      )}
+                      {logCount > 0 && (
+                        <span className={`text-xs ${theme.card} px-2 py-1 rounded-full ${theme.textMuted} group-hover:bg-opacity-70 transition-colors`}>
+                          {logCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {servers.length > 0 && (

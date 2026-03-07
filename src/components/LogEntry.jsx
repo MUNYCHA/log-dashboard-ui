@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatTimestamp } from '../utils/logUtils';
+import { formatTimestamp, getRelativeTime } from '../utils/logUtils';
 
 /**
  * Splits a message string by active keywords and wraps matches
@@ -30,31 +30,44 @@ const highlightMessage = (message, keywords) => {
   });
 };
 
-const LogEntry = ({ log, theme, darkMode, keywords }) => {
+const LogEntry = ({ log, theme, darkMode, keywords, now }) => {
+  const fullTimestamp = formatTimestamp(log.timestamp);
+  const relativeTime = now ? getRelativeTime(log.timestamp, now) : null;
+
   return (
     <div
       className={`group py-2 px-3 rounded-lg ${theme.logEntry} transition-colors border ${theme.border}`}
     >
       <div className="flex items-start space-x-3">
-        {/* Timestamp */}
-        <span className={`${darkMode ? 'text-purple-400' : 'text-purple-600'} text-xs whitespace-nowrap font-mono`}>
-          [{formatTimestamp(log.timestamp)}]
+        {/* Timestamp — shows relative time, full on hover */}
+        <span
+          className={`${darkMode ? 'text-purple-400' : 'text-purple-600'} text-xs whitespace-nowrap font-mono flex-shrink-0 cursor-default`}
+          title={fullTimestamp}
+        >
+          {relativeTime ? (
+            <>
+              <span>{relativeTime}</span>
+              <span className={`hidden group-hover:inline ml-1.5 opacity-50`}>{fullTimestamp}</span>
+            </>
+          ) : (
+            `[${fullTimestamp}]`
+          )}
         </span>
 
         {/* Server name */}
-        <span className={`${darkMode ? 'text-amber-400' : 'text-amber-700'} font-medium whitespace-nowrap`}>
+        <span className={`${darkMode ? 'text-amber-400' : 'text-amber-700'} font-medium whitespace-nowrap flex-shrink-0`}>
           {log.serverName}
         </span>
 
         {/* Message — keywords highlighted */}
-        <span className={`${darkMode ? 'text-emerald-300' : 'text-emerald-700'} break-all flex-1`}>
+        <span className={`${darkMode ? 'text-emerald-300' : 'text-emerald-700'} break-all flex-1 min-w-0`}>
           {highlightMessage(log.message, keywords)}
         </span>
 
         {/* Copy button */}
         <button
           onClick={() => navigator.clipboard.writeText(log.message)}
-          className={`opacity-0 group-hover:opacity-100 transition-opacity
+          className={`opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0
                    ${theme.textMuted} hover:${theme.textSecondary}`}
           title="Copy message"
         >

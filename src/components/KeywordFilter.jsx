@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 
 const DEFAULT_COLOR = '#06b6d4'; // cyan
+const PRESETS_KEY = 'logstream_keyword_presets';
 
 const hexToRgb = (hex) => {
   const clean = hex.replace('#', '');
@@ -22,16 +23,19 @@ const rgbToHex = (r, g, b) =>
     )
     .join('');
 
+const loadPresets = () => {
+  try {
+    return JSON.parse(localStorage.getItem(PRESETS_KEY) || '{}');
+  } catch {
+    return {};
+  }
+};
+
 /**
- * Tag-style keyword filter with color wheel + RGB/hex color picker.
+ * Tag-style keyword filter with color wheel + RGB/hex color picker,
+ * AND/OR mode toggle, and saved keyword presets.
  *
- * keywords shape: { text: string, color: string }[]  (color is a hex string e.g. "#ef4444")
- *
- * UX:
- *   - Type a keyword → color picker appears below
- *   - Pick color via wheel (native), hex input, or R/G/B inputs
- *   - Press Enter or comma to commit as a colored chip
- *   - Backspace on empty input removes the last chip
+ * keywords shape: { text: string, color: string }[]
  */
 const KeywordFilter = ({
   keywords,
@@ -40,11 +44,16 @@ const KeywordFilter = ({
   onAdd,
   onRemove,
   onClearAll,
+  mode,
+  onModeChange,
   theme,
   darkMode,
 }) => {
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
   const [hexInput, setHexInput] = useState(DEFAULT_COLOR.replace('#', ''));
+  const [presets, setPresets] = useState(() => loadPresets());
+  const [presetNameInput, setPresetNameInput] = useState('');
+  const [showPresets, setShowPresets] = useState(false);
   const inputRef = useRef(null);
 
   const applyColor = (hex) => {
@@ -81,8 +90,32 @@ const KeywordFilter = ({
     }
   };
 
+  const savePreset = () => {
+    const name = presetNameInput.trim();
+    if (!name || keywords.length === 0) return;
+    const updated = { ...presets, [name]: keywords };
+    setPresets(updated);
+    localStorage.setItem(PRESETS_KEY, JSON.stringify(updated));
+    setPresetNameInput('');
+  };
+
+  const loadPreset = (name) => {
+    onClearAll();
+    const preset = presets[name];
+    if (preset) preset.forEach((kw) => onAdd(kw));
+    setShowPresets(false);
+  };
+
+  const deletePreset = (name) => {
+    const updated = { ...presets };
+    delete updated[name];
+    setPresets(updated);
+    localStorage.setItem(PRESETS_KEY, JSON.stringify(updated));
+  };
+
   const showPicker = inputValue.trim().length > 0;
   const rgb = hexToRgb(selectedColor);
+  const presetNames = Object.keys(presets);
 
   const inputBaseClass = `text-xs px-2 py-1 rounded-md outline-none ${theme.input}
     focus:ring-1 ${darkMode ? 'focus:ring-cyan-500/50' : 'focus:ring-cyan-400/50'}`;
@@ -90,22 +123,101 @@ const KeywordFilter = ({
   return (
     <div className="mt-2">
       {/* Label row */}
-      <div className="flex items-center justify-between mb-1.5">
-        <span className={`text-xs font-medium ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`}>
-          Keyword filter
-          <span className={`ml-1.5 font-normal ${theme.textMuted}`}>
-            — match any keyword (OR)
+      <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-medium ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`}>
+            Keyword filter
           </span>
-        </span>
-        {keywords.length > 0 && (
+          {/* AND / OR toggle */}
           <button
             type="button"
-            onClick={onClearAll}
-            className={`text-xs ${theme.textMuted} hover:text-red-400 transition-colors`}
+            onClick={() => onModeChange(mode === 'or' ? 'and' : 'or')}
+            className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+              darkMode
+                ? 'border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/20'
+                : 'border-cyan-400/50 text-cyan-600 hover:bg-cyan-100'
+            }`}
+            title={`Currently: match ${mode.toUpperCase()} keywords. Click to toggle.`}
           >
-            Clear all
+            {mode.toUpperCase()}
           </button>
-        )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Presets dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowPresets((v) => !v)}
+              className={`text-xs ${theme.textMuted} hover:${theme.textSecondary} transition-colors`}
+              title="Saved keyword presets"
+            >
+              Presets {presetNames.length > 0 ? `(${presetNames.length})` : ''}
+            </button>
+            {showPresets && (
+              <div className={`absolute right-0 top-6 z-50 w-52 rounded-lg shadow-xl border ${theme.border} ${theme.card} p-2 space-y-1`}>
+                {presetNames.length === 0 ? (
+                  <p className={`text-xs ${theme.textMuted} px-2 py-1`}>No saved presets</p>
+                ) : (
+                  presetNames.map((name) => (
+                    <div key={name} className="flex items-center justify-between group">
+                      <button
+                        type="button"
+                        onClick={() => loadPreset(name)}
+                        className={`flex-1 text-left text-xs px-2 py-1 rounded ${theme.hover} ${theme.textSecondary} truncate`}
+                      >
+                        {name}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deletePreset(name)}
+                        className={`ml-1 text-xs ${theme.textMuted} hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity`}
+                        title="Delete preset"
+                      >
+                        <XIcon />
+                      </button>
+                    </div>
+                  ))
+                )}
+                {/* Save current keywords as preset */}
+                {keywords.length > 0 && (
+                  <div className={`pt-1 mt-1 border-t ${theme.border} flex gap-1`}>
+                    <input
+                      type="text"
+                      placeholder="Preset name..."
+                      value={presetNameInput}
+                      onChange={(e) => setPresetNameInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && savePreset()}
+                      className={`flex-1 text-xs px-2 py-1 rounded ${theme.input} outline-none`}
+                    />
+                    <button
+                      type="button"
+                      onClick={savePreset}
+                      disabled={!presetNameInput.trim()}
+                      className={`text-xs px-2 py-1 rounded ${
+                        darkMode
+                          ? 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30'
+                          : 'bg-cyan-100 text-cyan-600 hover:bg-cyan-200'
+                      } disabled:opacity-40 transition-colors`}
+                    >
+                      Save
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {keywords.length > 0 && (
+            <button
+              type="button"
+              onClick={onClearAll}
+              className={`text-xs ${theme.textMuted} hover:text-red-400 transition-colors`}
+            >
+              Clear all
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Chip + text input */}
@@ -151,10 +263,10 @@ const KeywordFilter = ({
 
       {/* Color picker — visible while typing */}
       {showPicker && (
-        <div className={`mt-2 px-1 flex flex-wrap items-center gap-3`}>
+        <div className="mt-2 px-1 flex flex-wrap items-center gap-3">
           <span className={`text-xs ${theme.textMuted} whitespace-nowrap`}>Color:</span>
 
-          {/* Color wheel (native system picker) */}
+          {/* Color wheel */}
           <div className="relative flex-shrink-0">
             <input
               type="color"
@@ -164,12 +276,8 @@ const KeywordFilter = ({
               tabIndex={-1}
             />
             <div
-              className="w-8 h-8 rounded-full border-2 shadow-md cursor-pointer
-                         transition-transform hover:scale-110"
-              style={{
-                backgroundColor: selectedColor,
-                borderColor: `${selectedColor}90`,
-              }}
+              className="w-8 h-8 rounded-full border-2 shadow-md cursor-pointer transition-transform hover:scale-110"
+              style={{ backgroundColor: selectedColor, borderColor: `${selectedColor}90` }}
               title="Open color wheel"
             />
           </div>
