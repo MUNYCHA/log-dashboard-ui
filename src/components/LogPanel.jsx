@@ -338,61 +338,6 @@ const LogPanel = ({
               )}
             </div>
 
-            {/* Dropdowns hidden on all desktop sizes — they live in the time range row below */}
-            <div className="hidden items-center gap-1.5 flex-shrink-0">
-              {/* Server dropdown */}
-              <div className="relative">
-                <button
-                  ref={serverButtonRef}
-                  onClick={() => setShowServerDropdown(!showServerDropdown)}
-                  className={`px-2 lg:px-3 py-1.5 rounded-lg ${theme.input} text-sm flex items-center gap-1.5 max-w-[110px] lg:max-w-[160px] justify-between
-                            ${selectedServer ? (darkMode ? "border-green-400/50" : "border-blue-400/50") : ""}
-                            cursor-pointer hover:bg-opacity-80 transition-colors`}
-                  type="button"
-                >
-                  <span className="truncate text-xs lg:text-sm">{selectedServer || "All Servers"}</span>
-                  <svg className={`w-3 h-3 flex-shrink-0 transition-transform ${showServerDropdown ? "rotate-180" : ""}`}
-                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <ServerDropdown
-                  isOpen={showServerDropdown} onClose={() => setShowServerDropdown(false)}
-                  servers={filteredServers} selectedServer={selectedServer}
-                  onServerSelect={handleServerSelect} onClearServer={handleClearServer}
-                  searchTerm={serverSearchTerm} onSearchChange={setServerSearchTerm}
-                  theme={theme} darkMode={darkMode}
-                />
-              </div>
-
-              {/* Path dropdown */}
-              <div className="relative">
-                <button
-                  ref={pathButtonRef}
-                  onClick={() => selectedServer && setShowPathDropdown(!showPathDropdown)}
-                  className={`px-2 lg:px-3 py-1.5 rounded-lg ${theme.input} text-sm flex items-center gap-1.5 max-w-[110px] lg:max-w-[160px] justify-between
-                            ${!selectedServer ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-opacity-80"}
-                            ${selectedPath ? (darkMode ? "border-purple-400/50" : "border-purple-500/50") : ""}`}
-                  type="button" disabled={!selectedServer}
-                  title={!selectedServer ? "Select a server first" : "Filter by path"}
-                >
-                  <span className="truncate text-xs lg:text-sm">{selectedPath ? getShortPath(selectedPath) : "All Paths"}</span>
-                  <svg className={`w-3 h-3 flex-shrink-0 transition-transform ${showPathDropdown ? "rotate-180" : ""}`}
-                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {selectedServer && (
-                  <PathDropdown
-                    isOpen={showPathDropdown} onClose={() => setShowPathDropdown(false)}
-                    paths={filteredPaths} selectedPath={selectedPath}
-                    onPathSelect={handlePathSelect} onClearPath={handleClearPath}
-                    searchTerm={pathSearchTerm} onSearchChange={setPathSearchTerm}
-                    theme={theme} darkMode={darkMode}
-                  />
-                )}
-              </div>
-            </div>
 
             {/* Search — hidden on md (shown in row 2), visible on lg+ */}
             <div className="relative flex-1 min-w-0 hidden lg:block">
