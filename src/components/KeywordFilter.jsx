@@ -81,7 +81,7 @@ const KeywordFilter = ({
   const rgb = hexToRgb(selectedColor);
 
   const inputBaseClass = `text-xs px-2 py-1 rounded-md outline-none ${theme.input}
-    focus:ring-1 ${darkMode ? 'focus:ring-cyan-500/50' : 'focus:ring-cyan-400/50'}`;
+    focus:ring-1 ${darkMode ? 'focus:ring-cyan-500/50' : 'focus:ring-indigo-400/50'}`;
 
   return (
     <div className="mt-2">

@@ -245,14 +245,14 @@ const LogPanel = ({
     setAutoScroll(true);
   };
 
-  const accentActive = darkMode ? "bg-green-500/20 text-green-400" : "bg-blue-500/20 text-blue-600";
+  const accentActive = darkMode ? "bg-green-500/20 text-green-400" : "bg-indigo-500/20 text-indigo-600";
   const accentPaused = darkMode ? "bg-amber-500/20 text-amber-400" : "bg-amber-500/20 text-amber-600";
 
   // ─── Empty state ───────────────────────────────────────────────────────────
   if (!selectedTopic) {
     return (
       <div
-        className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-70' : ''} ${splitView && isActivePanel ? `ring-1 ${darkMode ? 'ring-green-500/60' : 'ring-blue-400/60'}` : ''}`}
+        className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-70' : ''} ${splitView && isActivePanel ? `ring-1 ${darkMode ? 'ring-green-500/60' : 'ring-indigo-400/60'}` : ''}`}
         onClick={splitView && !isActivePanel ? onSetActive : undefined}
       >
         {/* Desktop header — only shown for split panel 2 so close button is always reachable */}
@@ -298,7 +298,7 @@ const LogPanel = ({
   // ─── Main panel ────────────────────────────────────────────────────────────
   return (
     <div
-      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-70' : ''} ${splitView && isActivePanel ? `ring-1 ${darkMode ? 'ring-green-500/60' : 'ring-blue-400/60'}` : ''}`}
+      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-70' : ''} ${splitView && isActivePanel ? `ring-1 ${darkMode ? 'ring-green-500/60' : 'ring-indigo-400/60'}` : ''}`}
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
@@ -317,14 +317,14 @@ const LogPanel = ({
                   onClick={onSetActive}
                   className={`w-4 h-4 rounded-full flex-shrink-0 border-2 transition-colors ${
                     isActivePanel
-                      ? darkMode ? 'border-green-400 bg-green-400' : 'border-blue-500 bg-blue-500'
+                      ? darkMode ? 'border-green-400 bg-green-400' : 'border-indigo-500 bg-indigo-500'
                       : `border-gray-500 ${theme.input}`
                   }`}
                   title={isActivePanel ? 'Active panel' : 'Click to make active'}
                 />
               )}
               <h2 className="text-sm lg:text-base font-semibold truncate max-w-[100px] lg:max-w-[200px]">
-                <span className={`${darkMode ? "bg-gradient-to-r from-green-400 to-emerald-400" : "bg-gradient-to-r from-blue-500 to-indigo-500"} bg-clip-text text-transparent`}>
+                <span className={`${darkMode ? "bg-gradient-to-r from-green-400 to-emerald-400" : "bg-gradient-to-r from-indigo-500 to-violet-500"} bg-clip-text text-transparent`}>
                   {selectedTopic}
                 </span>
               </h2>
@@ -411,7 +411,7 @@ const LogPanel = ({
                   onClick={() => setIsRegex((v) => !v)}
                   className={`text-xs px-1.5 py-0.5 rounded font-mono transition-colors ${
                     isRegex
-                      ? darkMode ? 'bg-green-500/30 text-green-300' : 'bg-blue-500/20 text-blue-600'
+                      ? darkMode ? 'bg-green-500/30 text-green-300' : 'bg-indigo-500/20 text-indigo-600'
                       : `${theme.textMuted} hover:${theme.textSecondary}`
                   }`}
                   title="Toggle regex search"
@@ -536,7 +536,7 @@ const LogPanel = ({
                   onClick={() => setIsRegex((v) => !v)}
                   className={`text-xs px-1.5 py-0.5 rounded font-mono transition-colors ${
                     isRegex
-                      ? darkMode ? 'bg-green-500/30 text-green-300' : 'bg-blue-500/20 text-blue-600'
+                      ? darkMode ? 'bg-green-500/30 text-green-300' : 'bg-indigo-500/20 text-indigo-600'
                       : `${theme.textMuted} hover:${theme.textSecondary}`
                   }`}
                   title="Toggle regex search"
@@ -559,7 +559,7 @@ const LogPanel = ({
                 </svg>
               </button>
               <h2 className="text-base font-semibold truncate max-w-[130px]">
-                <span className={`${darkMode ? "bg-gradient-to-r from-green-400 to-emerald-400" : "bg-gradient-to-r from-blue-500 to-indigo-500"} bg-clip-text text-transparent`}>
+                <span className={`${darkMode ? "bg-gradient-to-r from-green-400 to-emerald-400" : "bg-gradient-to-r from-indigo-500 to-violet-500"} bg-clip-text text-transparent`}>
                   {selectedTopic}
                 </span>
               </h2>
@@ -697,7 +697,7 @@ const LogPanel = ({
               <button
                 onClick={() => setIsRegex((v) => !v)}
                 className={`text-xs px-1.5 py-0.5 rounded font-mono transition-colors ${
-                  isRegex ? (darkMode ? 'bg-green-500/30 text-green-300' : 'bg-blue-500/20 text-blue-600') : theme.textMuted
+                  isRegex ? (darkMode ? 'bg-green-500/30 text-green-300' : 'bg-indigo-500/20 text-indigo-600') : theme.textMuted
                 }`}
                 title="Toggle regex"
               >.*</button>
@@ -745,7 +745,7 @@ const LogPanel = ({
           <div className="flex items-center flex-wrap gap-2 text-xs mt-2">
             <span className={theme.textMuted}>Active filters:</span>
             {selectedServer && (
-              <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full ${darkMode ? "bg-green-500/20 text-green-400" : "bg-blue-500/20 text-blue-600"}`}>
+              <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full ${darkMode ? "bg-green-500/20 text-green-400" : "bg-indigo-500/20 text-indigo-600"}`}>
                 <span className="max-w-[120px] truncate">Server: {selectedServer}</span>
                 <button onClick={handleClearServer} className="hover:text-red-400 ml-1">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -879,7 +879,7 @@ const LogPanel = ({
             <button
               onClick={handleClearServer}
               className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded
-                       ${darkMode ? "bg-green-500/20 text-green-400" : "bg-blue-500/20 text-blue-600"}
+                       ${darkMode ? "bg-green-500/20 text-green-400" : "bg-indigo-500/20 text-indigo-600"}
                        hover:bg-red-500/20 hover:text-red-400 transition-colors group`}
             >
               <span className="max-w-[100px] truncate">{selectedServer}</span>

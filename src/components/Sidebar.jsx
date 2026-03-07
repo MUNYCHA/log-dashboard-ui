@@ -27,8 +27,8 @@ const Sidebar = ({
       <div className={`p-4 border-b ${theme.border} flex-shrink-0`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className={`w-2 h-2 ${darkMode ? 'bg-green-400' : 'bg-blue-500'} rounded-full animate-pulse`} />
-            <h1 className={`text-lg font-semibold ${darkMode ? 'bg-gradient-to-r from-green-400 to-emerald-400' : 'bg-gradient-to-r from-blue-500 to-indigo-500'} bg-clip-text text-transparent`}>
+            <div className={`w-2 h-2 ${darkMode ? 'bg-green-400' : 'bg-indigo-500'} rounded-full animate-pulse`} />
+            <h1 className={`text-lg font-semibold ${darkMode ? 'bg-gradient-to-r from-green-400 to-emerald-400' : 'bg-gradient-to-r from-indigo-500 to-violet-500'} bg-clip-text text-transparent`}>
               Log Topics
             </h1>
           </div>
@@ -53,7 +53,7 @@ const Sidebar = ({
             type="text"
             placeholder="Search topics..."
             className={`w-full ${theme.input} rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2
-                     ${darkMode ? 'focus:ring-green-500/50' : 'focus:ring-blue-500/50'} focus:border-transparent transition-all`}
+                     ${darkMode ? 'focus:ring-green-500/50' : 'focus:ring-indigo-500/50'} focus:border-transparent transition-all`}
             value={topicSearchTerm}
             onChange={(e) => onTopicSearchChange(e.target.value)}
           />
@@ -85,12 +85,12 @@ const Sidebar = ({
                     <div className="flex items-center space-x-3 min-w-0">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         selectedTopic === topic
-                          ? darkMode ? 'bg-green-400' : 'bg-blue-500'
+                          ? darkMode ? 'bg-green-400' : 'bg-indigo-500'
                           : darkMode ? 'bg-gray-600' : 'bg-gray-400'
                       }`} />
                       <span className={`font-medium truncate ${
                         selectedTopic === topic
-                          ? darkMode ? 'text-green-400' : 'text-blue-600'
+                          ? darkMode ? 'text-green-400' : 'text-indigo-600'
                           : theme.textSecondary
                       }`}>
                         {topic}
@@ -98,7 +98,7 @@ const Sidebar = ({
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                       {logRates?.[topic] > 0 && (
-                        <span className={`text-xs ${darkMode ? 'text-green-400' : 'text-blue-500'} font-mono`}>
+                        <span className={`text-xs ${darkMode ? 'text-green-400' : 'text-indigo-500'} font-mono`}>
                           {logRates[topic]}/s
                         </span>
                       )}

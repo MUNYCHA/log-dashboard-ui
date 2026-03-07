@@ -29,8 +29,8 @@ const ServerDropdown = ({
     allLabel="All Servers"
     placeholder="Search servers..."
     emptyLabel="No servers found"
-    selectedClass={darkMode ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-600'}
-    focusRingClass={darkMode ? 'focus:ring-green-500/50' : 'focus:ring-blue-500/50'}
+    selectedClass={darkMode ? 'bg-green-500/20 text-green-400' : 'bg-indigo-500/20 text-indigo-600'}
+    focusRingClass={darkMode ? 'focus:ring-green-500/50' : 'focus:ring-indigo-500/50'}
     theme={theme}
   />
 );

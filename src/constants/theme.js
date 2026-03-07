@@ -1,26 +1,25 @@
 export const styles = {
   light: {
-    background: "bg-gray-50",
-    sidebar: "bg-white border-gray-200",
-    header: "bg-white/80 border-gray-200",
-    text: "text-gray-900",
-    textSecondary: "text-gray-600",
-    textMuted: "text-gray-500",
-    border: "border-gray-200",
-    input: "bg-white border-gray-400 text-gray-900 placeholder-gray-500 shadow-sm", // Made border darker, added shadow
+    background: "bg-slate-100",
+    sidebar: "bg-indigo-50 border-indigo-200",
+    header: "bg-indigo-50/90 border-indigo-200",
+    text: "text-slate-900",
+    textSecondary: "text-slate-700",
+    textMuted: "text-slate-500",
+    border: "border-indigo-200",
+    input: "bg-white border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm",
     card: "bg-white",
-    hover: "hover:bg-gray-100", // Made hover more visible
-    selected: "bg-blue-50 border-l-4 border-l-blue-500",
-    logEntry: "hover:bg-gray-100 border-gray-200", // Made hover more visible
-    statusBar: "bg-white/80 border-gray-200",
-    scrollbar: "scrollbar-thumb-gray-300 scrollbar-track-gray-100",
-    serverBadge: "bg-gray-200 text-gray-700",
-    serverBadgeHover: "hover:bg-gray-300",
-    dropdownItemSelected: "bg-blue-500/20 text-blue-600",
-    // New specific styles for better contrast
-    inputFocus: "ring-2 ring-blue-500/50 border-blue-500", // Focus ring for inputs
-    button: "bg-gray-200 hover:bg-gray-300 text-gray-700", // Button styles
-    buttonPrimary: "bg-blue-500 hover:bg-blue-600 text-white", // Primary button
+    hover: "hover:bg-indigo-50",
+    selected: "bg-indigo-100 border-l-4 border-l-indigo-500",
+    logEntry: "hover:bg-indigo-50 border-slate-200",
+    statusBar: "bg-indigo-50/90 border-indigo-200",
+    scrollbar: "scrollbar-thumb-indigo-300 scrollbar-track-slate-200",
+    serverBadge: "bg-indigo-100 text-indigo-700",
+    serverBadgeHover: "hover:bg-indigo-200",
+    dropdownItemSelected: "bg-indigo-500/20 text-indigo-700",
+    inputFocus: "ring-2 ring-indigo-500/50 border-indigo-500",
+    button: "bg-indigo-100 hover:bg-indigo-200 text-indigo-700",
+    buttonPrimary: "bg-indigo-500 hover:bg-indigo-600 text-white",
   },
   dark: {
     background: "bg-[#0B1120]",
