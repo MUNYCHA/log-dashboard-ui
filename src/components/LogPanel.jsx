@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from "react";
 import ServerDropdown from "./ServerDropdown";
 import PathDropdown from "./PathDropdown";
 import LogEntry from "./LogEntry";
@@ -59,16 +59,32 @@ const LogPanel = ({
   const [pathForTopic, setPathForTopic] = useState({ topic: null, path: null });
   const selectedPath = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
   const [prevTopic, setPrevTopic] = useState(selectedTopic);
-  if (prevTopic !== selectedTopic) {
-    setPrevTopic(selectedTopic);
-    setAutoScroll(true);
-  }
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [keywords, setKeywords] = useState([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordMode, setKeywordMode] = useState('or');
   const [isRegex, setIsRegex] = useState(false);
   const [timeRange, setTimeRange] = useState('all');
+  // Reset all filters when topic changes
+  if (prevTopic !== selectedTopic) {
+    setPrevTopic(selectedTopic);
+    setAutoScroll(true);
+    setLogSearchTerm('');
+    setPathForTopic({ topic: null, path: null });
+    setKeywords([]);
+    setKeywordInput('');
+    setTimeRange('all');
+    setIsRegex(false);
+    setServerSearchTerm('');
+    setPathSearchTerm('');
+    setFrozenLogs(null);
+    setShowServerDropdown(false);
+    setShowPathDropdown(false);
+    setShowMobileServerDropdown(false);
+    setShowMobilePathDropdown(false);
+    setIsMobileMenuOpen(false);
+    if (isPaused) togglePause();
+  }
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
@@ -78,6 +94,7 @@ const LogPanel = ({
   const serverButtonRef = useRef(null);
   const pathButtonRef = useRef(null);
   const exportMenuRef = useRef(null);
+  const isProgrammaticScrollRef = useRef(false);
 
   // Ticker for relative timestamps (every 30s)
   useEffect(() => {
@@ -97,9 +114,9 @@ const LogPanel = ({
   }, []);
 
 
-  // Scroll tracking — update atTop/atBottom, disable autoScroll when scrolling up
+  // Scroll tracking — update atTop/atBottom, disable autoScroll only on real user scrolls
   const handleScroll = useCallback(() => {
-    if (!scrollRef.current) return;
+    if (!scrollRef.current || isProgrammaticScrollRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
     setAtTop(scrollTop < 50);
     const nearBottom = scrollTop + clientHeight >= scrollHeight - 100;
@@ -113,6 +130,21 @@ const LogPanel = ({
     el.addEventListener('scroll', handleScroll, { passive: true });
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll, selectedTopic]);
+
+  // Re-scroll on container resize (window resize, split view toggle, etc.)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      if (autoScroll && !isPaused) {
+        isProgrammaticScrollRef.current = true;
+        el.scrollTop = el.scrollHeight;
+        requestAnimationFrame(() => { isProgrammaticScrollRef.current = false; });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [autoScroll, isPaused, selectedTopic]);
 
   // Regex validation
   const regexError = useMemo(() => {
@@ -203,12 +235,15 @@ const LogPanel = ({
     togglePause();
   };
 
-  // Auto-scroll to bottom
-  useEffect(() => {
+  // Auto-scroll to bottom — useLayoutEffect runs before paint.
+  // Flag marks the scroll as programmatic so handleScroll ignores it.
+  useLayoutEffect(() => {
     if (!isPaused && autoScroll && scrollRef.current) {
+      isProgrammaticScrollRef.current = true;
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      requestAnimationFrame(() => { isProgrammaticScrollRef.current = false; });
     }
-  }, [filteredLogs, autoScroll, isPaused]);
+  }, [filteredLogs, autoScroll, isPaused, darkMode]);
 
   // Handlers
   const handleServerSelect = (server) => {
