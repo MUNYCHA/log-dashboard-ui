@@ -50,6 +50,8 @@ const LogPanel = ({
   const [autoScroll, setAutoScroll] = useState(true);
   const [showServerDropdown, setShowServerDropdown] = useState(false);
   const [showPathDropdown, setShowPathDropdown] = useState(false);
+  const [showMobileServerDropdown, setShowMobileServerDropdown] = useState(false);
+  const [showMobilePathDropdown, setShowMobilePathDropdown] = useState(false);
   const [serverSearchTerm, setServerSearchTerm] = useState("");
   const [pathSearchTerm, setPathSearchTerm] = useState("");
   // selectedPath is tied to the current topic — auto-clears when topic changes
@@ -200,12 +202,14 @@ const LogPanel = ({
     onServerSelect(server);
     setPathForTopic({ topic: selectedTopic, path: null });
     setShowServerDropdown(false);
+    setShowMobileServerDropdown(false);
     setServerSearchTerm("");
   };
 
   const handlePathSelect = (path) => {
     setPathForTopic({ topic: selectedTopic, path });
     setShowPathDropdown(false);
+    setShowMobilePathDropdown(false);
     setPathSearchTerm("");
   };
 
@@ -499,20 +503,19 @@ const LogPanel = ({
               {/* Server dropdown mobile */}
               <div className="relative w-full">
                 <button
-                  ref={serverButtonRef}
-                  onClick={() => setShowServerDropdown(!showServerDropdown)}
+                  onClick={() => setShowMobileServerDropdown(!showMobileServerDropdown)}
                   className={`w-full px-3 py-2 rounded-lg ${theme.input} text-sm flex items-center justify-between
                             ${selectedServer ? (darkMode ? "border-green-400/50" : "border-blue-400/50") : ""}`}
                   type="button"
                 >
                   <span className="truncate">{selectedServer || "All Servers"}</span>
-                  <svg className={`w-4 h-4 transition-transform ${showServerDropdown ? "rotate-180" : ""}`}
+                  <svg className={`w-4 h-4 transition-transform ${showMobileServerDropdown ? "rotate-180" : ""}`}
                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 <ServerDropdown
-                  isOpen={showServerDropdown} onClose={() => setShowServerDropdown(false)}
+                  isOpen={showMobileServerDropdown} onClose={() => setShowMobileServerDropdown(false)}
                   servers={filteredServers} selectedServer={selectedServer}
                   onServerSelect={handleServerSelect} onClearServer={handleClearServer}
                   searchTerm={serverSearchTerm} onSearchChange={setServerSearchTerm}
@@ -523,22 +526,21 @@ const LogPanel = ({
               {/* Path dropdown mobile */}
               <div className="relative w-full">
                 <button
-                  ref={pathButtonRef}
-                  onClick={() => selectedServer && setShowPathDropdown(!showPathDropdown)}
+                  onClick={() => selectedServer && setShowMobilePathDropdown(!showMobilePathDropdown)}
                   className={`w-full px-3 py-2 rounded-lg ${theme.input} text-sm flex items-center justify-between
                             ${!selectedServer ? "opacity-50" : ""}
                             ${selectedPath ? (darkMode ? "border-purple-400/50" : "border-purple-500/50") : ""}`}
                   type="button" disabled={!selectedServer}
                 >
                   <span className="truncate">{selectedPath ? getShortPath(selectedPath) : "All Paths"}</span>
-                  <svg className={`w-4 h-4 transition-transform ${showPathDropdown ? "rotate-180" : ""}`}
+                  <svg className={`w-4 h-4 transition-transform ${showMobilePathDropdown ? "rotate-180" : ""}`}
                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 {selectedServer && (
                   <PathDropdown
-                    isOpen={showPathDropdown} onClose={() => setShowPathDropdown(false)}
+                    isOpen={showMobilePathDropdown} onClose={() => setShowMobilePathDropdown(false)}
                     paths={filteredPaths} selectedPath={selectedPath}
                     onPathSelect={handlePathSelect} onClearPath={handleClearPath}
                     searchTerm={pathSearchTerm} onSearchChange={setPathSearchTerm}
