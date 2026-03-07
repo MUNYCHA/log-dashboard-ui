@@ -302,7 +302,7 @@ const LogPanel = ({
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className={`border-b ${theme.border} px-3 sm:px-4 md:px-5 py-3 ${theme.header} backdrop-blur-xl flex-shrink-0`}>
+      <div className={`border-b ${theme.border} px-3 sm:px-4 md:px-5 py-3 ${theme.header} backdrop-blur-xl flex-shrink-0 relative z-10`}>
 
         {/* DESKTOP layout — md: two rows, lg+: single row */}
         <div className="hidden md:block">
