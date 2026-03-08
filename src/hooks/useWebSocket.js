@@ -1,29 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import config from '../config';
 
-const STORAGE_KEY = 'logstream_logs';
-const STORAGE_MAX_PER_TOPIC = 50;
-
-function loadFromStorage() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveToStorage(logsByTopic) {
-  try {
-    const toSave = {};
-    for (const [topic, logs] of Object.entries(logsByTopic)) {
-      toSave[topic] = logs.slice(0, STORAGE_MAX_PER_TOPIC);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-  } catch {
-    // Storage quota exceeded or unavailable — ignore
-  }
-}
+const FLUSH_INTERVAL_MS = 150;  // batch log state updates — reduces re-renders dramatically
 
 /**
  * Connects to a WebSocket server and manages incoming log data.
@@ -43,7 +21,7 @@ function saveToStorage(logsByTopic) {
  *   clearLogs     - (topic: string) => void
  */
 export const useWebSocket = (url) => {
-  const [logsByTopic, setLogsByTopic] = useState(() => loadFromStorage());
+  const [logsByTopic, setLogsByTopic] = useState({});
   const [topics, setTopics] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -51,25 +29,55 @@ export const useWebSocket = (url) => {
   const [logRates, setLogRates] = useState({});
 
   const isPausedRef = useRef(false);
-  const bufferRef = useRef([]);
+  const bufferRef = useRef([]);         // logs held while paused
+  const pendingRef = useRef([]);        // logs waiting for next flush
+  const pendingCountRef = useRef({});   // per-topic count in pendingRef — enforces cap
   const logCountRef = useRef({});
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef(null);
+
+  // Flush pending logs to state in batches — one React re-render per interval.
+  // Groups by topic first so we create ONE new array per topic per flush
+  // instead of one array per individual log message.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (pendingRef.current.length === 0) return;
+      const batch = pendingRef.current.splice(0);
+      pendingCountRef.current = {}; // reset per-topic counts after flush
+
+      // Group by topic — avoids N intermediate array allocations per topic
+      const byTopic = {};
+      for (const log of batch) {
+        if (!byTopic[log.topic]) byTopic[log.topic] = [];
+        byTopic[log.topic].push(log); // oldest first
+      }
+
+      setLogsByTopic((prev) => {
+        const updated = { ...prev };
+        for (const [topic, newLogs] of Object.entries(byTopic)) {
+          const existing = updated[topic] || [];
+          // newLogs is oldest-first — reverse in place (it's our local array)
+          // then concat existing, then cap. One new array per topic per flush.
+          updated[topic] = newLogs.reverse().concat(existing).slice(0, config.ws.maxLogsPerTopic);
+        }
+        return updated;
+      });
+    }, FLUSH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
 
   // Sync isPaused to ref and flush buffer when unpausing
   useEffect(() => {
     isPausedRef.current = isPaused;
     if (!isPaused && bufferRef.current.length > 0) {
       const buffered = bufferRef.current.splice(0);
-      setLogsByTopic((prev) => {
-        const updated = { ...prev };
-        for (const log of buffered) {
-          const existing = updated[log.topic] || [];
-          updated[log.topic] = [log, ...existing].slice(0, config.ws.maxLogsPerTopic);
+      for (const log of buffered) {
+        const topicCount = pendingCountRef.current[log.topic] || 0;
+        if (topicCount < config.ws.maxLogsPerTopic) {
+          pendingRef.current.push(log);
+          pendingCountRef.current[log.topic] = topicCount + 1;
         }
-        saveToStorage(updated);
-        return updated;
-      });
+      }
     }
   }, [isPaused]);
 
@@ -139,19 +147,20 @@ export const useWebSocket = (url) => {
         logCountRef.current[log.topic] = (logCountRef.current[log.topic] || 0) + 1;
 
         if (isPausedRef.current) {
-          bufferRef.current.push(log);
+          // Cap pause buffer — prevents unbounded memory growth at high log rates
+          if (bufferRef.current.length < config.ws.maxLogsPerTopic) {
+            bufferRef.current.push(log);
+          }
           return;
         }
 
-        setLogsByTopic((prev) => {
-          const existing = prev[log.topic] || [];
-          const updated = {
-            ...prev,
-            [log.topic]: [log, ...existing].slice(0, config.ws.maxLogsPerTopic),
-          };
-          saveToStorage(updated);
-          return updated;
-        });
+        // Per-topic cap on pending queue — drop logs for a topic that already has
+        // maxLogsPerTopic entries queued (they'd be discarded by the cap anyway)
+        const topicCount = pendingCountRef.current[log.topic] || 0;
+        if (topicCount < config.ws.maxLogsPerTopic) {
+          pendingRef.current.push(log);
+          pendingCountRef.current[log.topic] = topicCount + 1;
+        }
       };
     }
 
@@ -167,11 +176,10 @@ export const useWebSocket = (url) => {
   }, [url]);
 
   const clearLogs = useCallback((topic) => {
-    setLogsByTopic((prev) => {
-      const updated = { ...prev, [topic]: [] };
-      saveToStorage(updated);
-      return updated;
-    });
+    // Drain any queued logs for this topic so they don't reappear on the next flush
+    pendingRef.current = pendingRef.current.filter((log) => log.topic !== topic);
+    pendingCountRef.current[topic] = 0;
+    setLogsByTopic((prev) => ({ ...prev, [topic]: [] }));
   }, []);
 
   const togglePause = useCallback(() => setIsPaused((p) => !p), []);

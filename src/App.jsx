@@ -17,6 +17,7 @@ export default function App() {
   const [activePanel, setActivePanel] = useState(1);
   const [isPaused1, setIsPaused1] = useState(false);
   const [isPaused2, setIsPaused2] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates } = useWebSocket(config.ws.url);
   const theme = darkMode ? styles.dark : styles.light;
@@ -83,6 +84,8 @@ export default function App() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         logRates={logRates}
+        collapsed={sidebarCollapsed}
+        onCollapse={() => setSidebarCollapsed(v => !v)}
       />
 
       <div className="flex flex-1 min-w-0 overflow-hidden">

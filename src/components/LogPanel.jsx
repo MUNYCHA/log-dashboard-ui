@@ -5,6 +5,27 @@ import LogEntry from "./LogEntry";
 import ThemeToggle from "./ThemeToggle";
 import KeywordFilter from "./KeywordFilter";
 
+const HeartbeatLine = ({ rate, darkMode }) => {
+  const dur  = rate > 20 ? '0.4s' : rate > 10 ? '0.7s' : rate > 3 ? '1.3s' : '2.2s';
+  // Color shifts green → yellow → orange → red as rate climbs
+  const color = rate > 20
+    ? '#f87171'                          // red   — critical
+    : rate > 10
+      ? '#fb923c'                        // orange — busy
+      : rate > 3
+        ? '#fbbf24'                      // yellow — moderate
+        : darkMode ? '#4ade80' : '#22c55e'; // green  — calm
+  const pts = "0,8 5,8 8,3 11,13 14,5 17,8 24,8 29,8 32,3 35,13 38,5 41,8 48,8 53,8 56,3 59,13 62,5 65,8 72,8";
+  // key={dur} forces SVG remount when speed tier changes — ensures animation restarts cleanly
+  return (
+    <svg key={dur} width="48" height="16" viewBox="0 0 48 16" style={{ overflow: 'hidden', flexShrink: 0 }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <animateTransform attributeName="transform" type="translate" from="0,0" to="-24,0" dur={dur} repeatCount="indefinite" />
+      </polyline>
+    </svg>
+  );
+};
+
 const TIME_RANGES = [
   { label: 'All', value: 'all' },
   { label: '1m', value: '1m' },
@@ -152,22 +173,26 @@ const LogPanel = ({
     try { new RegExp(logSearchTerm); return false; } catch { return true; }
   }, [isRegex, logSearchTerm]);
 
+  // Pin to the selected topic's array — memos below only re-run when THIS topic's
+  // logs change, not when any other topic receives new logs
+  const topicLogs = logsByTopic[selectedTopic];
+
   // Unique servers for selected topic
   const serversForSelectedTopic = useMemo(
     () =>
       selectedTopic
-        ? [...new Set(logsByTopic[selectedTopic]?.map((l) => l.serverName) || [])].sort()
+        ? [...new Set(topicLogs?.map((l) => l.serverName) || [])].sort()
         : [],
-    [selectedTopic, logsByTopic],
+    [selectedTopic, topicLogs],
   );
 
   // Unique paths for selected server
   const pathsForSelectedServer = useMemo(() => {
-    if (!selectedTopic || !logsByTopic[selectedTopic]) return [];
-    let logs = logsByTopic[selectedTopic];
+    if (!selectedTopic || !topicLogs) return [];
+    let logs = topicLogs;
     if (selectedServer) logs = logs.filter((l) => l.serverName === selectedServer);
     return [...new Set(logs.map((l) => l.path))].sort();
-  }, [selectedTopic, logsByTopic, selectedServer]);
+  }, [selectedTopic, topicLogs, selectedServer]);
 
   const filteredServers = useMemo(
     () => serversForSelectedTopic.filter((s) => s.toLowerCase().includes(serverSearchTerm.toLowerCase())),
@@ -181,34 +206,38 @@ const LogPanel = ({
 
   // Main log filter
   const filteredLogs = useMemo(() => {
-    if (!selectedTopic || !logsByTopic[selectedTopic]) return [];
+    if (!selectedTopic || !topicLogs) return [];
     const cutoff = timeRange !== 'all' ? now - TIME_RANGE_MS[timeRange] : null;
 
-    const filtered = logsByTopic[selectedTopic].filter((log) => {
+    // Compute these once outside the filter loop — not once per log
+    const searchLower = logSearchTerm ? logSearchTerm.toLowerCase() : null;
+    const searchRegex = isRegex && !regexError && logSearchTerm
+      ? (() => { try { return new RegExp(logSearchTerm, 'i'); } catch { return null; } })()
+      : null;
+    const pendingInput = keywordInput.trim().toLowerCase();
+    const activeKeywords = keywords.length > 0 || pendingInput
+      ? [...keywords.map((k) => k.text), ...(pendingInput ? [pendingInput] : [])]
+      : null;
+
+    const filtered = topicLogs.filter((log) => {
       if (selectedServer && log.serverName !== selectedServer) return false;
       if (selectedPath && log.path !== selectedPath) return false;
       if (cutoff && new Date(log.timestamp).getTime() < cutoff) return false;
 
       if (logSearchTerm) {
         let matchesSearch = false;
-        if (isRegex && !regexError) {
-          try {
-            const re = new RegExp(logSearchTerm, 'i');
-            matchesSearch = re.test(log.message) || re.test(log.serverName) || re.test(log.path);
-          } catch { matchesSearch = false; }
+        if (searchRegex) {
+          matchesSearch = searchRegex.test(log.message) || searchRegex.test(log.serverName) || searchRegex.test(log.path);
         } else {
-          const q = logSearchTerm.toLowerCase();
           matchesSearch =
-            log.message.toLowerCase().includes(q) ||
-            log.serverName.toLowerCase().includes(q) ||
-            log.path.toLowerCase().includes(q);
+            log.message.toLowerCase().includes(searchLower) ||
+            log.serverName.toLowerCase().includes(searchLower) ||
+            log.path.toLowerCase().includes(searchLower);
         }
         if (!matchesSearch) return false;
       }
 
-      const pendingInput = keywordInput.trim().toLowerCase();
-      const activeKeywords = [...keywords.map((k) => k.text), ...(pendingInput ? [pendingInput] : [])];
-      if (activeKeywords.length > 0) {
+      if (activeKeywords) {
         const haystack = log.message.toLowerCase();
         const matches =
           keywordMode === 'and'
@@ -220,8 +249,8 @@ const LogPanel = ({
       return true;
     });
 
-    return [...filtered].reverse();
-  }, [selectedTopic, logsByTopic, selectedServer, selectedPath, logSearchTerm, isRegex, regexError, timeRange, now, keywords, keywordInput, keywordMode]);
+    return filtered.reverse();
+  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, isRegex, regexError, timeRange, now, keywords, keywordInput, keywordMode]);
 
   const displayedLogs = frozenLogs ?? filteredLogs;
 
@@ -270,7 +299,8 @@ const LogPanel = ({
 
   const exportLogs = (format) => {
     const safeTopic = selectedTopic.replace(/[^a-z0-9]/gi, '_');
-    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    const now = new Date();
+    const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}-${String(now.getSeconds()).padStart(2,'0')}`;
     const base = `${safeTopic}_${ts}`;
     if (format === 'json') {
       downloadFile(JSON.stringify(displayedLogs, null, 2), `${base}.json`, 'application/json');
@@ -299,6 +329,23 @@ const LogPanel = ({
 
   const accentActive = darkMode ? "bg-green-500/20 text-green-400" : "bg-indigo-500/20 text-indigo-600";
   const accentPaused = darkMode ? "bg-amber-500/20 text-amber-400" : "bg-amber-500/20 text-amber-600";
+
+  // Shared toolbar button base — matches ThemeToggle style
+  const btnBase = "p-1.5 rounded-lg transition-all duration-150 hover:scale-110 active:scale-95";
+  const btnIdle = darkMode
+    ? "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:shadow-lg"
+    : "bg-white shadow-md text-gray-500 hover:shadow-lg";
+  const btn = {
+    pause:   darkMode ? `${btnBase} ${btnIdle} hover:text-amber-400   hover:shadow-amber-400/20`   : `${btnBase} ${btnIdle} hover:bg-amber-50   hover:text-amber-500   hover:shadow-amber-200`,
+    paused:  darkMode ? `${btnBase} bg-amber-500/20  text-amber-400  hover:bg-amber-500/30  hover:shadow-lg hover:shadow-amber-400/20`  : `${btnBase} bg-amber-500/20  text-amber-600  hover:bg-amber-500/30  hover:shadow-lg hover:shadow-amber-200`,
+    export:  darkMode ? `${btnBase} ${btnIdle} hover:text-emerald-400 hover:shadow-emerald-400/20` : `${btnBase} ${btnIdle} hover:bg-emerald-50 hover:text-emerald-500 hover:shadow-emerald-200`,
+    scroll:  darkMode ? `${btnBase} ${btnIdle} hover:text-sky-400     hover:shadow-sky-400/20`     : `${btnBase} ${btnIdle} hover:bg-sky-50     hover:text-sky-500     hover:shadow-sky-200`,
+    scrollOn:darkMode ? `${btnBase} bg-green-500/20  text-green-400  hover:bg-green-500/30  hover:shadow-lg hover:shadow-green-400/20`  : `${btnBase} bg-indigo-500/20 text-indigo-600 hover:bg-indigo-500/30 hover:shadow-lg hover:shadow-indigo-200`,
+    split:   darkMode ? `${btnBase} ${btnIdle} hover:text-violet-400  hover:shadow-violet-400/20`  : `${btnBase} ${btnIdle} hover:bg-violet-50  hover:text-violet-500  hover:shadow-violet-200`,
+    splitOn: darkMode ? `${btnBase} bg-green-500/20  text-green-400  hover:bg-green-500/30  hover:shadow-lg hover:shadow-green-400/20`  : `${btnBase} bg-indigo-500/20 text-indigo-600 hover:bg-indigo-500/30 hover:shadow-lg hover:shadow-indigo-200`,
+    close:   darkMode ? `${btnBase} ${btnIdle} hover:text-red-400     hover:shadow-red-400/20`     : `${btnBase} ${btnIdle} hover:bg-red-50     hover:text-red-500     hover:shadow-red-200`,
+    clear:   darkMode ? `${btnBase} ${btnIdle} hover:text-red-400     hover:shadow-red-400/20`     : `${btnBase} ${btnIdle} hover:bg-red-50     hover:text-red-500     hover:shadow-red-200`,
+  };
 
   // ─── Empty state ───────────────────────────────────────────────────────────
   if (!selectedTopic) {
@@ -384,8 +431,11 @@ const LogPanel = ({
                 {displayedLogs?.length || 0}
               </span>
               {logRates?.[selectedTopic] > 0 && (
-                <span className={`hidden lg:inline text-xs ${theme.textMuted} whitespace-nowrap`}>
-                  {logRates[selectedTopic]}/s
+                <span className="hidden lg:inline-flex items-center gap-1.5 flex-shrink-0">
+                  <span className={`text-xs ${theme.textMuted} whitespace-nowrap`}>
+                    {logRates[selectedTopic]}/s
+                  </span>
+                  <HeartbeatLine rate={logRates[selectedTopic]} darkMode={darkMode} />
                 </span>
               )}
             </div>
@@ -396,7 +446,7 @@ const LogPanel = ({
               {/* Pause */}
               <button
                 onClick={handleTogglePause}
-                className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${isPaused ? accentPaused : theme.input}`}
+                className={isPaused ? btn.paused : btn.pause}
                 title={isPaused ? "Resume stream" : "Pause stream"}
               >
                 {isPaused ? (
@@ -414,7 +464,7 @@ const LogPanel = ({
               <div className="relative" ref={exportMenuRef}>
                 <button
                   onClick={() => setShowExportMenu((v) => !v)}
-                  className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${theme.input}`}
+                  className={btn.export}
                   title="Export logs"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -441,7 +491,7 @@ const LogPanel = ({
               {/* Auto-scroll */}
               <button
                 onClick={() => setAutoScroll(!autoScroll)}
-                className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${autoScroll ? accentActive : theme.input}`}
+                className={autoScroll ? btn.scrollOn : btn.scroll}
                 title="Auto-scroll"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -453,7 +503,7 @@ const LogPanel = ({
               {!onClosePanel && (
                 <button
                   onClick={onOpenSplit}
-                  className={`hidden md:flex p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${splitView ? accentActive : theme.input}`}
+                  className={`hidden md:flex ${splitView ? btn.splitOn : btn.split}`}
                   title="Open split view"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -465,7 +515,7 @@ const LogPanel = ({
               {onClosePanel && (
                 <button
                   onClick={onClosePanel}
-                  className={`hidden md:flex p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${theme.input} hover:text-red-400 hover:bg-red-500/10`}
+                  className={`hidden md:flex ${btn.close}`}
                   title="Close this panel"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -476,8 +526,8 @@ const LogPanel = ({
 
               {/* Clear */}
               <button
-                onClick={() => { onClearLogs(selectedTopic); handleClearServer(); handleClearPath(); setKeywords([]); }}
-                className={`p-1.5 rounded-lg ${theme.input} hover:text-red-400 hover:bg-red-500/10 transition-colors`}
+                onClick={() => onClearLogs(selectedTopic)}
+                className={btn.clear}
                 title="Clear logs"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -639,7 +689,7 @@ const LogPanel = ({
                   Export CSV
                 </button>
                 <button
-                  onClick={() => { onClearLogs(selectedTopic); handleClearServer(); handleClearPath(); setKeywords([]); }}
+                  onClick={() => onClearLogs(selectedTopic)}
                   className={`flex-1 p-2 rounded-lg ${theme.input} hover:text-red-400 text-sm flex items-center justify-center`}
                 >
                   Clear logs
