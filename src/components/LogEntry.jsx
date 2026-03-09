@@ -36,7 +36,7 @@ const LogEntry = ({ log, theme, darkMode, keywords, now }) => {
 
   return (
     <div
-      className={`group py-2 px-3 rounded-lg ${theme.logEntry} transition-all duration-150 border ${theme.border}`}
+      className={`group py-2 px-3 rounded-lg ${theme.logEntry} transition-all duration-150`}
     >
       <div className="flex items-start space-x-3">
         {/* Timestamp — shows relative time, full on hover */}

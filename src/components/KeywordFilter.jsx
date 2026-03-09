@@ -213,7 +213,7 @@ const KeywordFilter = ({
                   max="255"
                   value={val}
                   onChange={(e) => handleRgbChange(ch, e.target.value)}
-                  className={`w-12 text-center ${inputBaseClass}`}
+                  className={`w-14 text-center ${inputBaseClass}`}
                 />
               </div>
             ))}

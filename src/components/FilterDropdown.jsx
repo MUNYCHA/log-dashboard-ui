@@ -61,7 +61,7 @@ const FilterDropdown = ({
   return (
     <div
       ref={dropdownRef}
-      className={`absolute left-0 mt-2 ${width} rounded-lg shadow-lg ${theme.card} border ${theme.border} z-50`}
+      className={`absolute left-0 mt-2 ${width} rounded-xl shadow-xl ${theme.card} border ${theme.popupBorder} z-50`}
     >
       <div className="p-2">
         <input

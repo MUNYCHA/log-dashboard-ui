@@ -107,7 +107,7 @@ export default function App() {
         {/* Panel 2 — split view only */}
         {splitView && (
           <>
-            <div className={`w-px flex-shrink-0 ${theme.border}`} style={{ background: 'currentColor', opacity: 0.2 }} />
+            <div className={`w-px flex-shrink-0 ${darkMode ? 'bg-gray-800/30' : 'bg-indigo-200/40'}`} />
             <LogPanel
               {...sharedProps}
               selectedTopic={selectedTopic2}

@@ -356,7 +356,7 @@ const LogPanel = ({
       >
         {/* Desktop header — only shown for split panel 2 so close button is always reachable */}
         {onClosePanel && (
-          <div className={`hidden md:flex items-center justify-between px-3 py-3 border-b ${theme.border} ${theme.header}`}>
+          <div className={`hidden md:flex items-center justify-between px-3 py-3 ${theme.header}`}>
             <span className={`text-sm ${theme.textMuted}`}>Select a topic</span>
             <button
               onClick={(e) => { e.stopPropagation(); onClosePanel(); }}
@@ -369,7 +369,7 @@ const LogPanel = ({
             </button>
           </div>
         )}
-        <div className={`md:hidden flex items-center px-3 py-3 border-b ${theme.border} ${theme.header}`}>
+        <div className={`md:hidden flex items-center px-3 py-3 ${theme.header}`}>
           <button onClick={onOpenSidebar} className={`p-2 rounded-lg ${theme.input}`} aria-label="Open sidebar">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -401,7 +401,7 @@ const LogPanel = ({
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className={`border-b ${theme.border} px-3 sm:px-4 md:px-5 py-3 ${theme.header} backdrop-blur-xl flex-shrink-0 relative z-10`}>
+      <div className={`px-3 sm:px-4 md:px-5 py-3 ${theme.header} backdrop-blur-xl flex-shrink-0 relative z-10`}>
 
         {/* DESKTOP layout — md: two rows, lg+: single row */}
         <div className="hidden md:block">
@@ -431,7 +431,7 @@ const LogPanel = ({
                 {displayedLogs?.length || 0}
               </span>
               {logRates?.[selectedTopic] > 0 && (
-                <span className="hidden lg:inline-flex items-center gap-1.5 flex-shrink-0">
+                <span className="hidden md:inline-flex items-center gap-1.5 flex-shrink-0">
                   <span className={`text-xs ${theme.textMuted} whitespace-nowrap`}>
                     {logRates[selectedTopic]}/s
                   </span>
@@ -473,7 +473,7 @@ const LogPanel = ({
                   </svg>
                 </button>
                 {showExportMenu && (
-                  <div className={`absolute right-0 top-9 z-50 w-32 rounded-lg shadow-xl border ${theme.border} ${theme.card} overflow-hidden`}>
+                  <div className={`absolute right-0 top-9 z-50 w-32 rounded-xl shadow-xl border ${theme.popupBorder} ${theme.card} overflow-hidden`}>
                     <button onClick={() => exportLogs('json')} className={`w-full text-left px-4 py-2 text-sm ${theme.hover} ${theme.textSecondary}`}>
                       Export JSON
                     </button>
@@ -585,6 +585,14 @@ const LogPanel = ({
               <span className={`text-xs ${theme.card} px-2 py-0.5 rounded-full ${theme.textMuted} flex-shrink-0`}>
                 {displayedLogs?.length || 0}
               </span>
+              {logRates?.[selectedTopic] > 0 && (
+                <span className="inline-flex items-center gap-1 flex-shrink-0">
+                  <span className={`text-xs ${theme.textMuted} whitespace-nowrap`}>
+                    {logRates[selectedTopic]}/s
+                  </span>
+                  <HeartbeatLine rate={logRates[selectedTopic]} darkMode={darkMode} />
+                </span>
+              )}
             </div>
             <div className="flex items-center space-x-1 flex-shrink-0">
               <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
@@ -899,7 +907,7 @@ const LogPanel = ({
           {!atTop && (
             <button
               onClick={scrollToTop}
-              className={`p-2 rounded-full shadow-lg ${theme.card} border ${theme.border} ${theme.textMuted} hover:${theme.textSecondary} transition-all`}
+              className={`p-2 rounded-full shadow-lg ${theme.card} border ${theme.popupBorder} ${theme.textMuted} hover:${theme.textSecondary} transition-all`}
               title="Scroll to top"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -910,7 +918,7 @@ const LogPanel = ({
           {!atBottom && (
             <button
               onClick={scrollToBottom}
-              className={`p-2 rounded-full shadow-lg ${theme.card} border ${theme.border} ${theme.textMuted} hover:${theme.textSecondary} transition-all`}
+              className={`p-2 rounded-full shadow-lg ${theme.card} border ${theme.popupBorder} ${theme.textMuted} hover:${theme.textSecondary} transition-all`}
               title="Scroll to bottom"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -922,7 +930,7 @@ const LogPanel = ({
       </div>
 
       {/* ── Status Bar ─────────────────────────────────────────────────────── */}
-      <div className={`border-t ${theme.border} px-3 sm:px-4 md:px-5 py-2 ${theme.statusBar} backdrop-blur-xl text-xs ${theme.textMuted} flex items-center justify-between gap-2 flex-shrink-0`}>
+      <div className={`px-3 sm:px-4 md:px-5 py-2 ${theme.statusBar} backdrop-blur-xl text-xs ${theme.textMuted} flex items-center justify-between gap-2 flex-shrink-0`}>
         <div className="flex items-center flex-wrap gap-x-4 gap-y-1">
           {/* Connection status */}
           <div className="flex items-center space-x-1.5">

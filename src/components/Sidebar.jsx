@@ -19,7 +19,7 @@ const Sidebar = ({
   return (
     <div
       className={`
-        flex flex-col flex-shrink-0 border-r ${theme.border} ${theme.sidebar} backdrop-blur-xl
+        flex flex-col flex-shrink-0 ${theme.sidebar} backdrop-blur-xl
         fixed inset-y-0 left-0 z-50 w-72
         transform transition-transform duration-300 ease-in-out
         md:relative md:translate-x-0 md:z-auto md:transition-[width] md:duration-300 md:ease-in-out
@@ -47,7 +47,7 @@ const Sidebar = ({
 
       {/* Full sidebar content */}
       <div className={`flex flex-col flex-1 min-h-0 ${collapsed ? 'md:hidden' : ''}`}>
-        <div className={`p-4 border-b ${theme.border} flex-shrink-0`}>
+        <div className={`px-3 pt-4 pb-2 flex-shrink-0`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className={`w-2 h-2 ${darkMode ? 'bg-green-400' : 'bg-indigo-500'} rounded-full animate-pulse`} />
@@ -57,20 +57,6 @@ const Sidebar = ({
             </div>
             <div className="flex items-center space-x-2">
               <span className={`text-xs ${theme.textMuted}`}>{topics.length} active</span>
-              {/* Desktop collapse button */}
-              <button
-                onClick={onCollapse}
-                title="Hide sidebar"
-                aria-label="Collapse sidebar"
-                className={`hidden md:flex p-1.5 rounded-lg transition-all duration-150 hover:scale-110 active:scale-95
-                  ${darkMode
-                    ? 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-green-400 hover:shadow-lg hover:shadow-green-400/20'
-                    : 'bg-white text-gray-500 shadow-md hover:bg-indigo-50 hover:text-indigo-500 hover:shadow-lg hover:shadow-indigo-200'}`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
               {/* Mobile close button */}
               <button
                 onClick={onClose}
@@ -85,49 +71,74 @@ const Sidebar = ({
           </div>
         </div>
 
-      <div className={`p-3 border-b ${theme.border} flex-shrink-0`}>
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search topics..."
-            className={`w-full ${theme.input} rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2
-                     ${darkMode ? 'focus:ring-green-500/50' : 'focus:ring-indigo-500/50'} focus:border-transparent transition-all`}
-            value={topicSearchTerm}
-            onChange={(e) => onTopicSearchChange(e.target.value)}
-          />
-          <svg className={`absolute right-3 top-2.5 w-4 h-4 ${theme.textMuted}`}
-               fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+      <div className={`px-3 pb-3 flex-shrink-0`}>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-0">
+            <input
+              type="text"
+              placeholder="Search topics..."
+              className={`w-full ${theme.input} rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2
+                       ${darkMode ? 'focus:ring-green-500/50' : 'focus:ring-indigo-500/50'} focus:border-transparent transition-all`}
+              value={topicSearchTerm}
+              onChange={(e) => onTopicSearchChange(e.target.value)}
+            />
+            <svg className={`absolute right-3 top-2.5 w-4 h-4 ${theme.textMuted}`}
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          {/* Desktop collapse button — aligned with search box */}
+          <button
+            onClick={onCollapse}
+            title="Hide sidebar"
+            aria-label="Collapse sidebar"
+            className={`hidden md:flex flex-shrink-0 p-2 rounded-lg transition-all duration-150 hover:scale-110 active:scale-95
+              ${darkMode
+                ? 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-green-400 hover:shadow-lg hover:shadow-green-400/20'
+                : 'bg-white text-gray-500 shadow-md hover:bg-indigo-50 hover:text-indigo-500 hover:shadow-lg hover:shadow-indigo-200'}`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      <div className={`flex-1 overflow-y-auto ${theme.scrollbar}`}>
-        {topics
-          .filter(topic => topic.toLowerCase().includes(topicSearchTerm.toLowerCase()))
-          .map(topic => {
-            const logCount = logsByTopic[topic]?.length || 0;
-            const lastLog = logsByTopic[topic]?.[0];
-            const servers = getServersForTopic(topic, logsByTopic);
+      <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-2 py-1`}>
+        <div className="flex flex-col gap-1">
+          {topics
+            .filter(topic => topic.toLowerCase().includes(topicSearchTerm.toLowerCase()))
+            .map(topic => {
+              const logCount = logsByTopic[topic]?.length || 0;
+              const lastLog = logsByTopic[topic]?.[0];
+              const servers = getServersForTopic(topic, logsByTopic);
+              const isSelected = selectedTopic === topic;
 
-            return (
-              <div key={topic}>
+              return (
                 <button
+                  key={topic}
                   onClick={() => onTopicSelect(topic)}
-                  className={`w-full text-left px-4 py-3 border-b ${theme.border}
-                           ${theme.hover} transition-all duration-150 group active:scale-[0.99]
-                           ${selectedTopic === topic ? theme.selected : ""}`}
+                  className={`w-full text-left px-3 py-2.5 rounded-xl
+                           transition-all duration-200 group active:scale-[0.98]
+                           ${isSelected
+                             ? darkMode
+                               ? 'bg-gradient-to-r from-green-500/15 to-green-500/5 shadow-lg shadow-green-900/20 border border-green-500/20'
+                               : 'bg-white shadow-lg shadow-indigo-200/60 border border-indigo-200/80'
+                             : darkMode
+                               ? 'hover:bg-gray-700/40 border border-transparent hover:border-gray-700/50'
+                               : 'hover:bg-white/60 border border-transparent hover:border-indigo-100 hover:shadow-sm'
+                           }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3 min-w-0">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        selectedTopic === topic
-                          ? darkMode ? 'bg-green-400' : 'bg-indigo-500'
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 transition-colors duration-200 ${
+                        isSelected
+                          ? darkMode ? 'bg-green-400 shadow-sm shadow-green-400/50' : 'bg-indigo-500 shadow-sm shadow-indigo-500/50'
                           : darkMode ? 'bg-gray-600' : 'bg-gray-400'
                       }`} />
-                      <span className={`font-medium truncate ${
-                        selectedTopic === topic
+                      <span className={`font-medium truncate text-sm ${
+                        isSelected
                           ? darkMode ? 'text-green-400' : 'text-indigo-600'
                           : theme.textSecondary
                       }`}>
@@ -141,7 +152,11 @@ const Sidebar = ({
                         </span>
                       )}
                       {logCount > 0 && (
-                        <span className={`text-xs ${theme.card} px-2 py-1 rounded-full ${theme.textMuted} group-hover:bg-opacity-70 transition-colors`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-mono transition-colors ${
+                          isSelected
+                            ? darkMode ? 'bg-green-500/20 text-green-400' : 'bg-indigo-500/15 text-indigo-600'
+                            : darkMode ? 'bg-gray-800/80 text-gray-500' : 'bg-slate-200/80 text-slate-500'
+                        }`}>
                           {logCount}
                         </span>
                       )}
@@ -149,11 +164,10 @@ const Sidebar = ({
                   </div>
 
                   {servers.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      <span className={`text-xs ${theme.textMuted} mr-1`}>Servers:</span>
+                    <div className="flex flex-wrap gap-1 mt-1.5 ml-[18px]">
                       {servers.slice(0, 3).map(server => (
                         <span key={server}
-                              className={`text-xs px-1.5 py-0.5 rounded ${theme.serverBadge}`}>
+                              className={`text-xs px-1.5 py-0.5 rounded-md ${theme.serverBadge}`}>
                           {server}
                         </span>
                       ))}
@@ -164,14 +178,14 @@ const Sidebar = ({
                   )}
 
                   {lastLog && (
-                    <p className={`text-xs ${theme.textMuted} mt-2 truncate`}>
+                    <p className={`text-xs ${theme.textMuted} mt-1.5 truncate ml-[18px]`}>
                       {lastLog.message}
                     </p>
                   )}
                 </button>
-              </div>
-            );
-          })}
+              );
+            })}
+        </div>
         </div>
       </div>
     </div>
