@@ -81,6 +81,7 @@ const LogPanel = ({
   const selectedPath = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
   const [prevTopic, setPrevTopic] = useState(selectedTopic);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileMenuReady, setMobileMenuReady] = useState(false);
   const [keywords, setKeywords] = useState([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordMode, setKeywordMode] = useState('or');
@@ -115,7 +116,13 @@ const LogPanel = ({
   const serverButtonRef = useRef(null);
   const pathButtonRef = useRef(null);
   const exportMenuRef = useRef(null);
-  const isProgrammaticScrollRef = useRef(false);
+
+  // Delay mobile menu interactivity to prevent fast double-tap from hitting buttons
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const id = setTimeout(() => setMobileMenuReady(true), 300);
+    return () => { clearTimeout(id); setMobileMenuReady(false); };
+  }, [isMobileMenuOpen]);
 
   // Ticker for relative timestamps (every 30s)
   useEffect(() => {
@@ -135,15 +142,14 @@ const LogPanel = ({
   }, []);
 
 
-  // Scroll tracking — update atTop/atBottom, disable autoScroll only on real user scrolls
+  // Scroll tracking — update atTop/atBottom indicators only.
+  // Auto-scroll is toggled exclusively via the button, never by scrolling.
   const handleScroll = useCallback(() => {
-    if (!scrollRef.current || isProgrammaticScrollRef.current) return;
+    if (!scrollRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
     setAtTop(scrollTop < 50);
-    const nearBottom = scrollTop + clientHeight >= scrollHeight - 100;
-    setAtBottom(nearBottom);
-    if (!nearBottom && isActivePanel) setAutoScroll(false);
-  }, [isActivePanel]);
+    setAtBottom(scrollTop + clientHeight >= scrollHeight - 100);
+  }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -158,9 +164,7 @@ const LogPanel = ({
     if (!el) return;
     const ro = new ResizeObserver(() => {
       if (autoScroll && !isPaused) {
-        isProgrammaticScrollRef.current = true;
         el.scrollTop = el.scrollHeight;
-        requestAnimationFrame(() => { isProgrammaticScrollRef.current = false; });
       }
     });
     ro.observe(el);
@@ -265,12 +269,9 @@ const LogPanel = ({
   };
 
   // Auto-scroll to bottom — useLayoutEffect runs before paint.
-  // Flag marks the scroll as programmatic so handleScroll ignores it.
   useLayoutEffect(() => {
     if (!isPaused && autoScroll && scrollRef.current) {
-      isProgrammaticScrollRef.current = true;
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      requestAnimationFrame(() => { isProgrammaticScrollRef.current = false; });
     }
   }, [filteredLogs, autoScroll, isPaused, darkMode]);
 
@@ -605,7 +606,7 @@ const LogPanel = ({
           </div>
 
           {isMobileMenuOpen && (
-            <div className="space-y-2 mb-3 p-2 rounded-lg bg-opacity-50">
+            <div className={`space-y-2 mb-3 p-2 rounded-lg bg-opacity-50 ${mobileMenuReady ? '' : 'pointer-events-none'}`}>
               {/* Server dropdown mobile */}
               <div className="relative w-full">
                 <button
