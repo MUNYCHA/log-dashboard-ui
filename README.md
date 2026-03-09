@@ -10,34 +10,37 @@ A real-time log monitoring dashboard built with React + Vite. Connects to a WebS
 - WebSocket connection with **auto-reconnect** (exponential backoff, up to 30s between attempts)
 - **Reconnecting** status indicator in the status bar
 - **Pause / resume** stream — incoming logs are buffered while paused and flushed on resume
-- **Log persistence** via `localStorage` — logs survive a page refresh (capped at 50 logs per topic)
+- **Batched rendering** — log updates are flushed every 150ms to minimize re-renders under high volume
 
 ### Topic & Filtering
 - **Topic sidebar** — browse all active topics with live log count and per-topic log rate (logs/sec)
 - **Server filter** — searchable dropdown to filter logs by server name
-- **Path filter** — searchable dropdown to filter logs by file path (requires server selection)
+- **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
 - **Text search** — searches across message, server name, and path
 - **Regex search** — toggle `.*` button to switch to regex mode with invalid-pattern indicator
 - **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h
 - **Keyword filter** — add multiple keywords as colored chips; matches are highlighted in log messages
 - **AND / OR mode** toggle for keyword filter logic
-- **Saved keyword presets** — save, load, and delete named keyword sets (stored in `localStorage`)
+- **Custom keyword colors** — color wheel picker with hex/RGB input for each keyword
 
 ### Display
 - **Relative timestamps** — shows `2m ago` style time; hover to see the full timestamp
 - **Keyword highlight** — each keyword gets a custom hex color; matches are highlighted inline
 - **Dark / light theme** toggle
 - **Fully responsive** — sidebar is a slide-in drawer on mobile, fixed panel on tablet/desktop
-- **Split view** — open two independent log panels side by side (desktop)
-- **Log rate indicator** — logs/sec shown per topic in the sidebar and status bar
+- **Collapsible sidebar** — desktop sidebar collapses to a thin strip with an expand button
+- **Split view** — open two independent log panels side by side (desktop only)
+- **Per-panel independent pause** — each split-view panel has its own pause state
+- **Focus ring** — active panel in split view is highlighted with a focus ring
+- **Heartbeat indicator** — SVG line animation in the status bar reflecting log ingestion rate; color shifts from green to yellow to orange to red based on rate
+- **Log rate indicator** — logs/sec shown per topic in the sidebar
 
 ### Actions
-- **Export logs** — download currently filtered logs as JSON or CSV
-- **Copy** any individual log message to clipboard
+- **Export logs** — download currently filtered logs as JSON or CSV (timestamped filename)
+- **Copy** any individual log message to clipboard (button appears on hover)
 - **Clear logs** per topic
 - **Auto-scroll** to latest logs with manual override (re-enables when scrolled back to bottom)
 - **Scroll to top / bottom** floating buttons appear when needed
-- **Browser notifications** — opt-in alerts fired when keyword-matched logs arrive
 
 ---
 
@@ -52,8 +55,6 @@ A real-time log monitoring dashboard built with React + Vite. Connects to a WebS
 | **Linting** | ESLint 9 + eslint-plugin-react-hooks |
 | **Language** | JavaScript / JSX (no TypeScript) |
 | **Real-time** | WebSocket (native browser API) |
-| **Storage** | localStorage (native browser API) |
-| **Alerts** | Notification API (native browser API) |
 
 ---
 
@@ -169,18 +170,19 @@ log-dashboard-ui/
     │   └── keywordColors.js   # Preset keyword highlight colors
     ├── hooks/
     │   └── useWebSocket.js    # WebSocket connection, auto-reconnect,
-    │                          # pause/buffer, log rate tracker, localStorage
+    │                          # pause/buffer, log rate tracker
     ├── utils/
     │   └── logUtils.js        # formatTimestamp, getRelativeTime,
     │                          # getServersForTopic
     └── components/
-        ├── Sidebar.jsx        # Topic list with search and log rate badges
+        ├── Sidebar.jsx        # Topic list with search, log rate badges,
+        │                      # collapsible on desktop
         ├── LogPanel.jsx       # Main log view — all filters, search,
-        │                      # export, notifications, scroll buttons
+        │                      # export, heartbeat indicator, scroll buttons
         ├── LogEntry.jsx       # Single log row with keyword highlighting
         │                      # and relative timestamp
         ├── KeywordFilter.jsx  # Keyword chip input, color picker,
-        │                      # AND/OR toggle, saved presets
+        │                      # AND/OR toggle
         ├── FilterDropdown.jsx # Shared searchable dropdown base component
         ├── ServerDropdown.jsx # Server filter (wraps FilterDropdown)
         ├── PathDropdown.jsx   # Path filter (wraps FilterDropdown)
@@ -195,4 +197,4 @@ log-dashboard-ui/
 |---|---|---|
 | `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL |
 
-The max logs kept in memory per topic is configured in `src/config.js` (`maxLogsPerTopic`, default `300`). localStorage persistence caps at 50 logs per topic.
+The max logs kept in memory per topic is configured in `src/config.js` (`maxLogsPerTopic`, default `100`).
