@@ -35,6 +35,8 @@ export const useWebSocket = (url) => {
   const logCountRef = useRef({});
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef(null);
+  const socketRef = useRef(null);
+  const subscribedTopicsRef = useRef(new Set());
 
   // Flush pending logs to state in batches — one React re-render per interval.
   // Groups by topic first so we create ONE new array per topic per flush
@@ -102,12 +104,17 @@ export const useWebSocket = (url) => {
     function connect() {
       if (cancelled) return;
       const socket = new WebSocket(url);
+      socketRef.current = socket;
 
       socket.onopen = () => {
         if (cancelled) return;
         setIsConnected(true);
         setIsReconnecting(false);
         reconnectAttemptsRef.current = 0;
+        // Re-send subscriptions on reconnect
+        if (subscribedTopicsRef.current.size > 0) {
+          socket.send(JSON.stringify({ action: 'subscribe', topics: [...subscribedTopicsRef.current] }));
+        }
       };
 
       socket.onclose = () => {
@@ -184,5 +191,14 @@ export const useWebSocket = (url) => {
 
   const togglePause = useCallback(() => setIsPaused((p) => !p), []);
 
-  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, isPaused, togglePause, logRates };
+  const subscribe = useCallback((topicList) => {
+    const topicsSet = new Set(topicList.filter(Boolean));
+    subscribedTopicsRef.current = topicsSet;
+    const socket = socketRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ action: 'subscribe', topics: [...topicsSet] }));
+    }
+  }, []);
+
+  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, isPaused, togglePause, logRates, subscribe };
 };

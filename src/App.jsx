@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import Sidebar from './components/sidebar';
@@ -19,8 +19,16 @@ export default function App() {
   const [isPaused2, setIsPaused2] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates } = useWebSocket(config.ws.url);
+  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe } = useWebSocket(config.ws.url);
   const theme = darkMode ? styles.dark : styles.light;
+
+  // Subscribe to only the topics the user is viewing
+  useEffect(() => {
+    const activeTopics = [selectedTopic, selectedTopic2].filter(Boolean);
+    if (activeTopics.length > 0) {
+      subscribe(activeTopics);
+    }
+  }, [selectedTopic, selectedTopic2, subscribe]);
 
   const handleTopicSelect = (topic) => {
     if (splitView && activePanel === 2) {
