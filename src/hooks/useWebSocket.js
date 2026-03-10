@@ -31,6 +31,7 @@ export const useWebSocket = (url) => {
 
   const isPausedRef = useRef(false);
   const bufferRef = useRef([]);         // logs held while paused
+  const pauseCountRef = useRef({});     // per-topic count in pause buffer — enforces cap
   const pendingRef = useRef([]);        // logs waiting for next flush
   const pendingCountRef = useRef({});   // per-topic count in pendingRef — enforces cap
   const logCountRef = useRef({});
@@ -75,6 +76,7 @@ export const useWebSocket = (url) => {
     isPausedRef.current = isPaused;
     if (!isPaused && bufferRef.current.length > 0) {
       const buffered = bufferRef.current.splice(0);
+      pauseCountRef.current = {};
       for (const log of buffered) {
         const topicCount = pendingCountRef.current[log.topic] || 0;
         if (topicCount < config.ws.maxLogsPerTopic) {
@@ -142,7 +144,13 @@ export const useWebSocket = (url) => {
 
       socket.onmessage = (event) => {
         if (cancelled) return;
-        const data = JSON.parse(event.data);
+
+        let data;
+        try {
+          data = JSON.parse(event.data);
+        } catch {
+          return; // malformed message — skip silently
+        }
 
         if (Array.isArray(data)) {
           setTopics(data);
@@ -163,12 +171,20 @@ export const useWebSocket = (url) => {
         }
 
         const log = data;
+
+        // Truncate oversized messages to prevent DOM bloat
+        if (log.message && log.message.length > config.ws.maxMessageLength) {
+          log.message = log.message.slice(0, config.ws.maxMessageLength) + '\n… [truncated]';
+        }
+
         logCountRef.current[log.topic] = (logCountRef.current[log.topic] || 0) + 1;
 
         if (isPausedRef.current) {
-          // Cap pause buffer — prevents unbounded memory growth at high log rates
-          if (bufferRef.current.length < config.ws.maxLogsPerTopic) {
+          // Per-topic cap on pause buffer — prevents unbounded memory growth
+          const pauseCount = pauseCountRef.current[log.topic] || 0;
+          if (pauseCount < config.ws.maxLogsPerTopic) {
             bufferRef.current.push(log);
+            pauseCountRef.current[log.topic] = pauseCount + 1;
           }
           return;
         }
