@@ -9,11 +9,11 @@ const CloseIcon = () => (
 
 const StatusBar = ({
   isConnected, isReconnecting, isPaused,
-  selectedServer, selectedPath, selectedTopic,
-  logRates, darkMode, theme,
+  selectedServer, selectedPath,
+  logRate, darkMode, theme,
   onClearServer, onClearPath,
 }) => (
-  <div className={`px-3 sm:px-4 md:px-5 py-2 ${theme.statusBar} backdrop-blur-xl text-xs ${theme.textMuted} flex items-center justify-between gap-2 flex-shrink-0`}>
+  <div className={`px-3 sm:px-4 md:px-5 py-2 ${theme.statusBar} text-xs ${theme.textMuted} flex items-center justify-between gap-2 flex-shrink-0`}>
     <div className="flex items-center flex-wrap gap-x-4 gap-y-1">
       {/* Connection status */}
       <div className="flex items-center space-x-1.5">
@@ -30,8 +30,8 @@ const StatusBar = ({
       </div>
 
       {/* Log rate */}
-      {logRates?.[selectedTopic] > 0 && (
-        <span>{logRates[selectedTopic]} logs/s</span>
+      {logRate > 0 && (
+        <span>{logRate} logs/s</span>
       )}
 
       {/* Pause indicator */}

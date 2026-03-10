@@ -5,7 +5,7 @@ import { ServerDropdown, PathDropdown } from '../filters';
 import { TIME_RANGES, getShortPath } from './constants';
 
 const MobileHeader = ({
-  selectedTopic, displayedLogs, logRates, darkMode, theme,
+  selectedTopic, displayedLogs, logRate, darkMode, theme,
   onOpenSidebar, onThemeToggle,
   isMobileMenuOpen, onToggleMobileMenu, mobileMenuReady,
   isPaused, onTogglePause,
@@ -39,12 +39,12 @@ const MobileHeader = ({
           <span className={`text-xs ${theme.card} px-2 py-0.5 rounded-full ${theme.textMuted} flex-shrink-0`}>
             {displayedLogs?.length || 0}
           </span>
-          {logRates?.[selectedTopic] > 0 && (
+          {logRate > 0 && (
             <span className="inline-flex items-center gap-1 flex-shrink-0">
               <span className={`text-xs ${theme.textMuted} whitespace-nowrap`}>
-                {logRates[selectedTopic]}/s
+                {logRate}/s
               </span>
-              <HeartbeatLine rate={logRates[selectedTopic]} darkMode={darkMode} />
+              <HeartbeatLine rate={logRate} darkMode={darkMode} />
             </span>
           )}
         </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { formatTimestamp, getRelativeTime } from '../../utils/logUtils';
 
 /**
@@ -30,13 +30,16 @@ const highlightMessage = (message, keywords) => {
   });
 };
 
-const LogEntry = ({ log, theme, darkMode, keywords, now }) => {
+// timestampGen is a generation counter that bumps every 30s to trigger
+// relative-time recalculation without passing a changing `now` value.
+const LogEntry = ({ log, theme, darkMode, keywords, timestampGen }) => {
   const fullTimestamp = formatTimestamp(log.timestamp);
-  const relativeTime = now ? getRelativeTime(log.timestamp, now) : null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
 
   return (
     <div
-      className={`group py-2 px-3 rounded-lg ${theme.logEntry} transition-all duration-150`}
+      className={`group py-2 px-3 rounded-lg ${theme.logEntry} transition-colors duration-150`}
     >
       <div className="flex items-start space-x-3">
         {/* Timestamp — shows relative time, full on hover */}
@@ -67,7 +70,7 @@ const LogEntry = ({ log, theme, darkMode, keywords, now }) => {
         {/* Copy button */}
         <button
           onClick={() => navigator.clipboard.writeText(log.message)}
-          className={`opacity-0 group-hover:opacity-100 transition-all duration-150 active:scale-90 flex-shrink-0
+          className={`opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0
                    ${theme.textMuted} hover:${theme.textSecondary}`}
           title="Copy message"
         >
@@ -81,4 +84,4 @@ const LogEntry = ({ log, theme, darkMode, keywords, now }) => {
   );
 };
 
-export default LogEntry;
+export default React.memo(LogEntry);

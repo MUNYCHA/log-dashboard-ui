@@ -12,15 +12,15 @@ A real-time log monitoring dashboard built with React + Vite. Connects to a WebS
 - **Pause / resume** stream — incoming logs are buffered while paused and flushed on resume
 - **Batched rendering** — log updates are flushed every 150ms to minimize re-renders under high volume
 
-### Topic & Filtering (Server-Side)
-All filtering is performed by the backend — the UI sends filter criteria via WebSocket and receives only matching logs. Filter changes are debounced (300ms) before being sent to the server.
+### Topic & Filtering (Client-Side, Real-Time)
+All filtering runs client-side for instant feedback on every keystroke. A debounced server-side filter (300ms) runs in parallel as a bandwidth optimization to reduce WebSocket traffic.
 
-- **Topic sidebar** — browse all active topics with live log count and per-topic log rate (logs/sec)
+- **Topic sidebar** — all topics auto-subscribed; live log count, rate (logs/sec), server badges, and last message per topic
 - **Server filter** — searchable dropdown to filter logs by server name
 - **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
-- **Text search** — searches across message, server name, and path
-- **Regex search** — toggle `.*` button to switch to regex mode with server-validated pattern indicator
-- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h (server-clock based)
+- **Text search** — instant client-side search across message, server name, and path
+- **Regex search** — toggle `.*` button to switch to regex mode with instant validation
+- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h (client-side)
 - **Keyword filter** — add multiple keywords as colored chips; matches are highlighted in log messages
 - **AND / OR mode** toggle for keyword filter logic
 - **Custom keyword colors** — color wheel picker with hex/RGB input for each keyword
@@ -53,6 +53,7 @@ All filtering is performed by the backend — the UI sends filter criteria via W
 | **Framework** | React 19 |
 | **Build tool** | Vite 7 |
 | **Styling** | Tailwind CSS 4 |
+| **Virtualization** | @tanstack/react-virtual 3 |
 | **Animation** | Framer Motion 12 |
 | **Linting** | ESLint 9 + eslint-plugin-react-hooks |
 | **Language** | JavaScript / JSX (no TypeScript) |
@@ -125,15 +126,15 @@ npm run lint
 | Type | Shape | When |
 |---|---|---|
 | Topic list | `string[]` | Once on connect — list of all topic names |
-| Log entry | `{ topic, serverName, path, message, timestamp }` | Live log events (already filtered server-side) |
+| Log event | `{ topic, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events (already filtered server-side); single object or batched array |
 | Filter ack | `{ type: "filter-ack", filters: {...}, regexError?: "..." }` | Confirms filter applied; `regexError` present if regex is invalid |
 
 ### Client → Server
 
 | Action | Shape | Description |
 |---|---|---|
-| Subscribe | `{ action: "subscribe", topics: [...] }` | Subscribe to specific topics |
-| Filter | `{ action: "filter", filters: { server, path, search, regex, keywords: { terms, mode }, timeRange } }` | Set per-session filter — server applies before sending events |
+| Subscribe | `{ action: "subscribe", topics: [...] }` | Subscribe to topics (all topics on connect) |
+| Filter | `{ action: "filter", filters: { server, path, search, regex, keywords: { terms, mode }, timeRange } }` | Set server-side filter (bandwidth optimization — client filters locally for display) |
 | Clear filters | `{ action: "clear-filters" }` | Remove all filters for this session |
 
 ### Log entry fields

@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { KeywordFilter } from "../filters";
 import { downloadFile, getButtonStyles, getAccentStyles } from "./constants";
 import DesktopHeader from "./DesktopHeader";
@@ -10,9 +11,98 @@ import EmptyState from "./EmptyState";
 import ScrollButtons from "./ScrollButtons";
 import LogEntry from "./LogEntry";
 
+const ESTIMATED_LOG_HEIGHT = 52; // px — rough estimate, virtualizer measures actual
+
+const VirtualLogList = React.memo(({
+  displayedLogs, isPaused, accent, theme, darkMode, keywords, timestampGen,
+  selectedServer, selectedPath, timeRange,
+  scrollRef, atTop, atBottom, scrollToTop, scrollToBottom,
+  handleClearPath, handleClearServer,
+}) => {
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual is designed this way
+  const virtualizer = useVirtualizer({
+    count: displayedLogs.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ESTIMATED_LOG_HEIGHT,
+    overscan: 20,
+  });
+
+  return (
+    <div className="flex-1 relative overflow-hidden">
+      <div className="absolute inset-0 overflow-auto font-mono text-sm" ref={scrollRef}>
+        <div className="p-3 sm:p-4 md:p-5">
+          {isPaused && (
+            <div className={`text-center py-2 px-4 rounded-lg text-xs ${accent.paused} mb-2`}>
+              Stream paused — display frozen, new logs still incoming
+            </div>
+          )}
+          {displayedLogs.length > 0 ? (
+            <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const log = displayedLogs[virtualRow.index];
+                return (
+                  <div
+                    key={log._id}
+                    data-index={virtualRow.index}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <div className="py-1">
+                      <LogEntry log={log} theme={theme} darkMode={darkMode} keywords={keywords} timestampGen={timestampGen} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className={`flex flex-col items-center justify-center h-64 ${theme.textMuted}`}>
+              <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-lg">No logs to display</p>
+              <p className="text-sm px-4 text-center">
+                {selectedServer && selectedPath
+                  ? `No logs from "${selectedServer}" at "${selectedPath}"`
+                  : selectedServer
+                    ? `No logs from "${selectedServer}"`
+                    : timeRange !== 'all'
+                      ? `No logs in the last ${timeRange}`
+                      : "Waiting for incoming logs..."}
+              </p>
+              {(selectedServer || selectedPath) && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {selectedPath && (
+                    <button onClick={handleClearPath} className={`px-3 py-2 rounded-lg ${theme.input} text-sm`}>Clear path</button>
+                  )}
+                  {selectedServer && (
+                    <button onClick={handleClearServer} className={`px-3 py-2 rounded-lg ${theme.input} text-sm`}>Clear server</button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <ScrollButtons
+        atTop={atTop} atBottom={atBottom}
+        scrollToTop={scrollToTop} scrollToBottom={scrollToBottom}
+        theme={theme}
+      />
+    </div>
+  );
+});
+
 const LogPanel = ({
   selectedTopic,
-  logsByTopic,
+  topicLogs,
   selectedServer,
   onServerSelect,
   onClearServer,
@@ -21,7 +111,7 @@ const LogPanel = ({
   isReconnecting,
   isPaused,
   togglePause,
-  logRates,
+  logRate,
   theme,
   darkMode,
   onThemeToggle,
@@ -54,11 +144,18 @@ const LogPanel = ({
   const [keywordMode, setKeywordMode] = useState('or');
   const [isRegex, setIsRegex] = useState(false);
   const [timeRange, setTimeRange] = useState('all');
+  // Debounced versions of text inputs — only these use a delay before sending to server.
+  // Discrete actions (server select, path select, time range, regex toggle) trigger
+  // the filter useEffect immediately because their state changes aren't debounced.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
   // Reset all filters when topic changes
   if (prevTopic !== selectedTopic) {
     setPrevTopic(selectedTopic);
     setAutoScroll(true);
     setLogSearchTerm('');
+    setDebouncedSearch('');
+    setDebouncedKeywordInput('');
     setPathForTopic({ topic: null, path: null });
     setKeywords([]);
     setKeywordInput('');
@@ -77,7 +174,9 @@ const LogPanel = ({
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
-  const [now, setNow] = useState(() => Date.now());
+  // Relative timestamp ticker — uses a generation counter to trigger
+  // re-render without passing a changing `now` value to every LogEntry.
+  const [timestampGen, setTimestampGen] = useState(0);
 
   const scrollRef = useRef(null);
   const serverButtonRef = useRef(null);
@@ -91,10 +190,21 @@ const LogPanel = ({
     return () => { clearTimeout(id); setMobileMenuReady(false); };
   }, [isMobileMenuOpen]);
 
-  // Ticker for relative timestamps (every 30s)
+  // Ticker for relative timestamps (every 30s) — bumps generation counter
+  // and updates nowMs for time-range filtering (keeps render pure).
+  const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 30000);
+    const interval = setInterval(() => {
+      setTimestampGen((g) => g + 1);
+      setNowMs(Date.now());
+    }, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Refresh nowMs immediately when timeRange changes so the cutoff isn't stale
+  const handleTimeRangeChange = useCallback((value) => {
+    setTimeRange(value);
+    if (value !== 'all') setNowMs(Date.now());
   }, []);
 
   // Close export menu on outside click
@@ -144,35 +254,39 @@ const LogPanel = ({
     try { new RegExp(logSearchTerm); return false; } catch { return true; }
   }, [isRegex, logSearchTerm, filterAck]);
 
-  // Send filter updates to server (debounced 300ms)
-  const filterTimerRef = useRef(null);
+  // Debounce text search input (300ms) — discrete actions send immediately
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(logSearchTerm), 300);
+    return () => clearTimeout(t);
+  }, [logSearchTerm]);
+
+  // Debounce keyword input (300ms)
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedKeywordInput(keywordInput), 300);
+    return () => clearTimeout(t);
+  }, [keywordInput]);
+
+  // Send filter to server (debounced for text, immediate for discrete actions).
+  // This is a bandwidth optimization — the client-side filter in filteredLogs
+  // provides instant visual feedback, while this reduces unnecessary traffic.
   useEffect(() => {
     if (!sendFilter) return;
-    if (filterTimerRef.current) clearTimeout(filterTimerRef.current);
 
-    filterTimerRef.current = setTimeout(() => {
-      const pendingInput = keywordInput.trim().toLowerCase();
-      const allTerms = [...keywords.map((k) => k.text), ...(pendingInput ? [pendingInput] : [])];
+    const pendingInput = debouncedKeywordInput.trim().toLowerCase();
+    const allTerms = [...keywords.map((k) => k.text), ...(pendingInput ? [pendingInput] : [])];
 
-      const filters = {
-        server: selectedServer || null,
-        path: selectedPath || null,
-        search: logSearchTerm || null,
-        regex: isRegex,
-        keywords: allTerms.length > 0 ? { terms: allTerms, mode: keywordMode } : undefined,
-        timeRange: timeRange,
-      };
+    const filters = {
+      server: selectedServer || null,
+      path: selectedPath || null,
+      search: debouncedSearch || null,
+      regex: isRegex,
+      keywords: allTerms.length > 0 ? { terms: allTerms, mode: keywordMode } : undefined,
+      timeRange: timeRange,
+    };
 
-      // Check if all filters are empty
-      const hasAny = filters.server || filters.path || filters.search || filters.keywords || filters.timeRange !== 'all';
-      sendFilter(hasAny ? filters : null);
-    }, 300);
-
-    return () => { if (filterTimerRef.current) clearTimeout(filterTimerRef.current); };
-  }, [selectedServer, selectedPath, logSearchTerm, isRegex, keywords, keywordInput, keywordMode, timeRange, sendFilter]);
-
-  // Pin to the selected topic's array — already filtered by server
-  const topicLogs = logsByTopic[selectedTopic];
+    const hasAny = filters.server || filters.path || filters.search || filters.keywords || filters.timeRange !== 'all';
+    sendFilter(hasAny ? filters : null);
+  }, [selectedServer, selectedPath, debouncedSearch, isRegex, keywords, debouncedKeywordInput, keywordMode, timeRange, sendFilter]);
 
   // Unique servers for selected topic (derived from received logs for dropdown population)
   const serversForSelectedTopic = useMemo(
@@ -201,11 +315,67 @@ const LogPanel = ({
     [pathsForSelectedServer, pathSearchTerm],
   );
 
-  // Logs are already filtered by server — just reverse for newest-first display
+  // Client-side filter for instant visual feedback on every keystroke.
+  // All filters are applied locally so the UI reacts in real time.
+  // The server-side filter (debounced) reduces bandwidth but is not
+  // relied on for display — this memo is the single source of truth.
   const filteredLogs = useMemo(() => {
     if (!selectedTopic || !topicLogs) return [];
-    return [...topicLogs].reverse();
-  }, [selectedTopic, topicLogs]);
+    let logs = topicLogs;
+
+    // Server / path exact match
+    if (selectedServer) logs = logs.filter((l) => l.serverName === selectedServer);
+    if (selectedPath) logs = logs.filter((l) => l.path === selectedPath);
+
+    // Text search (instant — uses logSearchTerm, not debounced)
+    if (logSearchTerm) {
+      if (isRegex) {
+        try {
+          const re = new RegExp(logSearchTerm, 'i');
+          logs = logs.filter((l) =>
+            re.test(l.message) || re.test(l.serverName) || re.test(l.path)
+          );
+        } catch {
+          // Invalid regex in progress — show nothing until it's valid
+          logs = [];
+        }
+      } else {
+        const lower = logSearchTerm.toLowerCase();
+        logs = logs.filter((l) =>
+          l.message.toLowerCase().includes(lower) ||
+          l.serverName.toLowerCase().includes(lower) ||
+          l.path.toLowerCase().includes(lower)
+        );
+      }
+    }
+
+    // Keywords (instant — uses live keywordInput, not debounced)
+    const pendingKw = keywordInput.trim().toLowerCase();
+    const allTerms = [
+      ...keywords.map((k) => k.text.toLowerCase()),
+      ...(pendingKw ? [pendingKw] : []),
+    ];
+    if (allTerms.length > 0) {
+      logs = logs.filter((l) => {
+        const haystack = (l.message + '\0' + l.serverName + '\0' + l.path).toLowerCase();
+        return keywordMode === 'and'
+          ? allTerms.every((t) => haystack.includes(t))
+          : allTerms.some((t) => haystack.includes(t));
+      });
+    }
+
+    // Time range — uses nowMs (updated every 30s via effect) to stay pure
+    if (timeRange !== 'all') {
+      const ranges = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
+      const cutoff = nowMs - (ranges[timeRange] || 0);
+      logs = logs.filter((l) => {
+        try { return new Date(l.timestamp).getTime() >= cutoff; }
+        catch { return true; }
+      });
+    }
+
+    return [...logs].reverse();
+  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, isRegex, keywords, keywordInput, keywordMode, timeRange, nowMs]);
 
   const displayedLogs = frozenLogs ?? filteredLogs;
 
@@ -219,12 +389,15 @@ const LogPanel = ({
     togglePause();
   };
 
-  // Auto-scroll to bottom — useLayoutEffect runs before paint.
-  useLayoutEffect(() => {
+  // Auto-scroll to bottom — uses rAF to avoid blocking the main thread.
+  useEffect(() => {
     if (!isPaused && autoScroll && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const el = scrollRef.current;
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
     }
-  }, [filteredLogs, autoScroll, isPaused, darkMode]);
+  }, [filteredLogs, autoScroll, isPaused]);
 
   // Handlers
   const handleServerSelect = (server) => {
@@ -293,10 +466,10 @@ const LogPanel = ({
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className={`px-3 sm:px-4 md:px-5 py-3 ${theme.header} backdrop-blur-xl flex-shrink-0 relative z-10`}>
+      <div className={`px-3 sm:px-4 md:px-5 py-3 ${theme.header} flex-shrink-0 relative z-10`}>
         <DesktopHeader
           selectedTopic={selectedTopic} displayedLogs={displayedLogs}
-          logRates={logRates} darkMode={darkMode} theme={theme}
+          logRate={logRate} darkMode={darkMode} theme={theme}
           splitView={splitView} isActivePanel={isActivePanel}
           onSetActive={onSetActive} onClosePanel={onClosePanel} onOpenSplit={onOpenSplit}
           isPaused={isPaused} onTogglePause={handleTogglePause} btn={btn}
@@ -311,7 +484,7 @@ const LogPanel = ({
 
         <MobileHeader
           selectedTopic={selectedTopic} displayedLogs={displayedLogs}
-          logRates={logRates} darkMode={darkMode} theme={theme}
+          logRate={logRate} darkMode={darkMode} theme={theme}
           onOpenSidebar={onOpenSidebar} onThemeToggle={onThemeToggle}
           isMobileMenuOpen={isMobileMenuOpen}
           onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -331,7 +504,7 @@ const LogPanel = ({
           filteredPaths={filteredPaths} selectedPath={selectedPath}
           onPathSelect={handlePathSelect} onClearPath={handleClearPath}
           pathSearchTerm={pathSearchTerm} onPathSearchChange={setPathSearchTerm}
-          timeRange={timeRange} onTimeRangeChange={setTimeRange}
+          timeRange={timeRange} onTimeRangeChange={handleTimeRangeChange}
           accentActive={accent.active} accentPaused={accent.paused}
         />
 
@@ -348,7 +521,7 @@ const LogPanel = ({
           filteredPaths={filteredPaths} selectedPath={selectedPath}
           onPathSelect={handlePathSelect} onClearPath={handleClearPath}
           pathSearchTerm={pathSearchTerm} onPathSearchChange={setPathSearchTerm}
-          timeRange={timeRange} onTimeRangeChange={setTimeRange}
+          timeRange={timeRange} onTimeRangeChange={handleTimeRangeChange}
           accentActive={accent.active}
         />
 
@@ -378,65 +551,35 @@ const LogPanel = ({
       </div>
 
       {/* ── Logs Area ──────────────────────────────────────────────────────── */}
-      <div className="flex-1 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-auto font-mono text-sm" ref={scrollRef}>
-          <div className="p-3 sm:p-4 md:p-5 space-y-2">
-            {isPaused && (
-              <div className={`text-center py-2 px-4 rounded-lg text-xs ${accent.paused} mb-2`}>
-                Stream paused — display frozen, new logs still incoming
-              </div>
-            )}
-            {displayedLogs.length > 0 ? (
-              displayedLogs.map((log, i) => (
-                <LogEntry key={i} log={log} theme={theme} darkMode={darkMode} keywords={keywords} now={now} />
-              ))
-            ) : (
-              <div className={`flex flex-col items-center justify-center h-64 ${theme.textMuted}`}>
-                <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p className="text-lg">No logs to display</p>
-                <p className="text-sm px-4 text-center">
-                  {selectedServer && selectedPath
-                    ? `No logs from "${selectedServer}" at "${selectedPath}"`
-                    : selectedServer
-                      ? `No logs from "${selectedServer}"`
-                      : timeRange !== 'all'
-                        ? `No logs in the last ${timeRange}`
-                        : "Waiting for incoming logs..."}
-                </p>
-                {(selectedServer || selectedPath) && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {selectedPath && (
-                      <button onClick={handleClearPath} className={`px-3 py-2 rounded-lg ${theme.input} text-sm`}>Clear path</button>
-                    )}
-                    {selectedServer && (
-                      <button onClick={handleClearServer} className={`px-3 py-2 rounded-lg ${theme.input} text-sm`}>Clear server</button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <ScrollButtons
-          atTop={atTop} atBottom={atBottom}
-          scrollToTop={scrollToTop} scrollToBottom={scrollToBottom}
-          theme={theme}
-        />
-      </div>
+      <VirtualLogList
+        displayedLogs={displayedLogs}
+        isPaused={isPaused}
+        accent={accent}
+        theme={theme}
+        darkMode={darkMode}
+        keywords={keywords}
+        timestampGen={timestampGen}
+        selectedServer={selectedServer}
+        selectedPath={selectedPath}
+        timeRange={timeRange}
+        scrollRef={scrollRef}
+        atTop={atTop}
+        atBottom={atBottom}
+        scrollToTop={scrollToTop}
+        scrollToBottom={scrollToBottom}
+        handleClearPath={handleClearPath}
+        handleClearServer={handleClearServer}
+      />
 
       {/* ── Status Bar ─────────────────────────────────────────────────────── */}
       <StatusBar
         isConnected={isConnected} isReconnecting={isReconnecting} isPaused={isPaused}
-        selectedServer={selectedServer} selectedPath={selectedPath} selectedTopic={selectedTopic}
-        logRates={logRates} darkMode={darkMode} theme={theme}
+        selectedServer={selectedServer} selectedPath={selectedPath}
+        logRate={logRate} darkMode={darkMode} theme={theme}
         onClearServer={handleClearServer} onClearPath={handleClearPath}
       />
     </div>
   );
 };
 
-export default LogPanel;
+export default React.memo(LogPanel);

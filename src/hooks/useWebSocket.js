@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import config from '../config';
 
 const FLUSH_INTERVAL_MS = 150;  // batch log state updates — reduces re-renders dramatically
+let _logIdCounter = 0;
 
 /**
  * Connects to a WebSocket server and manages incoming log data.
@@ -20,7 +21,10 @@ const FLUSH_INTERVAL_MS = 150;  // batch log state updates — reduces re-render
  *   logRates      - Record<topic, number> — logs/sec per topic (5s window)
  *   clearLogs     - (topic: string) => void
  */
-export const useWebSocket = (url) => {
+/** Max logs kept for non-viewed topics (sidebar: last log + server badges). */
+const SIDEBAR_LOG_CAP = 50;
+
+export const useWebSocket = (url, viewedTopics) => {
   const [logsByTopic, setLogsByTopic] = useState({});
   const [topics, setTopics] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -40,6 +44,12 @@ export const useWebSocket = (url) => {
   const socketRef = useRef(null);
   const subscribedTopicsRef = useRef(new Set());
   const activeFilterRef = useRef(null); // last filter sent — resend on reconnect
+  const viewedTopicsRef = useRef(new Set());
+
+  // Keep viewed topics ref in sync (avoids stale closures in flush)
+  useEffect(() => {
+    viewedTopicsRef.current = new Set(viewedTopics.filter(Boolean));
+  }, [viewedTopics]);
 
   // Flush pending logs to state in batches — one React re-render per interval.
   // Groups by topic first so we create ONE new array per topic per flush
@@ -59,11 +69,14 @@ export const useWebSocket = (url) => {
 
       setLogsByTopic((prev) => {
         const updated = { ...prev };
+        const viewed = viewedTopicsRef.current;
         for (const [topic, newLogs] of Object.entries(byTopic)) {
           const existing = updated[topic] || [];
-          // newLogs is oldest-first — reverse in place (it's our local array)
-          // then concat existing, then cap. One new array per topic per flush.
-          updated[topic] = newLogs.reverse().concat(existing).slice(0, config.ws.maxLogsPerTopic);
+          // Viewed topics get the full cap (500) for the log panel.
+          // Non-viewed topics keep a small cap (50) — enough for sidebar
+          // (last log, server badges, count) without wasting memory.
+          const cap = viewed.has(topic) ? config.ws.maxLogsPerTopic : SIDEBAR_LOG_CAP;
+          updated[topic] = newLogs.reverse().concat(existing).slice(0, cap);
         }
         return updated;
       });
@@ -152,7 +165,8 @@ export const useWebSocket = (url) => {
           return; // malformed message — skip silently
         }
 
-        if (Array.isArray(data)) {
+        // Topic list — array of strings (first element is a string, not an object)
+        if (Array.isArray(data) && (data.length === 0 || typeof data[0] === 'string')) {
           setTopics(data);
           setLogsByTopic((prev) => {
             const updated = { ...prev };
@@ -170,31 +184,34 @@ export const useWebSocket = (url) => {
           return;
         }
 
-        const log = data;
+        // Normalize to array — backend may send single event or batched array
+        const events = Array.isArray(data) ? data : [data];
 
-        // Truncate oversized messages to prevent DOM bloat
-        if (log.message && log.message.length > config.ws.maxMessageLength) {
-          log.message = log.message.slice(0, config.ws.maxMessageLength) + '\n… [truncated]';
-        }
+        for (const log of events) {
+          // Assign stable unique ID for React key
+          log._id = ++_logIdCounter;
 
-        logCountRef.current[log.topic] = (logCountRef.current[log.topic] || 0) + 1;
-
-        if (isPausedRef.current) {
-          // Per-topic cap on pause buffer — prevents unbounded memory growth
-          const pauseCount = pauseCountRef.current[log.topic] || 0;
-          if (pauseCount < config.ws.maxLogsPerTopic) {
-            bufferRef.current.push(log);
-            pauseCountRef.current[log.topic] = pauseCount + 1;
+          // Truncate oversized messages to prevent DOM bloat
+          if (log.message && log.message.length > config.ws.maxMessageLength) {
+            log.message = log.message.slice(0, config.ws.maxMessageLength) + '\n… [truncated]';
           }
-          return;
-        }
 
-        // Per-topic cap on pending queue — drop logs for a topic that already has
-        // maxLogsPerTopic entries queued (they'd be discarded by the cap anyway)
-        const topicCount = pendingCountRef.current[log.topic] || 0;
-        if (topicCount < config.ws.maxLogsPerTopic) {
-          pendingRef.current.push(log);
-          pendingCountRef.current[log.topic] = topicCount + 1;
+          logCountRef.current[log.topic] = (logCountRef.current[log.topic] || 0) + 1;
+
+          if (isPausedRef.current) {
+            const pauseCount = pauseCountRef.current[log.topic] || 0;
+            if (pauseCount < config.ws.maxLogsPerTopic) {
+              bufferRef.current.push(log);
+              pauseCountRef.current[log.topic] = pauseCount + 1;
+            }
+            continue;
+          }
+
+          const topicCount = pendingCountRef.current[log.topic] || 0;
+          if (topicCount < config.ws.maxLogsPerTopic) {
+            pendingRef.current.push(log);
+            pendingCountRef.current[log.topic] = topicCount + 1;
+          }
         }
       };
     }

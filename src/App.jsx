@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import Sidebar from './components/sidebar';
@@ -19,19 +19,37 @@ export default function App() {
   const [isPaused2, setIsPaused2] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter, filterAck } = useWebSocket(config.ws.url);
+  // Which topics are currently displayed in log panels — these get full 500-log cap.
+  // Non-viewed topics get a smaller cap (50) for sidebar info only.
+  const viewedTopics = useMemo(
+    () => [selectedTopic, selectedTopic2].filter(Boolean),
+    [selectedTopic, selectedTopic2],
+  );
+
+  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter, filterAck } = useWebSocket(config.ws.url, viewedTopics);
   const theme = darkMode ? styles.dark : styles.light;
 
-  // Subscribe to only the topics the user is viewing
-  useEffect(() => {
-    const activeTopics = [selectedTopic, selectedTopic2].filter(Boolean);
-    if (activeTopics.length > 0) {
-      subscribe(activeTopics);
-    }
-  }, [selectedTopic, selectedTopic2, subscribe]);
+  // Extract topic-specific log arrays — these keep the same reference
+  // unless that specific topic received new logs in the last flush.
+  const topicLogs1 = logsByTopic[selectedTopic];
+  const topicLogs2 = logsByTopic[selectedTopic2];
 
-  const handleTopicSelect = (topic) => {
-    if (splitView && activePanel === 2) {
+  // Auto-subscribe to ALL topics so every topic receives logs (sidebar stats, etc.)
+  useEffect(() => {
+    if (topics.length > 0) {
+      subscribe(topics);
+    }
+  }, [topics, subscribe]);
+
+  // Refs to read current values in stable callbacks without re-creating them
+  const splitViewRef = useRef(splitView);
+  const activePanelRef = useRef(activePanel);
+  useEffect(() => { splitViewRef.current = splitView; }, [splitView]);
+  useEffect(() => { activePanelRef.current = activePanel; }, [activePanel]);
+
+  // ── Stable callbacks (useCallback prevents new refs every render) ──────
+  const handleTopicSelect = useCallback((topic) => {
+    if (splitViewRef.current && activePanelRef.current === 2) {
       setSelectedTopic2(topic);
       setSelectedServer2(null);
     } else {
@@ -40,37 +58,36 @@ export default function App() {
     }
     setTopicSearchTerm('');
     setSidebarOpen(false);
-  };
+  }, []);
 
-  const handleOpenSplit = () => {
+  const handleOpenSplit = useCallback(() => {
     setSelectedTopic2(null);
     setSelectedServer2(null);
     setSplitView(true);
     setActivePanel(2);
-  };
+  }, []);
 
-  const handleClosePanel2 = () => {
+  const handleClosePanel2 = useCallback(() => {
     setSplitView(false);
     setSelectedTopic2(null);
     setSelectedServer2(null);
     setActivePanel(1);
     setIsPaused2(false);
-  };
+  }, []);
 
-  const sharedProps = {
-    logsByTopic,
-    isConnected,
-    isReconnecting,
-    logRates,
-    theme,
-    darkMode,
-    onThemeToggle: () => setDarkMode((d) => !d),
-    onOpenSidebar: () => setSidebarOpen(true),
-    splitView,
-    onOpenSplit: handleOpenSplit,
-    sendFilter,
-    filterAck,
-  };
+  const toggleDarkMode = useCallback(() => setDarkMode((d) => !d), []);
+  const openSidebar = useCallback(() => setSidebarOpen(true), []);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+  const toggleSidebarCollapsed = useCallback(() => setSidebarCollapsed((v) => !v), []);
+
+  const togglePause1 = useCallback(() => setIsPaused1((p) => !p), []);
+  const togglePause2 = useCallback(() => setIsPaused2((p) => !p), []);
+
+  const clearServer1 = useCallback(() => setSelectedServer(null), []);
+  const clearServer2 = useCallback(() => setSelectedServer2(null), []);
+
+  const setActive1 = useCallback(() => setActivePanel(1), []);
+  const setActive2 = useCallback(() => setActivePanel(2), []);
 
   return (
     <div className={`flex h-screen overflow-hidden ${theme.background} ${theme.text} transition-colors duration-200`}>
@@ -78,7 +95,7 @@ export default function App() {
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
+          onClick={closeSidebar}
         />
       )}
 
@@ -92,26 +109,37 @@ export default function App() {
         theme={theme}
         darkMode={darkMode}
         isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+        onClose={closeSidebar}
         logRates={logRates}
         collapsed={sidebarCollapsed}
-        onCollapse={() => setSidebarCollapsed(v => !v)}
+        onCollapse={toggleSidebarCollapsed}
       />
 
       <div className="flex flex-1 min-w-0 overflow-hidden">
         {/* Panel 1 */}
         <LogPanel
-          {...sharedProps}
+          topicLogs={topicLogs1}
           selectedTopic={selectedTopic}
           selectedServer={selectedServer}
           onServerSelect={setSelectedServer}
-          onClearServer={() => setSelectedServer(null)}
+          onClearServer={clearServer1}
           onClearLogs={clearLogs}
+          isConnected={isConnected}
+          isReconnecting={isReconnecting}
+          logRate={logRates[selectedTopic] || 0}
+          theme={theme}
+          darkMode={darkMode}
+          onThemeToggle={toggleDarkMode}
+          onOpenSidebar={openSidebar}
+          splitView={splitView}
+          onOpenSplit={handleOpenSplit}
+          sendFilter={sendFilter}
+          filterAck={filterAck}
           panelId={1}
           isPaused={isPaused1}
-          togglePause={() => setIsPaused1((p) => !p)}
+          togglePause={togglePause1}
           isActivePanel={!splitView || activePanel === 1}
-          onSetActive={() => setActivePanel(1)}
+          onSetActive={setActive1}
         />
 
         {/* Panel 2 — split view only */}
@@ -119,16 +147,27 @@ export default function App() {
           <>
             <div className={`w-px flex-shrink-0 ${darkMode ? 'bg-gray-800/30' : 'bg-indigo-200/40'}`} />
             <LogPanel
-              {...sharedProps}
+              topicLogs={topicLogs2}
               selectedTopic={selectedTopic2}
               selectedServer={selectedServer2}
               onServerSelect={setSelectedServer2}
-              onClearServer={() => setSelectedServer2(null)}
+              onClearServer={clearServer2}
               onClearLogs={clearLogs}
+              isConnected={isConnected}
+              isReconnecting={isReconnecting}
+              logRate={logRates[selectedTopic2] || 0}
+              theme={theme}
+              darkMode={darkMode}
+              onThemeToggle={toggleDarkMode}
+              onOpenSidebar={openSidebar}
+              splitView={splitView}
+              onOpenSplit={handleOpenSplit}
+              sendFilter={sendFilter}
+              filterAck={filterAck}
               isPaused={isPaused2}
-              togglePause={() => setIsPaused2((p) => !p)}
+              togglePause={togglePause2}
               isActivePanel={activePanel === 2}
-              onSetActive={() => setActivePanel(2)}
+              onSetActive={setActive2}
               onClosePanel={handleClosePanel2}
             />
           </>

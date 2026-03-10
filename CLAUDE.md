@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code. For deep implementation details, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Commands
 
@@ -13,50 +13,65 @@ npm run preview   # Preview production build locally
 
 ## Stack
 
-React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12. JavaScript/JSX only (no TypeScript). Styling is 100% Tailwind utility classes — no CSS modules or styled-components.
+React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 3. JavaScript/JSX only (no TypeScript). Styling is 100% Tailwind utility classes.
 
-## Architecture
+## Architecture (Summary)
 
-**Component structure:** Components are organized into folders under `src/components/`:
-- `common/` — shared UI primitives (ThemeToggle, HeartbeatLine)
-- `filters/` — filter dropdowns and keyword filter (FilterDropdown, ServerDropdown, PathDropdown, KeywordFilter)
-- `log/` — log panel and its sub-components (LogPanel orchestrator, DesktopHeader, MobileHeader, FilterBar, ActiveFilters, StatusBar, EmptyState, ScrollButtons, LogEntry, constants)
-- `sidebar/` — topic sidebar (Sidebar)
+**Data flow:** `useWebSocket(url, viewedTopics)` hook → `App.jsx` (global state) → `Sidebar` + `LogPanel` (via props)
 
-Each folder has an `index.js` for clean imports (e.g. `import LogPanel from './components/log'`).
+**State ownership:**
+- `App.jsx` — selectedTopic/Server (per panel), darkMode, sidebarOpen/collapsed, splitView, activePanel, isPaused1/2, viewedTopics
+- `LogPanel.jsx` — path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, timestampGen, nowMs
+- `useWebSocket` — logsByTopic, topics, isConnected, logRates, filterAck
 
-**Data flow:** `useWebSocket` hook → `App.jsx` (global state) → `Sidebar` + `LogPanel` (via props)
+**Component tree:**
+```
+App
+├── Sidebar (topics list, TopicItem per topic — memo'd)
+├── LogPanel #1 (memo'd)
+│   ├── DesktopHeader / MobileHeader / FilterBar / ActiveFilters (presentational, no memo)
+│   ├── KeywordFilter (has local state: selectedColor, hexInput)
+│   ├── VirtualLogList (memo'd — @tanstack/react-virtual, ~20-30 visible rows)
+│   │   └── LogEntry (memo'd — key=log._id, useMemo for relativeTime)
+│   ├── ScrollButtons
+│   └── StatusBar
+└── LogPanel #2 (split view only, same structure)
+```
 
-**`useWebSocket(url)`** is the single data source. It manages the WebSocket connection, auto-reconnect (exponential backoff, max 30s), log batching (150ms flush interval), per-topic rate tracking (5s window), pause/buffer logic, and server-side filter dispatch. Returns `{ logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter, filterAck }`.
+**WS protocol:** Server sends `string[]` (topics) on connect, then `LogEvent` objects or **batched JSON arrays**, plus `{ type: "filter-ack" }` acks. Hook normalizes both formats. Each log gets `_id` (monotonic counter) for stable React keys.
 
-**WS protocol:** Server sends `string[]` (topic list) on connect, then individual `{ topic, serverName, path, message, timestamp }` objects (already filtered server-side), plus `{ type: "filter-ack", filters, regexError? }` acknowledgments. Max 500 logs per topic in memory (`config.ws.maxLogsPerTopic`). Messages longer than 50KB are truncated client-side to prevent DOM bloat.
+**Client-side filtering:** All filtering (server, path, search, keywords, regex, timeRange) runs client-side in `filteredLogs` useMemo for instant real-time feedback. Server-side filter (debounced 300ms) is a bandwidth optimization only — UI does not depend on it for display.
 
-**Server-side filtering:** All filtering (server, path, text search, regex, keywords, time range) is performed by the backend. The UI sends filter criteria via WebSocket (`action: "filter"`) with a 300ms debounce. Logs arriving from the server are already filtered — the frontend only handles display, keyword highlighting, and pause/freeze logic.
+**Topic subscription:** All topics auto-subscribed on connect. Viewed topics get full 500-log cap; non-viewed topics capped at 50 (sidebar info only).
 
-**`App.jsx`** owns all cross-component state: selected topics/servers for each panel, dark mode, sidebar open/collapsed, split view, per-panel pause states. Theme is resolved here (`darkMode ? styles.dark : styles.light`) and passed down.
+## Key Rules
 
-**Split view:** Two independent `LogPanel` instances, each with their own topic, server, pause, and filter state. Panel 2 state (`selectedTopic2`, `selectedServer2`, `isPaused2`) lives in App; panel-local filters (path, search, keywords, time range) live inside LogPanel.
+- `selectedPath` is local to LogPanel, auto-clears on topic change via `pathForTopic` pattern
+- `selectedServer` is global (App.jsx) — Sidebar badges depend on it
+- All filters reset on topic change (render-phase check: `prevTopic !== selectedTopic`)
+- Active filters resent on WS reconnect (stored in `activeFilterRef`)
+- Auto-scroll is button-toggled only — manual scrolling does NOT disable it
+- Mobile menu: 300ms `pointer-events-none` guard against double-tap
 
-**Theme system** (`src/constants/theme.js`): Two complete token objects (`styles.dark`, `styles.light`) containing Tailwind class strings. Components receive a `theme` prop and use `theme.X` for all styling. `popupBorder` is used for floating elements (dropdowns, scroll buttons); `border` is `border-transparent` (no visible dividers between sections).
+## Performance Rules (DO NOT REGRESS)
 
-## Key Patterns
-
-- `selectedPath` state is local to `LogPanel`, auto-clears on topic change via `pathForTopic` pattern
-- `selectedServer` is global (App.jsx) because Sidebar badges depend on it
-- All filters reset when topic changes (render-phase check: `prevTopic !== selectedTopic`)
-- Filter changes are debounced (300ms) before sending to server via `sendFilter()`
-- Active filters are resent on WebSocket reconnect (stored in `activeFilterRef`)
-- Auto-scroll is button-toggled only — manual scrolling does not disable it
-- Mobile menu has a 300ms `pointer-events-none` guard to prevent double-tap issues
-- `LogPanel` uses `useLayoutEffect` for auto-scroll to avoid visible flicker
-- ESLint `no-unused-vars` ignores uppercase/underscore-prefixed names (`^[A-Z_]`)
+- **Keys**: `LogEntry` MUST use `log._id` — NEVER array index (shifted keys = full re-render of 500 items)
+- **Virtualization**: Log list MUST use `@tanstack/react-virtual` — only visible rows rendered
+- **Auto-scroll**: MUST use `useEffect` + `requestAnimationFrame` — NEVER `useLayoutEffect` (blocks main thread)
+- **Timestamps**: `LogEntry` receives `timestampGen` counter, computes `Date.now()` internally via `useMemo` — NEVER pass a changing `now` prop (breaks memo for all entries)
+- **Flush interval**: 150ms in useWebSocket — balances responsiveness vs re-render frequency
+- Sub-components (DesktopHeader, MobileHeader, etc.) are intentionally NOT memo'd — they're cheap renders, memo overhead isn't worth it
 
 ## Environment
 
-`.env` is gitignored. Copy `.env.example` and configure. All values are baked at build time (Vite `import.meta.env`).
+`.env` is gitignored. Copy `.env.example` and configure. All values baked at build time.
 
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL |
-| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs kept in memory per topic |
+| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs in memory per viewed topic (non-viewed: 50) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate messages longer than this (chars) |
+
+## ESLint
+
+- `no-unused-vars` ignores uppercase/underscore-prefixed names (`^[A-Z_]`)
