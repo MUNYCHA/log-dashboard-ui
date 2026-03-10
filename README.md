@@ -12,13 +12,15 @@ A real-time log monitoring dashboard built with React + Vite. Connects to a WebS
 - **Pause / resume** stream — incoming logs are buffered while paused and flushed on resume
 - **Batched rendering** — log updates are flushed every 150ms to minimize re-renders under high volume
 
-### Topic & Filtering
+### Topic & Filtering (Server-Side)
+All filtering is performed by the backend — the UI sends filter criteria via WebSocket and receives only matching logs. Filter changes are debounced (300ms) before being sent to the server.
+
 - **Topic sidebar** — browse all active topics with live log count and per-topic log rate (logs/sec)
 - **Server filter** — searchable dropdown to filter logs by server name
 - **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
 - **Text search** — searches across message, server name, and path
-- **Regex search** — toggle `.*` button to switch to regex mode with invalid-pattern indicator
-- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h
+- **Regex search** — toggle `.*` button to switch to regex mode with server-validated pattern indicator
+- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h (server-clock based)
 - **Keyword filter** — add multiple keywords as colored chips; matches are highlighted in log messages
 - **AND / OR mode** toggle for keyword filter logic
 - **Custom keyword colors** — color wheel picker with hex/RGB input for each keyword
@@ -118,12 +120,21 @@ npm run lint
 
 ## WebSocket Message Protocol
 
-The server must send two message types over the WebSocket connection:
+### Server → Client
 
 | Type | Shape | When |
 |---|---|---|
 | Topic list | `string[]` | Once on connect — list of all topic names |
-| Log entry | `{ topic, serverName, path, message, timestamp }` | One object per log line |
+| Log entry | `{ topic, serverName, path, message, timestamp }` | Live log events (already filtered server-side) |
+| Filter ack | `{ type: "filter-ack", filters: {...}, regexError?: "..." }` | Confirms filter applied; `regexError` present if regex is invalid |
+
+### Client → Server
+
+| Action | Shape | Description |
+|---|---|---|
+| Subscribe | `{ action: "subscribe", topics: [...] }` | Subscribe to specific topics |
+| Filter | `{ action: "filter", filters: { server, path, search, regex, keywords: { terms, mode }, timeRange } }` | Set per-session filter — server applies before sending events |
+| Clear filters | `{ action: "clear-filters" }` | Remove all filters for this session |
 
 ### Log entry fields
 
@@ -148,6 +159,19 @@ The server must send two message types over the WebSocket connection:
   "path": "/var/log/api/app.log",
   "message": "GET /health 200 OK - 3ms",
   "timestamp": "2025-03-07T12:00:00.123Z"
+}
+```
+
+```json
+{
+  "action": "filter",
+  "filters": {
+    "server": "prod-01",
+    "search": "error",
+    "regex": false,
+    "keywords": { "terms": ["timeout"], "mode": "or" },
+    "timeRange": "15m"
+  }
 }
 ```
 

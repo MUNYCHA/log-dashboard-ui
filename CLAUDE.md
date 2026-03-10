@@ -27,9 +27,11 @@ Each folder has an `index.js` for clean imports (e.g. `import LogPanel from './c
 
 **Data flow:** `useWebSocket` hook → `App.jsx` (global state) → `Sidebar` + `LogPanel` (via props)
 
-**`useWebSocket(url)`** is the single data source. It manages the WebSocket connection, auto-reconnect (exponential backoff, max 30s), log batching (150ms flush interval), per-topic rate tracking (5s window), and pause/buffer logic. Returns `{ logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates }`.
+**`useWebSocket(url)`** is the single data source. It manages the WebSocket connection, auto-reconnect (exponential backoff, max 30s), log batching (150ms flush interval), per-topic rate tracking (5s window), pause/buffer logic, and server-side filter dispatch. Returns `{ logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter, filterAck }`.
 
-**WS protocol:** Server sends `string[]` (topic list) on connect, then individual `{ topic, serverName, path, message, timestamp }` objects. Max 100 logs per topic in memory (`config.ws.maxLogsPerTopic`).
+**WS protocol:** Server sends `string[]` (topic list) on connect, then individual `{ topic, serverName, path, message, timestamp }` objects (already filtered server-side), plus `{ type: "filter-ack", filters, regexError? }` acknowledgments. Max 100 logs per topic in memory (`config.ws.maxLogsPerTopic`).
+
+**Server-side filtering:** All filtering (server, path, text search, regex, keywords, time range) is performed by the backend. The UI sends filter criteria via WebSocket (`action: "filter"`) with a 300ms debounce. Logs arriving from the server are already filtered — the frontend only handles display, keyword highlighting, and pause/freeze logic.
 
 **`App.jsx`** owns all cross-component state: selected topics/servers for each panel, dark mode, sidebar open/collapsed, split view, per-panel pause states. Theme is resolved here (`darkMode ? styles.dark : styles.light`) and passed down.
 
@@ -42,6 +44,8 @@ Each folder has an `index.js` for clean imports (e.g. `import LogPanel from './c
 - `selectedPath` state is local to `LogPanel`, auto-clears on topic change via `pathForTopic` pattern
 - `selectedServer` is global (App.jsx) because Sidebar badges depend on it
 - All filters reset when topic changes (render-phase check: `prevTopic !== selectedTopic`)
+- Filter changes are debounced (300ms) before sending to server via `sendFilter()`
+- Active filters are resent on WebSocket reconnect (stored in `activeFilterRef`)
 - Auto-scroll is button-toggled only — manual scrolling does not disable it
 - Mobile menu has a 300ms `pointer-events-none` guard to prevent double-tap issues
 - `LogPanel` uses `useLayoutEffect` for auto-scroll to avoid visible flicker

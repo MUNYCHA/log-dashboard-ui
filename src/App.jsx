@@ -19,7 +19,7 @@ export default function App() {
   const [isPaused2, setIsPaused2] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe } = useWebSocket(config.ws.url);
+  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter, filterAck } = useWebSocket(config.ws.url);
   const theme = darkMode ? styles.dark : styles.light;
 
   // Subscribe to only the topics the user is viewing
@@ -68,6 +68,8 @@ export default function App() {
     onOpenSidebar: () => setSidebarOpen(true),
     splitView,
     onOpenSplit: handleOpenSplit,
+    sendFilter,
+    filterAck,
   };
 
   return (

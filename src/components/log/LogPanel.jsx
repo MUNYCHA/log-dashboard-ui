@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from "react";
 import { KeywordFilter } from "../filters";
-import { TIME_RANGE_MS, downloadFile, getButtonStyles, getAccentStyles } from "./constants";
+import { downloadFile, getButtonStyles, getAccentStyles } from "./constants";
 import DesktopHeader from "./DesktopHeader";
 import MobileHeader from "./MobileHeader";
 import FilterBar from "./FilterBar";
@@ -31,6 +31,8 @@ const LogPanel = ({
   onClosePanel,
   isActivePanel,
   onSetActive,
+  sendFilter,
+  filterAck,
 }) => {
   const [frozenLogs, setFrozenLogs] = useState(null);
   const [logSearchTerm, setLogSearchTerm] = useState("");
@@ -135,16 +137,44 @@ const LogPanel = ({
     return () => ro.disconnect();
   }, [autoScroll, isPaused, selectedTopic]);
 
-  // Regex validation
+  // Regex validation — from server ack or local check
   const regexError = useMemo(() => {
     if (!isRegex || !logSearchTerm) return false;
+    if (filterAck?.regexError) return true;
     try { new RegExp(logSearchTerm); return false; } catch { return true; }
-  }, [isRegex, logSearchTerm]);
+  }, [isRegex, logSearchTerm, filterAck]);
 
-  // Pin to the selected topic's array
+  // Send filter updates to server (debounced 300ms)
+  const filterTimerRef = useRef(null);
+  useEffect(() => {
+    if (!sendFilter) return;
+    if (filterTimerRef.current) clearTimeout(filterTimerRef.current);
+
+    filterTimerRef.current = setTimeout(() => {
+      const pendingInput = keywordInput.trim().toLowerCase();
+      const allTerms = [...keywords.map((k) => k.text), ...(pendingInput ? [pendingInput] : [])];
+
+      const filters = {
+        server: selectedServer || null,
+        path: selectedPath || null,
+        search: logSearchTerm || null,
+        regex: isRegex,
+        keywords: allTerms.length > 0 ? { terms: allTerms, mode: keywordMode } : undefined,
+        timeRange: timeRange,
+      };
+
+      // Check if all filters are empty
+      const hasAny = filters.server || filters.path || filters.search || filters.keywords || filters.timeRange !== 'all';
+      sendFilter(hasAny ? filters : null);
+    }, 300);
+
+    return () => { if (filterTimerRef.current) clearTimeout(filterTimerRef.current); };
+  }, [selectedServer, selectedPath, logSearchTerm, isRegex, keywords, keywordInput, keywordMode, timeRange, sendFilter]);
+
+  // Pin to the selected topic's array — already filtered by server
   const topicLogs = logsByTopic[selectedTopic];
 
-  // Unique servers for selected topic
+  // Unique servers for selected topic (derived from received logs for dropdown population)
   const serversForSelectedTopic = useMemo(
     () =>
       selectedTopic
@@ -171,52 +201,11 @@ const LogPanel = ({
     [pathsForSelectedServer, pathSearchTerm],
   );
 
-  // Main log filter
+  // Logs are already filtered by server — just reverse for newest-first display
   const filteredLogs = useMemo(() => {
     if (!selectedTopic || !topicLogs) return [];
-    const cutoff = timeRange !== 'all' ? now - TIME_RANGE_MS[timeRange] : null;
-
-    const searchLower = logSearchTerm ? logSearchTerm.toLowerCase() : null;
-    const searchRegex = isRegex && !regexError && logSearchTerm
-      ? (() => { try { return new RegExp(logSearchTerm, 'i'); } catch { return null; } })()
-      : null;
-    const pendingInput = keywordInput.trim().toLowerCase();
-    const activeKeywords = keywords.length > 0 || pendingInput
-      ? [...keywords.map((k) => k.text), ...(pendingInput ? [pendingInput] : [])]
-      : null;
-
-    const filtered = topicLogs.filter((log) => {
-      if (selectedServer && log.serverName !== selectedServer) return false;
-      if (selectedPath && log.path !== selectedPath) return false;
-      if (cutoff && new Date(log.timestamp).getTime() < cutoff) return false;
-
-      if (logSearchTerm) {
-        let matchesSearch = false;
-        if (searchRegex) {
-          matchesSearch = searchRegex.test(log.message) || searchRegex.test(log.serverName) || searchRegex.test(log.path);
-        } else {
-          matchesSearch =
-            log.message.toLowerCase().includes(searchLower) ||
-            log.serverName.toLowerCase().includes(searchLower) ||
-            log.path.toLowerCase().includes(searchLower);
-        }
-        if (!matchesSearch) return false;
-      }
-
-      if (activeKeywords) {
-        const haystack = log.message.toLowerCase();
-        const matches =
-          keywordMode === 'and'
-            ? activeKeywords.every((kw) => haystack.includes(kw))
-            : activeKeywords.some((kw) => haystack.includes(kw));
-        if (!matches) return false;
-      }
-
-      return true;
-    });
-
-    return filtered.reverse();
-  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, isRegex, regexError, timeRange, now, keywords, keywordInput, keywordMode]);
+    return [...topicLogs].reverse();
+  }, [selectedTopic, topicLogs]);
 
   const displayedLogs = frozenLogs ?? filteredLogs;
 

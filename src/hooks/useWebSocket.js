@@ -27,6 +27,7 @@ export const useWebSocket = (url) => {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [logRates, setLogRates] = useState({});
+  const [filterAck, setFilterAck] = useState(null);
 
   const isPausedRef = useRef(false);
   const bufferRef = useRef([]);         // logs held while paused
@@ -37,6 +38,7 @@ export const useWebSocket = (url) => {
   const reconnectTimerRef = useRef(null);
   const socketRef = useRef(null);
   const subscribedTopicsRef = useRef(new Set());
+  const activeFilterRef = useRef(null); // last filter sent — resend on reconnect
 
   // Flush pending logs to state in batches — one React re-render per interval.
   // Groups by topic first so we create ONE new array per topic per flush
@@ -115,6 +117,10 @@ export const useWebSocket = (url) => {
         if (subscribedTopicsRef.current.size > 0) {
           socket.send(JSON.stringify({ action: 'subscribe', topics: [...subscribedTopicsRef.current] }));
         }
+        // Re-send active filter on reconnect
+        if (activeFilterRef.current) {
+          socket.send(JSON.stringify({ action: 'filter', filters: activeFilterRef.current }));
+        }
       };
 
       socket.onclose = () => {
@@ -147,6 +153,12 @@ export const useWebSocket = (url) => {
             });
             return updated;
           });
+          return;
+        }
+
+        // Handle filter acknowledgment from server
+        if (data.type === 'filter-ack') {
+          setFilterAck(data);
           return;
         }
 
@@ -200,5 +212,17 @@ export const useWebSocket = (url) => {
     }
   }, []);
 
-  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, isPaused, togglePause, logRates, subscribe };
+  const sendFilter = useCallback((filters) => {
+    activeFilterRef.current = filters;
+    const socket = socketRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      if (!filters) {
+        socket.send(JSON.stringify({ action: 'clear-filters' }));
+      } else {
+        socket.send(JSON.stringify({ action: 'filter', filters }));
+      }
+    }
+  }, []);
+
+  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, isPaused, togglePause, logRates, subscribe, sendFilter, filterAck };
 };
