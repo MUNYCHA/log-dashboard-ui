@@ -175,18 +175,33 @@ log-dashboard-ui/
     │   └── logUtils.js        # formatTimestamp, getRelativeTime,
     │                          # getServersForTopic
     └── components/
-        ├── Sidebar.jsx        # Topic list with search, log rate badges,
-        │                      # collapsible on desktop
-        ├── LogPanel.jsx       # Main log view — all filters, search,
-        │                      # export, heartbeat indicator, scroll buttons
-        ├── LogEntry.jsx       # Single log row with keyword highlighting
-        │                      # and relative timestamp
-        ├── KeywordFilter.jsx  # Keyword chip input, color picker,
-        │                      # AND/OR toggle
-        ├── FilterDropdown.jsx # Shared searchable dropdown base component
-        ├── ServerDropdown.jsx # Server filter (wraps FilterDropdown)
-        ├── PathDropdown.jsx   # Path filter (wraps FilterDropdown)
-        └── ThemeToggle.jsx    # Dark / light mode button
+        ├── common/
+        │   ├── HeartbeatLine.jsx   # SVG heartbeat animation reflecting log rate
+        │   └── ThemeToggle.jsx     # Dark / light mode button
+        ├── filters/
+        │   ├── index.js            # Re-exports all filter components
+        │   ├── FilterDropdown.jsx  # Shared searchable dropdown base component
+        │   ├── ServerDropdown.jsx  # Server filter (wraps FilterDropdown)
+        │   ├── PathDropdown.jsx    # Path filter (wraps FilterDropdown)
+        │   └── KeywordFilter.jsx   # Keyword chip input, color picker,
+        │                           # AND/OR toggle
+        ├── log/
+        │   ├── index.js            # Re-exports LogPanel
+        │   ├── LogPanel.jsx        # Orchestrator — state, hooks, composition
+        │   ├── DesktopHeader.jsx   # Desktop topic info, toolbar, search bar
+        │   ├── MobileHeader.jsx    # Mobile topic bar, hamburger menu, search
+        │   ├── FilterBar.jsx       # Desktop server/path dropdowns, time range
+        │   ├── ActiveFilters.jsx   # Active filter chip badges
+        │   ├── StatusBar.jsx       # Bottom connection/filter status bar
+        │   ├── EmptyState.jsx      # No-topic-selected placeholder
+        │   ├── ScrollButtons.jsx   # Floating scroll-to-top/bottom buttons
+        │   ├── LogEntry.jsx        # Single log row with keyword highlighting
+        │   │                       # and relative timestamp
+        │   └── constants.js        # TIME_RANGES, downloadFile, button styles
+        └── sidebar/
+            ├── index.js            # Re-exports Sidebar
+            └── Sidebar.jsx         # Topic list with search, log rate badges,
+                                    # collapsible on desktop
 ```
 
 ---

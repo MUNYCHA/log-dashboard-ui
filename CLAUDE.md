@@ -17,6 +17,14 @@ React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12. JavaScript/JSX only (no T
 
 ## Architecture
 
+**Component structure:** Components are organized into folders under `src/components/`:
+- `common/` — shared UI primitives (ThemeToggle, HeartbeatLine)
+- `filters/` — filter dropdowns and keyword filter (FilterDropdown, ServerDropdown, PathDropdown, KeywordFilter)
+- `log/` — log panel and its sub-components (LogPanel orchestrator, DesktopHeader, MobileHeader, FilterBar, ActiveFilters, StatusBar, EmptyState, ScrollButtons, LogEntry, constants)
+- `sidebar/` — topic sidebar (Sidebar)
+
+Each folder has an `index.js` for clean imports (e.g. `import LogPanel from './components/log'`).
+
 **Data flow:** `useWebSocket` hook → `App.jsx` (global state) → `Sidebar` + `LogPanel` (via props)
 
 **`useWebSocket(url)`** is the single data source. It manages the WebSocket connection, auto-reconnect (exponential backoff, max 30s), log batching (150ms flush interval), per-topic rate tracking (5s window), and pause/buffer logic. Returns `{ logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates }`.

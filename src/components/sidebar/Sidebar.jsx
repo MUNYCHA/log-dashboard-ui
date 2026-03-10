@@ -1,5 +1,5 @@
 import React from 'react';
-import { getServersForTopic } from '../utils/logUtils';
+import { getServersForTopic } from '../../utils/logUtils';
 
 const Sidebar = ({
   topics,

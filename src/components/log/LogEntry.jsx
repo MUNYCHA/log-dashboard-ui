@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatTimestamp, getRelativeTime } from '../utils/logUtils';
+import { formatTimestamp, getRelativeTime } from '../../utils/logUtils';
 
 /**
  * Splits a message string by active keywords and wraps matches

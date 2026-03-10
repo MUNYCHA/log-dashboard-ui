@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
-import Sidebar from './components/Sidebar';
-import LogPanel from './components/LogPanel';
+import Sidebar from './components/sidebar';
+import LogPanel from './components/log';
 import config from './config';
 
 export default function App() {
