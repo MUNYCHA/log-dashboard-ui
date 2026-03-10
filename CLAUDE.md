@@ -29,7 +29,7 @@ Each folder has an `index.js` for clean imports (e.g. `import LogPanel from './c
 
 **`useWebSocket(url)`** is the single data source. It manages the WebSocket connection, auto-reconnect (exponential backoff, max 30s), log batching (150ms flush interval), per-topic rate tracking (5s window), pause/buffer logic, and server-side filter dispatch. Returns `{ logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter, filterAck }`.
 
-**WS protocol:** Server sends `string[]` (topic list) on connect, then individual `{ topic, serverName, path, message, timestamp }` objects (already filtered server-side), plus `{ type: "filter-ack", filters, regexError? }` acknowledgments. Max 100 logs per topic in memory (`config.ws.maxLogsPerTopic`).
+**WS protocol:** Server sends `string[]` (topic list) on connect, then individual `{ topic, serverName, path, message, timestamp }` objects (already filtered server-side), plus `{ type: "filter-ack", filters, regexError? }` acknowledgments. Max 500 logs per topic in memory (`config.ws.maxLogsPerTopic`). Messages longer than 50KB are truncated client-side to prevent DOM bloat.
 
 **Server-side filtering:** All filtering (server, path, text search, regex, keywords, time range) is performed by the backend. The UI sends filter criteria via WebSocket (`action: "filter"`) with a 300ms debounce. Logs arriving from the server are already filtered — the frontend only handles display, keyword highlighting, and pause/freeze logic.
 
@@ -53,4 +53,10 @@ Each folder has an `index.js` for clean imports (e.g. `import LogPanel from './c
 
 ## Environment
 
-`.env` is gitignored. Copy `.env.example` and set `VITE_WS_URL` (default fallback: `ws://localhost:8080/ws/logs`).
+`.env` is gitignored. Copy `.env.example` and configure. All values are baked at build time (Vite `import.meta.env`).
+
+| Variable | Default | Description |
+|---|---|---|
+| `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL |
+| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs kept in memory per topic |
+| `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate messages longer than this (chars) |

@@ -188,13 +188,15 @@ log-dashboard-ui/
 └── src/
     ├── main.jsx               # React entry point
     ├── App.jsx                # Root layout, split view, global state
-    ├── config.js              # Reads VITE_WS_URL from env with fallback
+    ├── config.js              # Reads VITE_WS_URL, VITE_MAX_LOGS_PER_TOPIC,
+    │                          # VITE_MAX_MESSAGE_LENGTH from env with fallbacks
     ├── constants/
     │   ├── theme.js           # Dark / light theme token objects
     │   └── keywordColors.js   # Preset keyword highlight colors
     ├── hooks/
     │   └── useWebSocket.js    # WebSocket connection, auto-reconnect,
-    │                          # pause/buffer, log rate tracker
+    │                          # pause/buffer, log rate tracker,
+    │                          # server-side filter dispatch
     ├── utils/
     │   └── logUtils.js        # formatTimestamp, getRelativeTime,
     │                          # getServersForTopic
@@ -232,8 +234,10 @@ log-dashboard-ui/
 
 ## Configuration
 
+All values are baked at build time via Vite's `import.meta.env`. Changing them requires a rebuild (`npm run build`).
+
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL |
-
-The max logs kept in memory per topic is configured in `src/config.js` (`maxLogsPerTopic`, default `100`).
+| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs kept in memory per topic |
+| `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate log messages longer than this (chars) to prevent DOM bloat |
