@@ -16,30 +16,27 @@ const DesktopHeader = ({
     {/* Row 1: topic + right controls */}
     <div className="flex items-center gap-2">
 
-      {/* Topic + count + rate */}
       <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
         {splitView && (
           <button
             onClick={onSetActive}
-            className={`w-4 h-4 rounded-full flex-shrink-0 border-2 transition-colors ${
+            className={`w-3 h-3 rounded-full flex-shrink-0 border-2 transition-colors ${
               isActivePanel
-                ? darkMode ? 'border-green-400 bg-green-400' : 'border-indigo-500 bg-indigo-500'
-                : `border-gray-500 ${theme.input}`
+                ? 'border-blue-500 bg-blue-500'
+                : `border-gray-500 bg-transparent`
             }`}
             title={isActivePanel ? 'Active panel' : 'Click to make active'}
           />
         )}
-        <h2 className="text-sm lg:text-base font-semibold truncate max-w-[100px] lg:max-w-[200px]">
-          <span className={`${darkMode ? "bg-gradient-to-r from-green-400 to-emerald-400" : "bg-gradient-to-r from-indigo-500 to-violet-500"} bg-clip-text text-transparent`}>
-            {selectedTopic}
-          </span>
+        <h2 className="text-sm font-semibold truncate max-w-[100px] lg:max-w-[200px]">
+          {selectedTopic}
         </h2>
-        <span className={`text-xs ${theme.card} px-2 py-0.5 rounded-full ${theme.textMuted} whitespace-nowrap flex-shrink-0`}>
+        <span className={`text-xs font-mono tabular-nums ${theme.textMuted}`}>
           {displayedLogs?.length || 0}
         </span>
         {logRate > 0 && (
           <span className="hidden md:inline-flex items-center gap-1.5 flex-shrink-0">
-            <span className={`text-xs ${theme.textMuted} whitespace-nowrap`}>
+            <span className={`text-xs font-mono tabular-nums ${theme.textMuted}`}>
               {logRate}/s
             </span>
             <HeartbeatLine rate={logRate} darkMode={darkMode} />
@@ -48,8 +45,7 @@ const DesktopHeader = ({
       </div>
 
       {/* Right controls */}
-      <div className="flex items-center gap-0.5 lg:gap-1 flex-shrink-0 ml-auto">
-        {/* Pause */}
+      <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
         <button
           onClick={onTogglePause}
           className={isPaused ? btn.paused : btn.pause}
@@ -66,7 +62,6 @@ const DesktopHeader = ({
           )}
         </button>
 
-        {/* Export */}
         <div className="relative" ref={exportMenuRef}>
           <button
             onClick={onToggleExportMenu}
@@ -79,22 +74,21 @@ const DesktopHeader = ({
             </svg>
           </button>
           {showExportMenu && (
-            <div className={`absolute right-0 top-9 z-50 w-32 rounded-xl shadow-xl border ${theme.popupBorder} ${theme.card} overflow-hidden`}>
-              <button onClick={() => onExport('json')} className={`w-full text-left px-4 py-2 text-sm ${theme.hover} ${theme.textSecondary}`}>
-                Export JSON
+            <div className={`absolute right-0 top-9 z-50 w-32 rounded-md shadow-lg border ${theme.popupBorder} ${theme.card} overflow-hidden`}>
+              <button onClick={() => onExport('json')} className={`w-full text-left px-3 py-2 text-sm ${theme.hover} ${theme.textSecondary}`}>
+                JSON
               </button>
-              <button onClick={() => onExport('csv')} className={`w-full text-left px-4 py-2 text-sm ${theme.hover} ${theme.textSecondary}`}>
-                Export CSV
+              <button onClick={() => onExport('csv')} className={`w-full text-left px-3 py-2 text-sm ${theme.hover} ${theme.textSecondary}`}>
+                CSV
               </button>
             </div>
           )}
         </div>
 
-        <div className={`w-px h-4 bg-current opacity-20`} />
+        <div className={`w-px h-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`} />
 
         <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
 
-        {/* Auto-scroll */}
         <button
           onClick={onToggleAutoScroll}
           className={autoScroll ? btn.scrollOn : btn.scroll}
@@ -105,7 +99,6 @@ const DesktopHeader = ({
           </svg>
         </button>
 
-        {/* Split view open (panel 1 only) */}
         {!onClosePanel && (
           <button
             onClick={onOpenSplit}
@@ -117,7 +110,6 @@ const DesktopHeader = ({
             </svg>
           </button>
         )}
-        {/* Close panel (panel 2 only) */}
         {onClosePanel && (
           <button
             onClick={onClosePanel}
@@ -130,7 +122,6 @@ const DesktopHeader = ({
           </button>
         )}
 
-        {/* Clear */}
         <button
           onClick={() => onClearLogs(selectedTopic)}
           className={btn.clear}
@@ -144,14 +135,14 @@ const DesktopHeader = ({
       </div>
     </div>
 
-    {/* Row 2: search — full width, all desktop sizes */}
+    {/* Row 2: search */}
     <div className="flex mt-2">
       <div className="relative flex-1 min-w-0">
         <input
           type="text"
           placeholder={isRegex ? "Regex pattern..." : "Search logs..."}
-          className={`w-full ${theme.input} rounded-lg px-3 py-1.5 pr-14 text-sm focus:outline-none
-                   focus:ring-2 ${regexError ? 'focus:ring-red-500/50 border-red-500/50' : darkMode ? "focus:ring-green-500/50" : "focus:ring-indigo-500/50"} focus:border-transparent`}
+          className={`w-full ${theme.input} rounded-md px-3 py-1.5 pr-14 text-sm focus:outline-none
+                   focus:ring-1 ${regexError ? 'focus:ring-red-500 border-red-500' : 'focus:ring-blue-500'} transition-colors`}
           value={logSearchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
         />
@@ -161,7 +152,7 @@ const DesktopHeader = ({
             onClick={onToggleRegex}
             className={`text-xs px-1.5 py-0.5 rounded font-mono transition-colors ${
               isRegex
-                ? darkMode ? 'bg-green-500/30 text-green-300' : 'bg-indigo-500/20 text-indigo-600'
+                ? darkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-50 text-blue-600'
                 : `${theme.textMuted} hover:${theme.textSecondary}`
             }`}
             title="Toggle regex search"

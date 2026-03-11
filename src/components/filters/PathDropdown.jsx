@@ -3,11 +3,6 @@ import FilterDropdown from './FilterDropdown';
 
 const getFileName = (path) => path?.split('/').pop() || path;
 
-/**
- * Dropdown for filtering logs by file path.
- * Thin configuration wrapper over FilterDropdown.
- * Displays the filename as the primary label and the full path as a sublabel.
- */
 const PathDropdown = ({
   isOpen,
   onClose,
@@ -33,8 +28,8 @@ const PathDropdown = ({
     placeholder="Search paths..."
     emptyLabel="No paths found"
     renderItem={(path) => ({ primary: getFileName(path), secondary: path })}
-    selectedClass={darkMode ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-500/20 text-purple-600'}
-    focusRingClass="focus:ring-purple-500/50"
+    selectedClass={darkMode ? 'bg-blue-500/15 text-blue-400' : 'bg-blue-50 text-blue-700'}
+    focusRingClass="focus:ring-blue-500"
     theme={theme}
     width="w-80"
   />

@@ -18,8 +18,6 @@ let _logIdCounter = 0;
  *   topics        - string[] — known topic names
  *   isConnected   - boolean — live connection status
  *   isReconnecting - boolean — true while waiting to reconnect
- *   isPaused      - boolean — stream is paused (logs buffered)
- *   togglePause   - () => void
  *   logRates      - Record<topic, number> — logs/sec per topic (from server stats)
  *   topicServers  - Record<topic, string[]> — active servers per topic (from server stats)
  *   clearLogs     - (topic: string) => void
@@ -32,14 +30,10 @@ export const useWebSocket = (url, viewedTopics) => {
   const [topics, setTopics] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [logRates, setLogRates] = useState({});
   const [topicServers, setTopicServers] = useState({});
   const [filterAck, setFilterAck] = useState(null);
 
-  const isPausedRef = useRef(false);
-  const bufferRef = useRef([]);         // logs held while paused
-  const pauseCountRef = useRef({});     // per-topic count in pause buffer — enforces cap
   const pendingRef = useRef([]);        // logs waiting for next flush
   const pendingCountRef = useRef({});   // per-topic count in pendingRef — enforces cap
   const reconnectAttemptsRef = useRef(0);
@@ -78,7 +72,7 @@ export const useWebSocket = (url, viewedTopics) => {
           // Viewed topics get the full cap (500) for the log panel.
           // Non-viewed topics keep a small cap (50) — enough for sidebar
           // (last log, server badges, count) without wasting memory.
-          const cap = viewed.has(topic) ? config.ws.maxLogsPerTopic : SIDEBAR_LOG_CAP;
+          const cap = viewed.has(topic) ? config.ws.rawBufferPerTopic : SIDEBAR_LOG_CAP;
           updated[topic] = newLogs.reverse().concat(existing).slice(0, cap);
         }
         return updated;
@@ -86,22 +80,6 @@ export const useWebSocket = (url, viewedTopics) => {
     }, FLUSH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, []);
-
-  // Sync isPaused to ref and flush buffer when unpausing
-  useEffect(() => {
-    isPausedRef.current = isPaused;
-    if (!isPaused && bufferRef.current.length > 0) {
-      const buffered = bufferRef.current.splice(0);
-      pauseCountRef.current = {};
-      for (const log of buffered) {
-        const topicCount = pendingCountRef.current[log.topic] || 0;
-        if (topicCount < config.ws.maxLogsPerTopic) {
-          pendingRef.current.push(log);
-          pendingCountRef.current[log.topic] = topicCount + 1;
-        }
-      }
-    }
-  }, [isPaused]);
 
   // Log rates are now provided by server-side stats messages (no client-side counting needed)
 
@@ -166,6 +144,15 @@ export const useWebSocket = (url, viewedTopics) => {
             });
             return updated;
           });
+          // Auto-subscribe to all topics so logs flow immediately.
+          // Viewed topics get full buffer cap; non-viewed get sidebar cap (50).
+          if (data.topics.length > 0) {
+            const allTopics = new Set(data.topics);
+            // Merge with any existing subscriptions (e.g. from previous viewed topics)
+            subscribedTopicsRef.current.forEach((t) => allTopics.add(t));
+            subscribedTopicsRef.current = allTopics;
+            socket.send(JSON.stringify({ action: 'subscribe', topics: [...allTopics] }));
+          }
           return;
         }
 
@@ -197,6 +184,13 @@ export const useWebSocket = (url, viewedTopics) => {
             });
             return updated;
           });
+          // Auto-subscribe (same as typed topics handler)
+          if (data.length > 0) {
+            const allTopics = new Set(data);
+            subscribedTopicsRef.current.forEach((t) => allTopics.add(t));
+            subscribedTopicsRef.current = allTopics;
+            socket.send(JSON.stringify({ action: 'subscribe', topics: [...allTopics] }));
+          }
           return;
         }
 
@@ -212,17 +206,8 @@ export const useWebSocket = (url, viewedTopics) => {
             log.message = log.message.slice(0, config.ws.maxMessageLength) + '\n… [truncated]';
           }
 
-          if (isPausedRef.current) {
-            const pauseCount = pauseCountRef.current[log.topic] || 0;
-            if (pauseCount < config.ws.maxLogsPerTopic) {
-              bufferRef.current.push(log);
-              pauseCountRef.current[log.topic] = pauseCount + 1;
-            }
-            continue;
-          }
-
           const topicCount = pendingCountRef.current[log.topic] || 0;
-          if (topicCount < config.ws.maxLogsPerTopic) {
+          if (topicCount < config.ws.rawBufferPerTopic) {
             pendingRef.current.push(log);
             pendingCountRef.current[log.topic] = topicCount + 1;
           }
@@ -234,6 +219,12 @@ export const useWebSocket = (url, viewedTopics) => {
 
     return () => {
       cancelled = true;
+      // Close the socket so StrictMode re-mount doesn't leave a stale
+      // connection that still receives (and duplicates) server messages.
+      if (socketRef.current) {
+        socketRef.current.close();
+        socketRef.current = null;
+      }
       if (reconnectTimerRef.current) {
         clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
@@ -248,28 +239,63 @@ export const useWebSocket = (url, viewedTopics) => {
     setLogsByTopic((prev) => ({ ...prev, [topic]: [] }));
   }, []);
 
-  const togglePause = useCallback(() => setIsPaused((p) => !p), []);
-
   const subscribe = useCallback((topicList) => {
-    const topicsSet = new Set(topicList.filter(Boolean));
-    subscribedTopicsRef.current = topicsSet;
+    // Merge viewed topics into the existing subscription set (which includes
+    // all topics from auto-subscribe). Don't replace — that would unsubscribe
+    // non-viewed topics and break sidebar data.
+    const viewed = new Set(topicList.filter(Boolean));
+    viewed.forEach((t) => subscribedTopicsRef.current.add(t));
     const socket = socketRef.current;
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ action: 'subscribe', topics: [...topicsSet] }));
+      socket.send(JSON.stringify({ action: 'subscribe', topics: [...subscribedTopicsRef.current] }));
     }
   }, []);
 
-  const sendFilter = useCallback((filters) => {
-    activeFilterRef.current = filters;
-    const socket = socketRef.current;
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      if (!filters) {
-        socket.send(JSON.stringify({ action: 'clear-filters' }));
+  // Per-panel filter storage — in split view both panels may have different
+  // filters active. We merge them so the server sends a superset of what
+  // either panel needs, then each panel does its own client-side filtering.
+  const panelFiltersRef = useRef({});
+
+  const sendFilter = useCallback((filters, panelId) => {
+    // Store per-panel
+    if (panelId != null) {
+      if (filters) {
+        panelFiltersRef.current[panelId] = filters;
       } else {
-        socket.send(JSON.stringify({ action: 'filter', filters }));
+        delete panelFiltersRef.current[panelId];
       }
     }
+
+    const panels = Object.values(panelFiltersRef.current);
+
+    // If no panel has filters, clear server-side filter entirely
+    if (panels.length === 0) {
+      activeFilterRef.current = null;
+      const socket = socketRef.current;
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'clear-filters' }));
+      }
+      return;
+    }
+
+    // If only one panel has a filter, send it directly
+    if (panels.length === 1) {
+      activeFilterRef.current = panels[0];
+      const socket = socketRef.current;
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'filter', filters: panels[0] }));
+      }
+      return;
+    }
+
+    // Multiple panels with filters — clear server-side filter so both panels
+    // receive all logs. Client-side filtering handles each panel independently.
+    activeFilterRef.current = null;
+    const socket = socketRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ action: 'clear-filters' }));
+    }
   }, []);
 
-  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, isPaused, togglePause, logRates, topicServers, subscribe, sendFilter, filterAck };
+  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, topicServers, subscribe, sendFilter, filterAck };
 };

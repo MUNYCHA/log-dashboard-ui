@@ -26,24 +26,24 @@ export const getShortPath = (path) => {
 };
 
 export const getButtonStyles = (darkMode) => {
-  const btnBase = "p-1.5 rounded-lg transition-all duration-150 hover:scale-110 active:scale-95";
+  const btnBase = "p-1.5 rounded-md transition-colors";
   const btnIdle = darkMode
-    ? "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:shadow-lg"
-    : "bg-white shadow-md text-gray-500 hover:shadow-lg";
+    ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100";
   return {
-    pause:    darkMode ? `${btnBase} ${btnIdle} hover:text-amber-400   hover:shadow-amber-400/20`   : `${btnBase} ${btnIdle} hover:bg-amber-50   hover:text-amber-500   hover:shadow-amber-200`,
-    paused:   darkMode ? `${btnBase} bg-amber-500/20  text-amber-400  hover:bg-amber-500/30  hover:shadow-lg hover:shadow-amber-400/20`  : `${btnBase} bg-amber-500/20  text-amber-600  hover:bg-amber-500/30  hover:shadow-lg hover:shadow-amber-200`,
-    export:   darkMode ? `${btnBase} ${btnIdle} hover:text-emerald-400 hover:shadow-emerald-400/20` : `${btnBase} ${btnIdle} hover:bg-emerald-50 hover:text-emerald-500 hover:shadow-emerald-200`,
-    scroll:   darkMode ? `${btnBase} ${btnIdle} hover:text-sky-400     hover:shadow-sky-400/20`     : `${btnBase} ${btnIdle} hover:bg-sky-50     hover:text-sky-500     hover:shadow-sky-200`,
-    scrollOn: darkMode ? `${btnBase} bg-green-500/20  text-green-400  hover:bg-green-500/30  hover:shadow-lg hover:shadow-green-400/20`  : `${btnBase} bg-indigo-500/20 text-indigo-600 hover:bg-indigo-500/30 hover:shadow-lg hover:shadow-indigo-200`,
-    split:    darkMode ? `${btnBase} ${btnIdle} hover:text-violet-400  hover:shadow-violet-400/20`  : `${btnBase} ${btnIdle} hover:bg-violet-50  hover:text-violet-500  hover:shadow-violet-200`,
-    splitOn:  darkMode ? `${btnBase} bg-green-500/20  text-green-400  hover:bg-green-500/30  hover:shadow-lg hover:shadow-green-400/20`  : `${btnBase} bg-indigo-500/20 text-indigo-600 hover:bg-indigo-500/30 hover:shadow-lg hover:shadow-indigo-200`,
-    close:    darkMode ? `${btnBase} ${btnIdle} hover:text-red-400     hover:shadow-red-400/20`     : `${btnBase} ${btnIdle} hover:bg-red-50     hover:text-red-500     hover:shadow-red-200`,
-    clear:    darkMode ? `${btnBase} ${btnIdle} hover:text-red-400     hover:shadow-red-400/20`     : `${btnBase} ${btnIdle} hover:bg-red-50     hover:text-red-500     hover:shadow-red-200`,
+    pause:    `${btnBase} ${btnIdle}`,
+    paused:   `${btnBase} ${darkMode ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`,
+    export:   `${btnBase} ${btnIdle}`,
+    scroll:   `${btnBase} ${btnIdle}`,
+    scrollOn: `${btnBase} ${darkMode ? 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`,
+    split:    `${btnBase} ${btnIdle}`,
+    splitOn:  `${btnBase} ${darkMode ? 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`,
+    close:    `${btnBase} ${darkMode ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-500 hover:text-red-500 hover:bg-red-50'}`,
+    clear:    `${btnBase} ${darkMode ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-500 hover:text-red-500 hover:bg-red-50'}`,
   };
 };
 
 export const getAccentStyles = (darkMode) => ({
-  active: darkMode ? "bg-green-500/20 text-green-400" : "bg-indigo-500/20 text-indigo-600",
-  paused: darkMode ? "bg-amber-500/20 text-amber-400" : "bg-amber-500/20 text-amber-600",
+  active: darkMode ? "bg-blue-500/15 text-blue-400" : "bg-blue-50 text-blue-700",
+  paused: darkMode ? "bg-amber-500/15 text-amber-400" : "bg-amber-50 text-amber-600",
 });

@@ -48,15 +48,17 @@ export default function App() {
 
   // Auto-select the most active topic on first load (only if it has traffic).
   // If no topic has logs, leave unselected — user picks manually.
+  // Uses a ref to avoid re-running once a pick has been made, and
+  // queueMicrotask to fire immediately without being cancelled by effect cleanup.
+  const autoSelectDone = useRef(false);
   useEffect(() => {
-    if (selectedTopic) return;
+    if (selectedTopic || autoSelectDone.current) return;
     const rateEntries = Object.entries(logRates);
     if (topics.length > 0 && rateEntries.length > 0) {
       const best = rateEntries.sort((a, b) => b[1] - a[1])[0];
       if (best && best[1] > 0) {
-        const pick = best[0];
-        const id = setTimeout(() => setSelectedTopic(pick), 0);
-        return () => clearTimeout(id);
+        autoSelectDone.current = true;
+        queueMicrotask(() => setSelectedTopic(best[0]));
       }
     }
   }, [topics, logRates, selectedTopic]);
@@ -71,20 +73,21 @@ export default function App() {
   // ── Stable callbacks (useCallback prevents new refs every render) ──────
   const handleTopicSelect = useCallback((topic) => {
     if (splitViewRef.current && activePanelRef.current === 2) {
-      // Clear old topic's logs before switching
       const prev = selectedTopic2Ref.current;
-      if (prev && prev !== topic) clearLogs(prev);
+      // Only clear if the other panel isn't still viewing this topic
+      if (prev && prev !== topic && prev !== selectedTopic1Ref.current) clearLogs(prev);
       setSelectedTopic2(topic);
       setSelectedServer2(null);
     } else {
-      // Clear old topic's logs before switching
       const prev = selectedTopic1Ref.current;
-      if (prev && prev !== topic) clearLogs(prev);
+      // Only clear if the other panel isn't still viewing this topic
+      if (prev && prev !== topic && prev !== selectedTopic2Ref.current) clearLogs(prev);
       setSelectedTopic(topic);
       setSelectedServer(null);
     }
-    // Clear server-side filters for the new topic (start fresh)
-    sendFilter(null);
+    // Clear server-side filters for the active panel (start fresh)
+    const pid = splitViewRef.current && activePanelRef.current === 2 ? 2 : 1;
+    sendFilter(null, pid);
     setTopicSearchTerm('');
     setSidebarOpen(false);
   }, [clearLogs, sendFilter]);
@@ -102,7 +105,8 @@ export default function App() {
     setSelectedServer2(null);
     setActivePanel(1);
     setIsPaused2(false);
-  }, []);
+    sendFilter(null, 2); // clear panel 2's server-side filter
+  }, [sendFilter]);
 
   const toggleDarkMode = useCallback(() => setDarkMode((d) => !d), []);
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
@@ -174,7 +178,7 @@ export default function App() {
         {/* Panel 2 — split view only */}
         {splitView && (
           <>
-            <div className={`w-px flex-shrink-0 ${darkMode ? 'bg-gray-800/30' : 'bg-indigo-200/40'}`} />
+            <div className={`w-px flex-shrink-0 ${darkMode ? 'bg-gray-800' : 'bg-gray-200'}`} />
             <LogPanel
               topicLogs={topicLogs2}
               selectedTopic={selectedTopic2}
@@ -198,6 +202,7 @@ export default function App() {
               isActivePanel={activePanel === 2}
               onSetActive={setActive2}
               onClosePanel={handleClosePanel2}
+              panelId={2}
             />
           </>
         )}

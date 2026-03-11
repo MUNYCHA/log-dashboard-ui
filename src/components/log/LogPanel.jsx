@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { KeywordFilter } from "../filters";
 import { downloadFile, getButtonStyles, getAccentStyles } from "./constants";
+import config from "../../config";
 import DesktopHeader from "./DesktopHeader";
 import MobileHeader from "./MobileHeader";
 import FilterBar from "./FilterBar";
@@ -30,10 +31,10 @@ const VirtualLogList = React.memo(({
   return (
     <div className="flex-1 relative overflow-hidden">
       <div className="absolute inset-0 overflow-auto font-mono text-sm" ref={scrollRef}>
-        <div className="p-3 sm:p-4 md:p-5">
+        <div className="p-2 sm:p-3 md:p-4">
           {isPaused && (
-            <div className={`text-center py-2 px-4 rounded-lg text-xs ${accent.paused} mb-2`}>
-              Stream paused — display frozen, new logs still incoming
+            <div className={`text-center py-1.5 px-3 rounded-md text-xs ${accent.paused} mb-2`}>
+              Paused — display frozen, new logs still incoming
             </div>
           )}
           {displayedLogs.length > 0 ? (
@@ -61,13 +62,9 @@ const VirtualLogList = React.memo(({
               })}
             </div>
           ) : (
-            <div className={`flex flex-col items-center justify-center h-64 ${theme.textMuted}`}>
-              <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="text-lg">No logs to display</p>
-              <p className="text-sm px-4 text-center">
+            <div className={`flex flex-col items-center justify-center h-48 ${theme.textMuted}`}>
+              <p className="text-sm">No logs to display</p>
+              <p className="text-xs mt-1">
                 {selectedServer && selectedPath
                   ? `No logs from "${selectedServer}" at "${selectedPath}"`
                   : selectedServer
@@ -77,12 +74,12 @@ const VirtualLogList = React.memo(({
                       : "Waiting for incoming logs..."}
               </p>
               {(selectedServer || selectedPath) && (
-                <div className="flex flex-wrap gap-2 mt-4">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {selectedPath && (
-                    <button onClick={handleClearPath} className={`px-3 py-2 rounded-lg ${theme.input} text-sm`}>Clear path</button>
+                    <button onClick={handleClearPath} className={`px-2.5 py-1.5 rounded-md ${theme.input} text-xs`}>Clear path</button>
                   )}
                   {selectedServer && (
-                    <button onClick={handleClearServer} className={`px-3 py-2 rounded-lg ${theme.input} text-sm`}>Clear server</button>
+                    <button onClick={handleClearServer} className={`px-2.5 py-1.5 rounded-md ${theme.input} text-xs`}>Clear server</button>
                   )}
                 </div>
               )}
@@ -94,7 +91,7 @@ const VirtualLogList = React.memo(({
       <ScrollButtons
         atTop={atTop} atBottom={atBottom}
         scrollToTop={scrollToTop} scrollToBottom={scrollToBottom}
-        theme={theme}
+        darkMode={darkMode}
       />
     </div>
   );
@@ -123,6 +120,7 @@ const LogPanel = ({
   onSetActive,
   sendFilter,
   filterAck,
+  panelId,
 }) => {
   const [frozenLogs, setFrozenLogs] = useState(null);
   const [logSearchTerm, setLogSearchTerm] = useState("");
@@ -169,8 +167,12 @@ const LogPanel = ({
     setShowMobileServerDropdown(false);
     setShowMobilePathDropdown(false);
     setIsMobileMenuOpen(false);
-    if (isPaused) togglePause();
   }
+  // Unpause on topic change — in an effect to avoid calling parent setState during render
+  useEffect(() => {
+    if (isPaused && prevTopic === selectedTopic) return;
+    if (isPaused) togglePause();
+  }, [selectedTopic]); // eslint-disable-line react-hooks/exhaustive-deps
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
@@ -285,8 +287,8 @@ const LogPanel = ({
     };
 
     const hasAny = filters.server || filters.path || filters.search || filters.keywords || filters.timeRange !== 'all';
-    sendFilter(hasAny ? filters : null);
-  }, [selectedServer, selectedPath, debouncedSearch, isRegex, keywords, debouncedKeywordInput, keywordMode, timeRange, sendFilter]);
+    sendFilter(hasAny ? filters : null, panelId);
+  }, [selectedServer, selectedPath, debouncedSearch, isRegex, keywords, debouncedKeywordInput, keywordMode, timeRange, sendFilter, panelId]);
 
   // Unique servers for selected topic (derived from received logs for dropdown population)
   const serversForSelectedTopic = useMemo(
@@ -374,7 +376,7 @@ const LogPanel = ({
       });
     }
 
-    return [...logs].reverse();
+    return [...logs].slice(0, config.ws.maxLogsPerTopic).reverse();
   }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, isRegex, keywords, keywordInput, keywordMode, timeRange, nowMs]);
 
   const displayedLogs = frozenLogs ?? filteredLogs;
@@ -462,11 +464,10 @@ const LogPanel = ({
   // ─── Main panel ────────────────────────────────────────────────────────────
   return (
     <div
-      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-70' : ''} ${splitView && isActivePanel ? `ring-1 ${darkMode ? 'ring-green-500/60' : 'ring-indigo-400/60'}` : ''}`}
+      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-blue-500/40' : ''}`}
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className={`px-3 sm:px-4 md:px-5 py-3 ${theme.header} flex-shrink-0 relative z-10`}>
+      <div className={`px-3 sm:px-4 md:px-5 py-2.5 ${theme.header} flex-shrink-0 relative z-10`}>
         <DesktopHeader
           selectedTopic={selectedTopic} displayedLogs={displayedLogs}
           logRate={logRate} darkMode={darkMode} theme={theme}
@@ -525,7 +526,6 @@ const LogPanel = ({
           accentActive={accent.active}
         />
 
-        {/* Keyword filter */}
         <div className="mt-2">
           <KeywordFilter
             keywords={keywords}

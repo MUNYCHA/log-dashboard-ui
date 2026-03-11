@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 
-const DEFAULT_COLOR = '#06b6d4'; // cyan
+const DEFAULT_COLOR = '#3b82f6'; // blue-500
 
 const hexToRgb = (hex) => {
   const clean = hex.replace('#', '');
-  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return { r: 6, g: 182, b: 212 };
+  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return { r: 59, g: 130, b: 246 };
   return {
     r: parseInt(clean.slice(0, 2), 16),
     g: parseInt(clean.slice(2, 4), 16),
@@ -22,11 +22,6 @@ const rgbToHex = (r, g, b) =>
     )
     .join('');
 
-/**
- * Tag-style keyword filter with color wheel + RGB/hex color picker and AND/OR mode toggle.
- *
- * keywords shape: { text: string, color: string }[]
- */
 const KeywordFilter = ({
   keywords,
   inputValue,
@@ -81,24 +76,22 @@ const KeywordFilter = ({
   const rgb = hexToRgb(selectedColor);
 
   const inputBaseClass = `text-xs px-2 py-1 rounded-md outline-none ${theme.input}
-    focus:ring-1 ${darkMode ? 'focus:ring-cyan-500/50' : 'focus:ring-indigo-400/50'}`;
+    focus:ring-1 ${darkMode ? 'focus:ring-blue-500' : 'focus:ring-blue-500'}`;
 
   return (
-    <div className="mt-2">
-      {/* Label row */}
-      <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-2">
-          <span className={`text-xs font-medium ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`}>
-            Keyword filter
+          <span className={`text-xs ${theme.textMuted}`}>
+            Keywords
           </span>
-          {/* AND / OR toggle */}
           <button
             type="button"
             onClick={() => onModeChange(mode === 'or' ? 'and' : 'or')}
-            className={`text-xs px-2 py-0.5 rounded-full border transition-all duration-150 hover:scale-105 active:scale-95 ${
+            className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${
               darkMode
-                ? 'border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/20'
-                : 'border-cyan-400/50 text-cyan-600 hover:bg-cyan-100'
+                ? 'border-gray-700 text-gray-400 hover:bg-gray-800'
+                : 'border-gray-200 text-gray-500 hover:bg-gray-100'
             }`}
             title={`Currently: match ${mode.toUpperCase()} keywords. Click to toggle.`}
           >
@@ -106,34 +99,29 @@ const KeywordFilter = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          {keywords.length > 0 && (
-            <button
-              type="button"
-              onClick={onClearAll}
-              className={`text-xs ${theme.textMuted} hover:text-red-400 transition-colors`}
-            >
-              Clear all
-            </button>
-          )}
-        </div>
+        {keywords.length > 0 && (
+          <button
+            type="button"
+            onClick={onClearAll}
+            className={`text-xs ${theme.textMuted} ${darkMode ? 'hover:text-red-400' : 'hover:text-red-500'} transition-colors`}
+          >
+            Clear all
+          </button>
+        )}
       </div>
 
-      {/* Chip + text input */}
       <div
         onClick={() => inputRef.current?.focus()}
-        className={`flex flex-wrap items-center gap-1.5 min-h-[36px] w-full px-3 py-1.5
-          rounded-lg border cursor-text transition-colors ${theme.input}
-          ${darkMode ? 'border-cyan-500/30' : 'border-cyan-400/40'}`}
+        className={`flex flex-wrap items-center gap-1.5 min-h-[32px] w-full px-2.5 py-1.5
+          rounded-md cursor-text transition-colors ${theme.input}`}
       >
         {keywords.map((kw) => (
           <span
             key={kw.text}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono border"
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono"
             style={{
-              backgroundColor: `${kw.color}25`,
+              backgroundColor: `${kw.color}20`,
               color: kw.color,
-              borderColor: `${kw.color}55`,
             }}
           >
             {kw.text}
@@ -143,7 +131,9 @@ const KeywordFilter = ({
               className="hover:text-red-400 transition-colors leading-none"
               aria-label={`Remove keyword ${kw.text}`}
             >
-              <XIcon />
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </span>
         ))}
@@ -156,39 +146,36 @@ const KeywordFilter = ({
           onKeyDown={handleKeyDown}
           placeholder={keywords.length === 0 ? 'Type keyword, press Enter...' : ''}
           className={`flex-1 min-w-[140px] bg-transparent text-sm outline-none ${theme.text}
-            ${darkMode ? 'placeholder:text-gray-500' : 'placeholder:text-gray-400'}`}
+            ${darkMode ? 'placeholder:text-gray-600' : 'placeholder:text-gray-400'}`}
         />
       </div>
 
-      {/* Color picker — visible while typing */}
       {showPicker && (
-        <div className="mt-2 px-1 flex flex-wrap items-center gap-3">
-          <span className={`text-xs ${theme.textMuted} whitespace-nowrap`}>Color:</span>
+        <div className="mt-1.5 px-1 flex flex-wrap items-center gap-3">
+          <span className={`text-xs ${theme.textMuted}`}>Color:</span>
 
-          {/* Color wheel */}
           <div className="relative flex-shrink-0">
             <input
               type="color"
               value={selectedColor}
               onChange={(e) => applyColor(e.target.value)}
-              className="absolute inset-0 opacity-0 w-8 h-8 cursor-pointer"
+              className="absolute inset-0 opacity-0 w-6 h-6 cursor-pointer"
               tabIndex={-1}
             />
             <div
-              className="w-8 h-8 rounded-full border-2 shadow-md cursor-pointer transition-transform hover:scale-110"
-              style={{ backgroundColor: selectedColor, borderColor: `${selectedColor}90` }}
-              title="Open color wheel"
+              className="w-6 h-6 rounded border cursor-pointer"
+              style={{ backgroundColor: selectedColor, borderColor: `${selectedColor}60` }}
+              title="Open color picker"
             />
           </div>
 
-          {/* Hex input */}
           <div className="flex items-center gap-1">
             <span className={`text-xs font-mono ${theme.textMuted}`}>#</span>
             <input
               type="text"
               value={hexInput}
               maxLength={6}
-              placeholder="06b6d4"
+              placeholder="3b82f6"
               onChange={(e) => {
                 const raw = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
                 setHexInput(raw);
@@ -198,7 +185,6 @@ const KeywordFilter = ({
             />
           </div>
 
-          {/* RGB inputs */}
           <div className="flex items-center gap-2">
             {[
               { ch: 'r', label: 'R', val: rgb.r },
@@ -206,7 +192,7 @@ const KeywordFilter = ({
               { ch: 'b', label: 'B', val: rgb.b },
             ].map(({ ch, label, val }) => (
               <div key={ch} className="flex items-center gap-1">
-                <span className={`text-xs font-medium ${theme.textMuted}`}>{label}</span>
+                <span className={`text-xs ${theme.textMuted}`}>{label}</span>
                 <input
                   type="number"
                   min="0"
@@ -223,11 +209,5 @@ const KeywordFilter = ({
     </div>
   );
 };
-
-const XIcon = () => (
-  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
 
 export default KeywordFilter;

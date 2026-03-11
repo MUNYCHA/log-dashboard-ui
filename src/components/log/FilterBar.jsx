@@ -15,15 +15,13 @@ const FilterBar = ({
   accentActive,
 }) => (
   <div className="hidden md:flex items-center gap-2 mt-2 flex-wrap">
-    {/* Server + path dropdowns */}
     <div className="flex items-center gap-1.5 flex-shrink-0">
       <div className="relative">
         <button
           ref={serverButtonRef}
           onClick={onToggleServerDropdown}
-          className={`px-2 py-1.5 rounded-lg ${theme.input} text-sm flex items-center gap-1.5 max-w-[120px] justify-between
-                    ${selectedServer ? (darkMode ? "border-green-400/50" : "border-indigo-400/50") : ""}
-                    cursor-pointer transition-all duration-150 active:scale-95`}
+          className={`px-2 py-1 rounded-md ${theme.input} text-sm flex items-center gap-1.5 max-w-[120px] justify-between
+                    cursor-pointer transition-colors`}
           type="button"
         >
           <span className="truncate text-xs">{selectedServer || "All Servers"}</span>
@@ -44,9 +42,8 @@ const FilterBar = ({
         <button
           ref={pathButtonRef}
           onClick={() => selectedServer && onTogglePathDropdown()}
-          className={`px-2 py-1.5 rounded-lg ${theme.input} text-sm flex items-center gap-1.5 max-w-[120px] justify-between
-                    ${!selectedServer ? "opacity-50 cursor-not-allowed" : "cursor-pointer transition-all duration-150 active:scale-95"}
-                    ${selectedPath ? (darkMode ? "border-purple-400/50" : "border-purple-500/50") : ""}`}
+          className={`px-2 py-1 rounded-md ${theme.input} text-sm flex items-center gap-1.5 max-w-[120px] justify-between
+                    ${!selectedServer ? "opacity-50 cursor-not-allowed" : "cursor-pointer transition-colors"}`}
           type="button" disabled={!selectedServer}
           title={!selectedServer ? "Select a server first" : "Filter by path"}
         >
@@ -66,17 +63,16 @@ const FilterBar = ({
           />
         )}
       </div>
-      <div className="w-px h-4 bg-current opacity-20 mx-1" />
+      <div className={`w-px h-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} mx-1`} />
     </div>
 
-    {/* Range pills */}
     <span className={`text-xs ${theme.textMuted}`}>Range:</span>
     {TIME_RANGES.map((r) => (
       <button
         key={r.value}
         onClick={() => onTimeRangeChange(r.value)}
-        className={`px-2.5 py-0.5 rounded-full text-xs transition-all duration-150 hover:scale-105 active:scale-95 ${
-          timeRange === r.value ? accentActive : `${theme.input} ${theme.textMuted}`
+        className={`px-2 py-0.5 rounded-md text-xs transition-colors ${
+          timeRange === r.value ? accentActive : `${theme.textMuted} hover:${theme.textSecondary}`
         }`}
       >
         {r.label}

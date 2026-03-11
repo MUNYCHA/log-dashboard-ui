@@ -1,11 +1,15 @@
 import React from 'react';
 
-const ScrollButtons = ({ atTop, atBottom, scrollToTop, scrollToBottom, theme }) => (
-  <div className="absolute right-3 bottom-4 flex flex-col gap-2 z-10">
+const ScrollButtons = ({ atTop, atBottom, scrollToTop, scrollToBottom, darkMode }) => (
+  <div className="absolute right-3 bottom-3 flex flex-col gap-1.5 z-10">
     {!atTop && (
       <button
         onClick={scrollToTop}
-        className={`p-2 rounded-full shadow-lg ${theme.card} border ${theme.popupBorder} ${theme.textMuted} hover:${theme.textSecondary} transition-all`}
+        className={`p-1.5 rounded-md shadow-sm border transition-colors
+          ${darkMode
+            ? 'bg-[#161b22] border-gray-700 text-gray-400 hover:text-gray-200'
+            : 'bg-white border-gray-200 text-gray-400 hover:text-gray-600'
+          }`}
         title="Scroll to top"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -16,7 +20,11 @@ const ScrollButtons = ({ atTop, atBottom, scrollToTop, scrollToBottom, theme }) 
     {!atBottom && (
       <button
         onClick={scrollToBottom}
-        className={`p-2 rounded-full shadow-lg ${theme.card} border ${theme.popupBorder} ${theme.textMuted} hover:${theme.textSecondary} transition-all`}
+        className={`p-1.5 rounded-md shadow-sm border transition-colors
+          ${darkMode
+            ? 'bg-[#161b22] border-gray-700 text-gray-400 hover:text-gray-200'
+            : 'bg-white border-gray-200 text-gray-400 hover:text-gray-600'
+          }`}
         title="Scroll to bottom"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
