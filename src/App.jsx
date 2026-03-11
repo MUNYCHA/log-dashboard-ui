@@ -26,7 +26,7 @@ export default function App() {
     [selectedTopic, selectedTopic2],
   );
 
-  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter, filterAck } = useWebSocket(config.ws.url, viewedTopics);
+  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, topicServers, subscribe, sendFilter, filterAck } = useWebSocket(config.ws.url, viewedTopics);
   const theme = darkMode ? styles.dark : styles.light;
 
   // Extract topic-specific log arrays — these keep the same reference
@@ -34,31 +34,60 @@ export default function App() {
   const topicLogs1 = logsByTopic[selectedTopic];
   const topicLogs2 = logsByTopic[selectedTopic2];
 
-  // Auto-subscribe to ALL topics so every topic receives logs (sidebar stats, etc.)
-  useEffect(() => {
-    if (topics.length > 0) {
-      subscribe(topics);
-    }
-  }, [topics, subscribe]);
-
   // Refs to read current values in stable callbacks without re-creating them
   const splitViewRef = useRef(splitView);
   const activePanelRef = useRef(activePanel);
+  const selectedTopic1Ref = useRef(selectedTopic);
+  const selectedTopic2Ref = useRef(selectedTopic2);
+  const topicsRef = useRef(topics);
   useEffect(() => { splitViewRef.current = splitView; }, [splitView]);
   useEffect(() => { activePanelRef.current = activePanel; }, [activePanel]);
+  useEffect(() => { selectedTopic1Ref.current = selectedTopic; }, [selectedTopic]);
+  useEffect(() => { selectedTopic2Ref.current = selectedTopic2; }, [selectedTopic2]);
+  useEffect(() => { topicsRef.current = topics; }, [topics]);
+
+  // Auto-select the most active topic on first load (only if it has traffic).
+  // If no topic has logs, leave unselected — user picks manually.
+  useEffect(() => {
+    if (selectedTopic) return;
+    const rateEntries = Object.entries(logRates);
+    if (topics.length > 0 && rateEntries.length > 0) {
+      const best = rateEntries.sort((a, b) => b[1] - a[1])[0];
+      if (best && best[1] > 0) {
+        const pick = best[0];
+        const id = setTimeout(() => setSelectedTopic(pick), 0);
+        return () => clearTimeout(id);
+      }
+    }
+  }, [topics, logRates, selectedTopic]);
+
+  // Subscribe only to topics the user is actively viewing
+  useEffect(() => {
+    if (viewedTopics.length > 0) {
+      subscribe(viewedTopics);
+    }
+  }, [viewedTopics, subscribe]);
 
   // ── Stable callbacks (useCallback prevents new refs every render) ──────
   const handleTopicSelect = useCallback((topic) => {
     if (splitViewRef.current && activePanelRef.current === 2) {
+      // Clear old topic's logs before switching
+      const prev = selectedTopic2Ref.current;
+      if (prev && prev !== topic) clearLogs(prev);
       setSelectedTopic2(topic);
       setSelectedServer2(null);
     } else {
+      // Clear old topic's logs before switching
+      const prev = selectedTopic1Ref.current;
+      if (prev && prev !== topic) clearLogs(prev);
       setSelectedTopic(topic);
       setSelectedServer(null);
     }
+    // Clear server-side filters for the new topic (start fresh)
+    sendFilter(null);
     setTopicSearchTerm('');
     setSidebarOpen(false);
-  }, []);
+  }, [clearLogs, sendFilter]);
 
   const handleOpenSplit = useCallback(() => {
     setSelectedTopic2(null);
@@ -101,7 +130,6 @@ export default function App() {
 
       <Sidebar
         topics={topics}
-        logsByTopic={logsByTopic}
         selectedTopic={activePanel === 2 && splitView ? selectedTopic2 : selectedTopic}
         onTopicSelect={handleTopicSelect}
         topicSearchTerm={topicSearchTerm}
@@ -111,6 +139,7 @@ export default function App() {
         isOpen={sidebarOpen}
         onClose={closeSidebar}
         logRates={logRates}
+        topicServers={topicServers}
         collapsed={sidebarCollapsed}
         onCollapse={toggleSidebarCollapsed}
       />

@@ -7,9 +7,11 @@ let _logIdCounter = 0;
 /**
  * Connects to a WebSocket server and manages incoming log data.
  *
- * The server is expected to send two message shapes:
- *   - string[]  — initial list of topic names
- *   - LogEntry  — { topic, serverName, path, message, timestamp }
+ * The server sends typed messages:
+ *   - { type: "topics", topics: string[] }                    — available topics (on connect)
+ *   - { type: "stats", topics: { [t]: { rate, servers } } }  — periodic stats (every ~2s)
+ *   - { type: "filter-ack", filters, regexError? }           — filter acknowledgment
+ *   - LogEntry or LogEntry[]                                  — log events (after subscribe)
  *
  * Returns:
  *   logsByTopic   - Record<topic, LogEntry[]> — most recent log first
@@ -18,7 +20,8 @@ let _logIdCounter = 0;
  *   isReconnecting - boolean — true while waiting to reconnect
  *   isPaused      - boolean — stream is paused (logs buffered)
  *   togglePause   - () => void
- *   logRates      - Record<topic, number> — logs/sec per topic (5s window)
+ *   logRates      - Record<topic, number> — logs/sec per topic (from server stats)
+ *   topicServers  - Record<topic, string[]> — active servers per topic (from server stats)
  *   clearLogs     - (topic: string) => void
  */
 /** Max logs kept for non-viewed topics (sidebar: last log + server badges). */
@@ -31,6 +34,7 @@ export const useWebSocket = (url, viewedTopics) => {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [logRates, setLogRates] = useState({});
+  const [topicServers, setTopicServers] = useState({});
   const [filterAck, setFilterAck] = useState(null);
 
   const isPausedRef = useRef(false);
@@ -38,7 +42,6 @@ export const useWebSocket = (url, viewedTopics) => {
   const pauseCountRef = useRef({});     // per-topic count in pause buffer — enforces cap
   const pendingRef = useRef([]);        // logs waiting for next flush
   const pendingCountRef = useRef({});   // per-topic count in pendingRef — enforces cap
-  const logCountRef = useRef({});
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef(null);
   const socketRef = useRef(null);
@@ -100,19 +103,7 @@ export const useWebSocket = (url, viewedTopics) => {
     }
   }, [isPaused]);
 
-  // Log rate tracker — count logs per 5s window, expose as logs/sec
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const counts = { ...logCountRef.current };
-      logCountRef.current = {};
-      setLogRates(
-        Object.fromEntries(
-          Object.entries(counts).map(([t, c]) => [t, +(c / 5).toFixed(1)])
-        )
-      );
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  // Log rates are now provided by server-side stats messages (no client-side counting needed)
 
   // WebSocket with auto-reconnect (exponential backoff, max 30s)
   useEffect(() => {
@@ -165,7 +156,38 @@ export const useWebSocket = (url, viewedTopics) => {
           return; // malformed message — skip silently
         }
 
-        // Topic list — array of strings (first element is a string, not an object)
+        // Typed messages from server
+        if (data.type === 'topics') {
+          setTopics(data.topics);
+          setLogsByTopic((prev) => {
+            const updated = { ...prev };
+            data.topics.forEach((topic) => {
+              if (!updated[topic]) updated[topic] = [];
+            });
+            return updated;
+          });
+          return;
+        }
+
+        if (data.type === 'stats') {
+          const intervalSec = (data.intervalMs || 2000) / 1000;
+          const rates = {};
+          const servers = {};
+          for (const [topic, info] of Object.entries(data.topics)) {
+            rates[topic] = +(info.rate / intervalSec).toFixed(1);
+            servers[topic] = info.servers || [];
+          }
+          setLogRates(rates);
+          setTopicServers(servers);
+          return;
+        }
+
+        if (data.type === 'filter-ack') {
+          setFilterAck(data);
+          return;
+        }
+
+        // Legacy: bare topic array (backwards compat during rollout)
         if (Array.isArray(data) && (data.length === 0 || typeof data[0] === 'string')) {
           setTopics(data);
           setLogsByTopic((prev) => {
@@ -175,12 +197,6 @@ export const useWebSocket = (url, viewedTopics) => {
             });
             return updated;
           });
-          return;
-        }
-
-        // Handle filter acknowledgment from server
-        if (data.type === 'filter-ack') {
-          setFilterAck(data);
           return;
         }
 
@@ -195,8 +211,6 @@ export const useWebSocket = (url, viewedTopics) => {
           if (log.message && log.message.length > config.ws.maxMessageLength) {
             log.message = log.message.slice(0, config.ws.maxMessageLength) + '\n… [truncated]';
           }
-
-          logCountRef.current[log.topic] = (logCountRef.current[log.topic] || 0) + 1;
 
           if (isPausedRef.current) {
             const pauseCount = pauseCountRef.current[log.topic] || 0;
@@ -257,5 +271,5 @@ export const useWebSocket = (url, viewedTopics) => {
     }
   }, []);
 
-  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, isPaused, togglePause, logRates, subscribe, sendFilter, filterAck };
+  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, isPaused, togglePause, logRates, topicServers, subscribe, sendFilter, filterAck };
 };
