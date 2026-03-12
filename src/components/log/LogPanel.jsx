@@ -18,7 +18,7 @@ const VirtualLogList = React.memo(({
   displayedLogs, isPaused, accent, theme, darkMode, keywords, timestampGen,
   selectedServer, selectedPath, timeRange,
   scrollRef, atTop, atBottom, scrollToTop, scrollToBottom,
-  handleClearPath, handleClearServer,
+  handleClearPath, handleClearServer, markUserScrollIntent,
 }) => {
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual is designed this way
   const virtualizer = useVirtualizer({
@@ -30,7 +30,13 @@ const VirtualLogList = React.memo(({
 
   return (
     <div className="flex-1 relative overflow-hidden">
-      <div className="absolute inset-0 overflow-auto font-mono text-sm" ref={scrollRef}>
+      <div
+        className="absolute inset-0 overflow-auto font-mono text-sm"
+        ref={scrollRef}
+        onWheel={markUserScrollIntent}
+        onTouchMove={markUserScrollIntent}
+        onPointerDown={markUserScrollIntent}
+      >
         <div className="p-2 sm:p-3 md:p-4">
           {isPaused && (
             <div className={`text-center py-1.5 px-3 rounded-md text-xs ${accent.paused} mb-2`}>
@@ -156,6 +162,12 @@ const LogPanel = ({
   const serverButtonRef = useRef(null);
   const pathButtonRef = useRef(null);
   const exportMenuRef = useRef(null);
+  const previousScrollTopRef = useRef(0);
+  const userScrollIntentUntilRef = useRef(0);
+
+  const markUserScrollIntent = useCallback(() => {
+    userScrollIntentUntilRef.current = Date.now() + 800;
+  }, []);
 
   // Delay mobile menu interactivity to prevent fast double-tap from hitting buttons
   useEffect(() => {
@@ -197,13 +209,23 @@ const LogPanel = ({
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    setAtTop(scrollTop < 50);
-    setAtBottom(scrollTop + clientHeight >= scrollHeight - 100);
+    const previousScrollTop = previousScrollTopRef.current;
+    const didScrollUp = scrollTop < previousScrollTop - 1;
+    const isNearTop = scrollTop < 50;
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
+    const userInitiated = userScrollIntentUntilRef.current > Date.now();
+    previousScrollTopRef.current = scrollTop;
+    setAtTop(isNearTop);
+    setAtBottom(isNearBottom);
+    if (userInitiated && didScrollUp && !isNearBottom) {
+      setAutoScroll(false);
+    }
   }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    previousScrollTopRef.current = el.scrollTop;
     el.addEventListener('scroll', handleScroll, { passive: true });
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll, selectedTopic]);
@@ -369,6 +391,7 @@ const LogPanel = ({
       const el = scrollRef.current;
       requestAnimationFrame(() => {
         el.scrollTop = el.scrollHeight;
+        previousScrollTopRef.current = el.scrollTop;
       });
     }
   }, [filteredLogs, autoScroll, isPaused]);
@@ -413,9 +436,22 @@ const LogPanel = ({
     setShowExportMenu(false);
   };
 
-  const scrollToTop = () => { if (scrollRef.current) scrollRef.current.scrollTop = 0; };
+  const scrollToTop = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+      previousScrollTopRef.current = 0;
+      setAtTop(true);
+      setAtBottom(false);
+    }
+    setAutoScroll(false);
+  };
   const scrollToBottom = () => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      previousScrollTopRef.current = scrollRef.current.scrollTop;
+      setAtTop(false);
+      setAtBottom(true);
+    }
     setAutoScroll(true);
   };
 
@@ -541,6 +577,7 @@ const LogPanel = ({
         scrollToBottom={scrollToBottom}
         handleClearPath={handleClearPath}
         handleClearServer={handleClearServer}
+        markUserScrollIntent={markUserScrollIntent}
       />
 
       {/* ── Status Bar ─────────────────────────────────────────────────────── */}

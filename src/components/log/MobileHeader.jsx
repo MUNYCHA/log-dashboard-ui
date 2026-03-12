@@ -23,33 +23,31 @@ const MobileHeader = ({
 }) => (
   <>
     <div className="md:hidden">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-2">
-          <button onClick={onOpenSidebar} className={`mt-0.5 p-1.5 rounded-lg ${theme.textMuted} hover:${theme.text}`} aria-label="Open sidebar">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <button onClick={onOpenSidebar} className={`p-1.5 rounded-lg ${theme.textMuted} hover:${theme.text}`} aria-label="Open sidebar">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <div className="min-w-0">
+          <div className="min-w-0 flex items-center gap-1.5 overflow-hidden">
             <h2 className="truncate text-sm font-semibold">
               {selectedTopic}
             </h2>
-            <div className="mt-1.5 flex items-center gap-2 text-[11px]">
-              <span className={`inline-flex items-center rounded-full border px-2 py-1 font-mono tabular-nums ${
-                darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600'
-              }`}>
-                {displayedLogs?.length || 0} logs
-              </span>
-              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 font-mono tabular-nums ${
-                logRate > 0
-                  ? (darkMode ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
-                  : (darkMode ? 'border-gray-800 bg-black/20 text-gray-500' : 'border-gray-200 bg-white text-gray-400')
-              }`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${logRate > 0 ? 'bg-current animate-pulse' : 'bg-current/70'}`} />
-                {logRate}/s
-              </span>
-              {logRate > 0 && <HeartbeatLine rate={logRate} darkMode={darkMode} />}
-            </div>
+            <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-mono tabular-nums flex-shrink-0 ${
+              darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600'
+            }`}>
+              {displayedLogs?.length || 0} logs
+            </span>
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-mono tabular-nums flex-shrink-0 ${
+              logRate > 0
+                ? (darkMode ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
+                : (darkMode ? 'border-gray-800 bg-black/20 text-gray-500' : 'border-gray-200 bg-white text-gray-400')
+            }`}>
+              <span className={`h-2 w-2 rounded-full ${logRate > 0 ? 'bg-current animate-pulse' : 'bg-current/70'}`} />
+              {logRate}/s
+            </span>
+            {logRate > 0 && <HeartbeatLine rate={logRate} darkMode={darkMode} />}
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
