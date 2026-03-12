@@ -119,7 +119,6 @@ const LogPanel = ({
   isActivePanel,
   onSetActive,
   sendFilter,
-  filterAck,
   panelId,
 }) => {
   const [frozenLogs, setFrozenLogs] = useState(null);
@@ -134,7 +133,6 @@ const LogPanel = ({
   // selectedPath is tied to the current topic — auto-clears when topic changes
   const [pathForTopic, setPathForTopic] = useState({ topic: null, path: null });
   const selectedPath = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
-  const [prevTopic, setPrevTopic] = useState(selectedTopic);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileMenuReady, setMobileMenuReady] = useState(false);
   const [keywords, setKeywords] = useState([]);
@@ -147,32 +145,6 @@ const LogPanel = ({
   // the filter useEffect immediately because their state changes aren't debounced.
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
-  // Reset all filters when topic changes
-  if (prevTopic !== selectedTopic) {
-    setPrevTopic(selectedTopic);
-    setAutoScroll(true);
-    setLogSearchTerm('');
-    setDebouncedSearch('');
-    setDebouncedKeywordInput('');
-    setPathForTopic({ topic: null, path: null });
-    setKeywords([]);
-    setKeywordInput('');
-    setTimeRange('all');
-    setIsRegex(false);
-    setServerSearchTerm('');
-    setPathSearchTerm('');
-    setFrozenLogs(null);
-    setShowServerDropdown(false);
-    setShowPathDropdown(false);
-    setShowMobileServerDropdown(false);
-    setShowMobilePathDropdown(false);
-    setIsMobileMenuOpen(false);
-  }
-  // Unpause on topic change — in an effect to avoid calling parent setState during render
-  useEffect(() => {
-    if (isPaused && prevTopic === selectedTopic) return;
-    if (isPaused) togglePause();
-  }, [selectedTopic]); // eslint-disable-line react-hooks/exhaustive-deps
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
@@ -249,12 +221,12 @@ const LogPanel = ({
     return () => ro.disconnect();
   }, [autoScroll, isPaused, selectedTopic]);
 
-  // Regex validation — from server ack or local check
+  // Regex validation — local validation keeps split-view state isolated.
   const regexError = useMemo(() => {
     if (!isRegex || !logSearchTerm) return false;
-    if (filterAck?.regexError) return true;
+    if (logSearchTerm.length > 512) return true;
     try { new RegExp(logSearchTerm); return false; } catch { return true; }
-  }, [isRegex, logSearchTerm, filterAck]);
+  }, [isRegex, logSearchTerm]);
 
   // Debounce text search input (300ms) — discrete actions send immediately
   useEffect(() => {
@@ -335,7 +307,7 @@ const LogPanel = ({
         try {
           const re = new RegExp(logSearchTerm, 'i');
           logs = logs.filter((l) =>
-            re.test(l.message) || re.test(l.serverName) || re.test(l.path)
+            re.test(String(l.message ?? '')) || re.test(String(l.serverName ?? '')) || re.test(String(l.path ?? ''))
           );
         } catch {
           // Invalid regex in progress — show nothing until it's valid
@@ -344,9 +316,9 @@ const LogPanel = ({
       } else {
         const lower = logSearchTerm.toLowerCase();
         logs = logs.filter((l) =>
-          l.message.toLowerCase().includes(lower) ||
-          l.serverName.toLowerCase().includes(lower) ||
-          l.path.toLowerCase().includes(lower)
+          String(l.message ?? '').toLowerCase().includes(lower) ||
+          String(l.serverName ?? '').toLowerCase().includes(lower) ||
+          String(l.path ?? '').toLowerCase().includes(lower)
         );
       }
     }
@@ -359,7 +331,7 @@ const LogPanel = ({
     ];
     if (allTerms.length > 0) {
       logs = logs.filter((l) => {
-        const haystack = (l.message + '\0' + l.serverName + '\0' + l.path).toLowerCase();
+        const haystack = `${String(l.message ?? '')}\0${String(l.serverName ?? '')}\0${String(l.path ?? '')}`.toLowerCase();
         return keywordMode === 'and'
           ? allTerms.every((t) => haystack.includes(t))
           : allTerms.some((t) => haystack.includes(t));
@@ -371,8 +343,8 @@ const LogPanel = ({
       const ranges = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
       const cutoff = nowMs - (ranges[timeRange] || 0);
       logs = logs.filter((l) => {
-        try { return new Date(l.timestamp).getTime() >= cutoff; }
-        catch { return true; }
+        const ts = new Date(l.timestamp).getTime();
+        return Number.isFinite(ts) && ts >= cutoff;
       });
     }
 

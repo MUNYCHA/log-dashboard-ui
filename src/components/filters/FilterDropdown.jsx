@@ -34,7 +34,7 @@ const FilterDropdown = ({
   if (!isOpen) return null;
 
   const filteredItems = items.filter((item) =>
-    item.toLowerCase().includes(searchTerm.toLowerCase()),
+    typeof item === 'string' && item.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (

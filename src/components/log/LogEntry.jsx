@@ -2,20 +2,21 @@ import React, { useMemo } from 'react';
 import { formatTimestamp, getRelativeTime } from '../../utils/logUtils';
 
 const highlightMessage = (message, keywords) => {
-  if (!keywords || keywords.length === 0) return message;
+  const safeMessage = typeof message === 'string' ? message : String(message ?? '');
+  if (!keywords || keywords.length === 0) return safeMessage;
 
   const escaped = keywords.map((kw) =>
     kw.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
   );
   const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
-  const parts = message.split(regex);
+  const parts = safeMessage.split(regex);
 
   return parts.map((part, i) => {
     const match = keywords.find((kw) => kw.text.toLowerCase() === part.toLowerCase());
     if (!match) return part;
     return (
       <mark
-        key={i}
+        key={`${part}-${i}`}
         className="rounded px-0.5 font-semibold"
         style={{ backgroundColor: `${match.color}25`, color: match.color }}
       >
@@ -29,6 +30,33 @@ const LogEntry = ({ log, theme, darkMode, keywords, timestampGen }) => {
   const fullTimestamp = formatTimestamp(log.timestamp);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
+  const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
+  const message = typeof log.message === 'string' ? log.message : String(log.message ?? '');
+
+  const handleCopy = async () => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(message);
+        return;
+      }
+    } catch {
+      // Fallback below.
+    }
+
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = message;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    } catch {
+      // Ignore clipboard failures.
+    }
+  };
 
   return (
     <div className={`group py-1.5 px-3 rounded ${theme.logEntry} transition-colors`}>
@@ -48,15 +76,15 @@ const LogEntry = ({ log, theme, darkMode, keywords, timestampGen }) => {
         </span>
 
         <span className={`${darkMode ? 'text-blue-400' : 'text-blue-600'} text-sm font-medium whitespace-nowrap flex-shrink-0`}>
-          {log.serverName}
+          {serverName}
         </span>
 
         <span className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm break-all flex-1 min-w-0`}>
-          {highlightMessage(log.message, keywords)}
+          {highlightMessage(message, keywords)}
         </span>
 
         <button
-          onClick={() => navigator.clipboard.writeText(log.message)}
+          onClick={handleCopy}
           className={`opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ${theme.textMuted}`}
           title="Copy message"
         >

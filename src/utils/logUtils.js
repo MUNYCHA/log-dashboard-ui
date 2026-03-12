@@ -10,7 +10,9 @@ export const getLogLevelColor = (level, darkMode) => {
 
 export const formatTimestamp = (timestamp) => {
   try {
-    return new Date(timestamp).toLocaleTimeString('en-US', {
+    const ts = new Date(timestamp).getTime();
+    if (!Number.isFinite(ts)) return String(timestamp ?? '');
+    return new Date(ts).toLocaleTimeString('en-US', {
       hour12: false,
       hour: '2-digit',
       minute: '2-digit',
@@ -31,6 +33,7 @@ export const getServersForTopic = (topic, logsByTopic) => {
 export const getRelativeTime = (timestamp, now) => {
   try {
     const ts = new Date(timestamp).getTime();
+    if (!Number.isFinite(ts)) return '';
     const diff = Math.max(0, now - ts);
     if (diff < 10000) return 'just now';
     if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;

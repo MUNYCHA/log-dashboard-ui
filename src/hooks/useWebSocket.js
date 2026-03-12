@@ -2,7 +2,36 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import config from '../config';
 
 const FLUSH_INTERVAL_MS = 150;  // batch log state updates — reduces re-renders dramatically
-let _logIdCounter = 0;
+const SIDEBAR_LOG_CAP = 50;
+const isValidTopicList = (topics) =>
+  Array.isArray(topics) && topics.every((topic) => typeof topic === 'string' && topic.trim() !== '');
+
+const normalizeLogEvent = (value, nextId) => {
+  if (!value || typeof value !== 'object') return null;
+
+  const topic = typeof value.topic === 'string' ? value.topic.trim() : '';
+  const serverName = typeof value.serverName === 'string' ? value.serverName : null;
+  const path = typeof value.path === 'string' ? value.path : null;
+  const timestamp = typeof value.timestamp === 'string' ? value.timestamp : null;
+  const message = typeof value.message === 'string' ? value.message : null;
+
+  if (!topic || serverName == null || path == null || timestamp == null || message == null) {
+    return null;
+  }
+
+  const safeMessage = message.length > config.ws.maxMessageLength
+    ? `${message.slice(0, config.ws.maxMessageLength)}\n... [truncated]`
+    : message;
+
+  return {
+    _id: nextId,
+    topic,
+    serverName,
+    path,
+    timestamp,
+    message: safeMessage,
+  };
+};
 
 /**
  * Connects to a WebSocket server and manages incoming log data.
@@ -22,9 +51,6 @@ let _logIdCounter = 0;
  *   topicServers  - Record<topic, string[]> — active servers per topic (from server stats)
  *   clearLogs     - (topic: string) => void
  */
-/** Max logs kept for non-viewed topics (sidebar: last log + server badges). */
-const SIDEBAR_LOG_CAP = 50;
-
 export const useWebSocket = (url, viewedTopics) => {
   const [logsByTopic, setLogsByTopic] = useState({});
   const [topics, setTopics] = useState([]);
@@ -32,7 +58,6 @@ export const useWebSocket = (url, viewedTopics) => {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [logRates, setLogRates] = useState({});
   const [topicServers, setTopicServers] = useState({});
-  const [filterAck, setFilterAck] = useState(null);
 
   const pendingRef = useRef([]);        // logs waiting for next flush
   const pendingCountRef = useRef({});   // per-topic count in pendingRef — enforces cap
@@ -42,6 +67,7 @@ export const useWebSocket = (url, viewedTopics) => {
   const subscribedTopicsRef = useRef(new Set());
   const activeFilterRef = useRef(null); // last filter sent — resend on reconnect
   const viewedTopicsRef = useRef(new Set());
+  const nextLogIdRef = useRef(1);
 
   // Keep viewed topics ref in sync (avoids stale closures in flush)
   useEffect(() => {
@@ -136,33 +162,30 @@ export const useWebSocket = (url, viewedTopics) => {
 
         // Typed messages from server
         if (data.type === 'topics') {
-          setTopics(data.topics);
+          const topicList = isValidTopicList(data.topics) ? data.topics : [];
+          setTopics(topicList);
           setLogsByTopic((prev) => {
             const updated = { ...prev };
-            data.topics.forEach((topic) => {
+            topicList.forEach((topic) => {
               if (!updated[topic]) updated[topic] = [];
             });
             return updated;
           });
-          // Auto-subscribe to all topics so logs flow immediately.
-          // Viewed topics get full buffer cap; non-viewed get sidebar cap (50).
-          if (data.topics.length > 0) {
-            const allTopics = new Set(data.topics);
-            // Merge with any existing subscriptions (e.g. from previous viewed topics)
-            subscribedTopicsRef.current.forEach((t) => allTopics.add(t));
-            subscribedTopicsRef.current = allTopics;
-            socket.send(JSON.stringify({ action: 'subscribe', topics: [...allTopics] }));
-          }
           return;
         }
 
         if (data.type === 'stats') {
+          if (!data.topics || typeof data.topics !== 'object') return;
           const intervalSec = (data.intervalMs || 2000) / 1000;
           const rates = {};
           const servers = {};
           for (const [topic, info] of Object.entries(data.topics)) {
-            rates[topic] = +(info.rate / intervalSec).toFixed(1);
-            servers[topic] = info.servers || [];
+            if (!info || typeof info !== 'object') continue;
+            const rate = Number(info.rate);
+            rates[topic] = Number.isFinite(rate) ? +(rate / intervalSec).toFixed(1) : 0;
+            servers[topic] = Array.isArray(info.servers)
+              ? info.servers.filter((server) => typeof server === 'string')
+              : [];
           }
           setLogRates(rates);
           setTopicServers(servers);
@@ -170,12 +193,11 @@ export const useWebSocket = (url, viewedTopics) => {
         }
 
         if (data.type === 'filter-ack') {
-          setFilterAck(data);
           return;
         }
 
         // Legacy: bare topic array (backwards compat during rollout)
-        if (Array.isArray(data) && (data.length === 0 || typeof data[0] === 'string')) {
+        if (isValidTopicList(data)) {
           setTopics(data);
           setLogsByTopic((prev) => {
             const updated = { ...prev };
@@ -184,27 +206,15 @@ export const useWebSocket = (url, viewedTopics) => {
             });
             return updated;
           });
-          // Auto-subscribe (same as typed topics handler)
-          if (data.length > 0) {
-            const allTopics = new Set(data);
-            subscribedTopicsRef.current.forEach((t) => allTopics.add(t));
-            subscribedTopicsRef.current = allTopics;
-            socket.send(JSON.stringify({ action: 'subscribe', topics: [...allTopics] }));
-          }
           return;
         }
 
         // Normalize to array — backend may send single event or batched array
         const events = Array.isArray(data) ? data : [data];
 
-        for (const log of events) {
-          // Assign stable unique ID for React key
-          log._id = ++_logIdCounter;
-
-          // Truncate oversized messages to prevent DOM bloat
-          if (log.message && log.message.length > config.ws.maxMessageLength) {
-            log.message = log.message.slice(0, config.ws.maxMessageLength) + '\n… [truncated]';
-          }
+        for (const rawEvent of events) {
+          const log = normalizeLogEvent(rawEvent, nextLogIdRef.current++);
+          if (!log) continue;
 
           const topicCount = pendingCountRef.current[log.topic] || 0;
           if (topicCount < config.ws.rawBufferPerTopic) {
@@ -240,14 +250,11 @@ export const useWebSocket = (url, viewedTopics) => {
   }, []);
 
   const subscribe = useCallback((topicList) => {
-    // Merge viewed topics into the existing subscription set (which includes
-    // all topics from auto-subscribe). Don't replace — that would unsubscribe
-    // non-viewed topics and break sidebar data.
-    const viewed = new Set(topicList.filter(Boolean));
-    viewed.forEach((t) => subscribedTopicsRef.current.add(t));
+    const viewed = new Set(topicList.filter((topic) => typeof topic === 'string' && topic.trim() !== ''));
+    subscribedTopicsRef.current = viewed;
     const socket = socketRef.current;
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ action: 'subscribe', topics: [...subscribedTopicsRef.current] }));
+      socket.send(JSON.stringify({ action: 'subscribe', topics: [...viewed] }));
     }
   }, []);
 
@@ -297,5 +304,5 @@ export const useWebSocket = (url, viewedTopics) => {
     }
   }, []);
 
-  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, topicServers, subscribe, sendFilter, filterAck };
+  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, topicServers, subscribe, sendFilter };
 };

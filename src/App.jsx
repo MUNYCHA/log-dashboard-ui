@@ -26,7 +26,7 @@ export default function App() {
     [selectedTopic, selectedTopic2],
   );
 
-  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, topicServers, subscribe, sendFilter, filterAck } = useWebSocket(config.ws.url, viewedTopics);
+  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, topicServers, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics);
   const theme = darkMode ? styles.dark : styles.light;
 
   // Extract topic-specific log arrays — these keep the same reference
@@ -78,12 +78,14 @@ export default function App() {
       if (prev && prev !== topic && prev !== selectedTopic1Ref.current) clearLogs(prev);
       setSelectedTopic2(topic);
       setSelectedServer2(null);
+      setIsPaused2(false);
     } else {
       const prev = selectedTopic1Ref.current;
       // Only clear if the other panel isn't still viewing this topic
       if (prev && prev !== topic && prev !== selectedTopic2Ref.current) clearLogs(prev);
       setSelectedTopic(topic);
       setSelectedServer(null);
+      setIsPaused1(false);
     }
     // Clear server-side filters for the active panel (start fresh)
     const pid = splitViewRef.current && activePanelRef.current === 2 ? 2 : 1;
@@ -151,6 +153,7 @@ export default function App() {
       <div className="flex flex-1 min-w-0 overflow-hidden">
         {/* Panel 1 */}
         <LogPanel
+          key={`panel-1-${selectedTopic ?? 'none'}`}
           topicLogs={topicLogs1}
           selectedTopic={selectedTopic}
           selectedServer={selectedServer}
@@ -167,7 +170,6 @@ export default function App() {
           splitView={splitView}
           onOpenSplit={handleOpenSplit}
           sendFilter={sendFilter}
-          filterAck={filterAck}
           panelId={1}
           isPaused={isPaused1}
           togglePause={togglePause1}
@@ -180,6 +182,7 @@ export default function App() {
           <>
             <div className={`w-px flex-shrink-0 ${darkMode ? 'bg-gray-800' : 'bg-gray-200'}`} />
             <LogPanel
+              key={`panel-2-${selectedTopic2 ?? 'none'}`}
               topicLogs={topicLogs2}
               selectedTopic={selectedTopic2}
               selectedServer={selectedServer2}
@@ -196,7 +199,6 @@ export default function App() {
               splitView={splitView}
               onOpenSplit={handleOpenSplit}
               sendFilter={sendFilter}
-              filterAck={filterAck}
               isPaused={isPaused2}
               togglePause={togglePause2}
               isActivePanel={activePanel === 2}
