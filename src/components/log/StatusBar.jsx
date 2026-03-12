@@ -6,70 +6,85 @@ const StatusBar = ({
   selectedServer, selectedPath,
   logRate, darkMode, theme,
   onClearServer, onClearPath,
-}) => (
-  <div className={`px-3 sm:px-4 md:px-5 py-1.5 ${theme.statusBar} text-xs ${theme.textMuted} flex items-center justify-between gap-2 flex-shrink-0`}>
-    <div className="flex items-center flex-wrap gap-x-3 gap-y-1">
-      <div className="flex items-center gap-1.5">
-        {isConnected ? (
-          <svg className="w-3.5 h-3.5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-          </svg>
-        ) : isReconnecting ? (
-          <svg className="w-3.5 h-3.5 text-amber-400 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M23 4v6h-6M1 20v-6h6" />
-            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
-          </svg>
-        ) : (
-          <svg className="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="1" y1="1" x2="23" y2="23" />
-            <path d="M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39" />
-            <path d="M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88" />
-            <path d="M8.53 16.11a6 6 0 016.95 0" />
-            <line x1="12" y1="20" x2="12.01" y2="20" />
-          </svg>
-        )}
-        <span className={isConnected ? (darkMode ? 'text-green-400' : 'text-green-600') : ''}>
-          {isConnected ? 'Connected' : isReconnecting ? 'Reconnecting\u2026' : 'Disconnected'}
+}) => {
+  const connectionTone = isConnected
+    ? (darkMode ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
+    : isReconnecting
+      ? (darkMode ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700')
+      : (darkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700');
+
+  return (
+    <div className={`px-3 sm:px-4 md:px-5 py-2 ${theme.statusBar} text-xs ${theme.textMuted} flex items-center justify-between gap-3 flex-shrink-0`}>
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium ${connectionTone}`}>
+          <span className={`h-2 w-2 rounded-full ${
+            isConnected
+              ? 'bg-current animate-pulse'
+              : isReconnecting
+                ? 'bg-current animate-pulse'
+                : 'bg-current'
+          }`} />
+          {isConnected ? 'Connected' : isReconnecting ? 'Reconnecting' : 'Disconnected'}
         </span>
+
+        <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-mono tabular-nums ${
+          darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600'
+        }`}>
+          {logRate} logs/s
+        </span>
+
+        {isPaused && (
+          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-medium ${
+            darkMode ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700'
+          }`}>
+            Paused
+          </span>
+        )}
+
+        {selectedServer && (
+          <button
+            onClick={onClearServer}
+            className={`inline-flex max-w-[180px] items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors ${
+              darkMode
+                ? 'border-blue-500/20 bg-blue-500/10 text-blue-300 hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-300'
+                : 'border-blue-200 bg-blue-50 text-blue-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700'
+            }`}
+          >
+            <svg className="h-3 w-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2M5 12a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2" />
+            </svg>
+            <span className="truncate">{selectedServer}</span>
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+
+        {selectedPath && (
+          <button
+            onClick={onClearPath}
+            className={`inline-flex max-w-[180px] items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors ${
+              darkMode
+                ? 'border-blue-500/20 bg-blue-500/10 text-blue-300 hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-300'
+                : 'border-blue-200 bg-blue-50 text-blue-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700'
+            }`}
+          >
+            <svg className="h-3 w-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M6 7V5a1 1 0 011-1h10a1 1 0 011 1v2M6 7v12a1 1 0 001 1h10a1 1 0 001-1V7" />
+            </svg>
+            <span className="truncate">{getShortPath(selectedPath)}</span>
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
-      {logRate > 0 && (
-        <span className="font-mono tabular-nums">{logRate} logs/s</span>
-      )}
-
-      {isPaused && <span className="text-amber-500">Paused</span>}
-
-      {selectedServer && (
-        <button
-          onClick={onClearServer}
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded
-                   ${darkMode ? "bg-blue-500/15 text-blue-400" : "bg-blue-50 text-blue-600"}
-                   hover:bg-red-500/15 hover:text-red-400 transition-colors`}
-        >
-          <span className="max-w-[100px] truncate">{selectedServer}</span>
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      )}
-
-      {selectedPath && (
-        <button
-          onClick={onClearPath}
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded
-                   ${darkMode ? "bg-blue-500/15 text-blue-400" : "bg-blue-50 text-blue-600"}
-                   hover:bg-red-500/15 hover:text-red-400 transition-colors`}
-        >
-          <span className="max-w-[100px] truncate">{getShortPath(selectedPath)}</span>
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      )}
+      <span className={`text-xs font-mono tabular-nums whitespace-nowrap ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+        {new Date().toLocaleTimeString()}
+      </span>
     </div>
-
-    <span className="text-xs font-mono tabular-nums whitespace-nowrap">{new Date().toLocaleTimeString()}</span>
-  </div>
-);
+  );
+};
 
 export default StatusBar;

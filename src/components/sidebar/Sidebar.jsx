@@ -1,58 +1,77 @@
 import React, { useMemo } from 'react';
 
+const TOPIC_SORT_OPTIONS = [
+  { value: 'activity', label: 'Speed', title: 'Most active first' },
+  { value: 'asc', label: 'A-Z', title: 'Alphabetical ascending' },
+  { value: 'desc', label: 'Z-A', title: 'Alphabetical descending' },
+];
+
+const sortButtonStyles = (isActive, darkMode) => {
+  if (isActive) {
+    return darkMode
+      ? 'border-blue-500/25 bg-blue-500/10 text-blue-300'
+      : 'border-blue-200 bg-blue-50 text-blue-700';
+  }
+
+  return darkMode
+    ? 'border-gray-800 bg-black/20 text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+    : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700';
+};
+
 const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, serverCount, darkMode }) => {
   const isActive = logRate > 0;
+  const itemTone = isSelected
+    ? (darkMode
+      ? 'border-blue-500/40 bg-blue-500/10 text-blue-100 shadow-[inset_0_1px_0_rgba(96,165,250,0.14)]'
+      : 'border-blue-200 bg-blue-50/90 text-blue-900 shadow-sm')
+    : (darkMode
+      ? 'border-gray-900 bg-[#06090f] text-gray-200 hover:border-gray-800 hover:bg-[#0b1220]'
+      : 'border-gray-200 bg-white/90 text-gray-700 hover:border-gray-300 hover:bg-white');
+  const badgeTone = isActive
+    ? (darkMode ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
+    : (darkMode ? 'border-gray-800 bg-black/20 text-gray-500' : 'border-gray-200 bg-white text-gray-400');
 
   return (
     <button
       onClick={() => onTopicSelect(topic)}
-      className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors
-        ${isSelected
-          ? darkMode
-            ? 'bg-blue-500/10 text-blue-400 border-l-2 border-l-blue-400'
-            : 'bg-blue-50 text-blue-700 border-l-2 border-l-blue-500'
-          : darkMode
-            ? 'text-gray-300 hover:bg-gray-800/60'
-            : 'text-gray-700 hover:bg-gray-100'
-        }`}
+      className={`w-full rounded-xl border px-2.5 py-1.5 text-left transition-all md:px-3 md:py-2 ${itemTone}`}
     >
-      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0
-        ${isActive
-          ? darkMode ? 'bg-green-400 animate-pulse' : 'bg-green-500 animate-pulse'
-          : darkMode ? 'bg-gray-600' : 'bg-gray-300'
+      <div className="flex items-start gap-1.5 md:gap-2">
+        <div className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${
+          isActive
+            ? darkMode ? 'bg-emerald-300 animate-pulse shadow-[0_0_12px_rgba(110,231,183,0.7)]' : 'bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.45)]'
+            : darkMode ? 'bg-gray-700' : 'bg-gray-300'
         }`}
-      />
+        />
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-medium truncate text-sm">
-            {topic}
-          </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <span className="block truncate text-[13px] font-semibold tracking-[0.01em] md:text-sm">
+                {topic}
+              </span>
+              {serverCount > 0 && (
+                <div className={`mt-0.5 inline-flex items-center gap-1 text-[10px] md:text-[11px] ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                  <svg className="h-3 w-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 12h14M5 12a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2M5 12a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2"
+                    />
+                  </svg>
+                  <span>{serverCount}</span>
+                </div>
+              )}
+            </div>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            {logRate > 0 ? (
-              <span className={`text-xs font-mono tabular-nums ${
-                darkMode ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                {logRate}/s
-              </span>
-            ) : (
-              <span className={`text-xs ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>
-                idle
-              </span>
-            )}
+            <span className={`inline-flex flex-shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-mono tabular-nums md:px-2 md:py-1 md:text-[11px] ${badgeTone}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-current' : 'bg-current/70'}`} />
+              {logRate > 0 ? `${logRate}/s` : 'idle'}
+            </span>
           </div>
+
         </div>
-
-        {serverCount > 0 && (
-          <div className={`flex items-center gap-1 text-xs mt-0.5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
-            </svg>
-            <span>{serverCount} {serverCount === 1 ? 'server' : 'servers'}</span>
-          </div>
-        )}
       </div>
     </button>
   );
@@ -64,6 +83,8 @@ const Sidebar = ({
   onTopicSelect,
   topicSearchTerm,
   onTopicSearchChange,
+  topicSortMode,
+  onTopicSortModeChange,
   theme,
   darkMode,
   isOpen,
@@ -75,6 +96,15 @@ const Sidebar = ({
 }) => {
   const sortedTopics = useMemo(() => {
     const filtered = topics.filter(t => t.toLowerCase().includes(topicSearchTerm.toLowerCase()));
+
+    if (topicSortMode === 'asc') {
+      return filtered.sort((a, b) => a.localeCompare(b));
+    }
+
+    if (topicSortMode === 'desc') {
+      return filtered.sort((a, b) => b.localeCompare(a));
+    }
+
     return filtered.sort((a, b) => {
       const rateA = logRates?.[a] || 0;
       const rateB = logRates?.[b] || 0;
@@ -83,7 +113,7 @@ const Sidebar = ({
       if (rateA !== rateB) return rateB - rateA;
       return a.localeCompare(b);
     });
-  }, [topics, topicSearchTerm, logRates]);
+  }, [topics, topicSearchTerm, topicSortMode, logRates]);
 
   const activeCount = useMemo(
     () => topics.filter(t => (logRates?.[t] || 0) > 0).length,
@@ -103,7 +133,7 @@ const Sidebar = ({
     >
       {/* Collapsed strip */}
       {collapsed && (
-        <div className="hidden md:flex flex-col items-center justify-start pt-3 flex-1">
+        <div className="hidden md:flex flex-col items-center justify-start pt-2.5 flex-1">
           <button
             onClick={onCollapse}
             title="Show sidebar"
@@ -121,15 +151,24 @@ const Sidebar = ({
 
       <div className={`flex flex-col flex-1 min-h-0 ${collapsed ? 'md:hidden' : ''}`}>
         {/* Header */}
-        <div className="px-3 pt-3 pb-2 flex-shrink-0">
+        <div className="px-3 pt-2.5 pb-1.5 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <h1 className={`text-sm font-semibold uppercase tracking-wider ${theme.textMuted}`}>
-              Topics
-            </h1>
+            <div>
+              <h1 className={`text-sm font-semibold uppercase tracking-[0.18em] ${theme.textMuted}`}>
+                Topics
+              </h1>
+            </div>
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-mono ${
-                activeCount > 0 ? (darkMode ? 'text-green-400' : 'text-green-600') : theme.textMuted
+              <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-mono ${
+                activeCount > 0
+                  ? (darkMode
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-700')
+                  : (darkMode
+                    ? 'border-gray-800 bg-black/20 text-gray-500'
+                    : 'border-gray-200 bg-white text-gray-400')
               }`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${activeCount > 0 ? 'bg-current' : 'bg-gray-400'}`} />
                 {activeCount}/{topics.length}
               </span>
               <button
@@ -146,42 +185,76 @@ const Sidebar = ({
         </div>
 
         {/* Search */}
-        <div className="px-3 pb-2 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 min-w-0">
-              <input
-                type="text"
-                placeholder="Search topics..."
-                className={`w-full ${theme.input} rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1
-                         ${darkMode ? 'focus:ring-blue-500' : 'focus:ring-blue-500'} transition-colors`}
-                value={topicSearchTerm}
-                onChange={(e) => onTopicSearchChange(e.target.value)}
-              />
-              <svg className={`absolute right-2.5 top-2 w-3.5 h-3.5 ${theme.textMuted}`}
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+        <div className="px-3 pb-2.5 flex-shrink-0">
+          <div className={`rounded-2xl border px-2 py-2 ${darkMode ? 'border-gray-800 bg-gradient-to-b from-gray-950 to-[#05080d]' : 'border-gray-200 bg-gradient-to-b from-white to-gray-50 shadow-sm'}`}>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <svg
+                  className={`absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${theme.textMuted}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search topics"
+                  className={`w-full ${theme.input} rounded-xl border px-9 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors ${
+                    darkMode
+                      ? 'border-gray-800 bg-black/30 placeholder:text-gray-600'
+                      : 'border-gray-200 bg-white/80 placeholder:text-gray-400'
+                  }`}
+                  value={topicSearchTerm}
+                  onChange={(e) => onTopicSearchChange(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={onCollapse}
+                title="Hide sidebar"
+                aria-label="Collapse sidebar"
+                className={`hidden md:flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border transition-colors ${
+                  darkMode
+                    ? 'border-gray-800 text-gray-500 hover:bg-gray-800 hover:text-gray-300'
+                    : 'border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
             </div>
-            <button
-              onClick={onCollapse}
-              title="Hide sidebar"
-              aria-label="Collapse sidebar"
-              className={`hidden md:flex flex-shrink-0 p-1.5 rounded-md transition-colors
-                ${darkMode
-                  ? 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <span className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${theme.textMuted}`}>
+                Sort
+              </span>
+              <div className={`flex items-center gap-1 rounded-full border p-0.5 ${darkMode ? 'border-gray-800 bg-black/20' : 'border-gray-200 bg-white'}`}>
+                {TOPIC_SORT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => onTopicSortModeChange(option.value)}
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors ${sortButtonStyles(option.value === topicSortMode, darkMode)}`}
+                    aria-pressed={option.value === topicSortMode}
+                    title={option.title}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Topic list */}
-        <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-2 py-1`}>
-          <div className="flex flex-col gap-0.5">
+        <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-2 py-0.5`}>
+          <div className="flex flex-col gap-1">
             {sortedTopics.map(topic => (
               <TopicItem
                 key={topic}

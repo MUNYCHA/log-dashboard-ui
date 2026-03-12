@@ -59,33 +59,39 @@ const LogEntry = ({ log, theme, darkMode, keywords, timestampGen }) => {
   };
 
   return (
-    <div className={`group py-1.5 px-3 rounded ${theme.logEntry} transition-colors`}>
+    <div className={`group rounded-xl border px-3 py-2 ${theme.logEntry} transition-colors`}>
       <div className="flex items-start gap-3">
-        <span
-          className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} text-xs whitespace-nowrap font-mono flex-shrink-0 cursor-default`}
-          title={fullTimestamp}
-        >
-          {relativeTime ? (
-            <>
-              <span>{relativeTime}</span>
-              <span className={`hidden group-hover:inline ml-1.5 opacity-60`}>{fullTimestamp}</span>
-            </>
-          ) : (
-            `[${fullTimestamp}]`
+        <div className="flex w-[86px] flex-shrink-0 flex-col">
+          <span
+            className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} text-[11px] whitespace-nowrap font-mono leading-5 cursor-default`}
+            title={fullTimestamp}
+          >
+            {relativeTime || fullTimestamp}
+          </span>
+          {relativeTime && (
+            <span className={`text-[10px] leading-4 ${darkMode ? 'text-gray-700 group-hover:text-gray-500' : 'text-gray-300 group-hover:text-gray-400'} transition-colors`}>
+              {fullTimestamp}
+            </span>
           )}
-        </span>
+        </div>
 
-        <span className={`${darkMode ? 'text-blue-400' : 'text-blue-600'} text-sm font-medium whitespace-nowrap flex-shrink-0`}>
+        <span className={`inline-flex flex-shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+          darkMode ? 'border-blue-500/20 bg-blue-500/10 text-blue-300' : 'border-blue-200 bg-blue-50 text-blue-700'
+        }`}>
           {serverName}
         </span>
 
-        <span className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm break-all flex-1 min-w-0`}>
+        <span className={`${darkMode ? 'text-gray-200' : 'text-gray-700'} min-w-0 flex-1 break-words text-[13px] leading-6`}>
           {highlightMessage(message, keywords)}
         </span>
 
         <button
           onClick={handleCopy}
-          className={`opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ${theme.textMuted}`}
+          className={`opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 rounded-full border p-1.5 ${
+            darkMode
+              ? 'border-gray-800 bg-black/20 text-gray-500 hover:bg-gray-900 hover:text-gray-300'
+              : 'border-gray-200 bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+          }`}
           title="Copy message"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -6,6 +6,7 @@ import LogPanel from './components/log';
 import config from './config';
 
 export default function App() {
+  const [topicSortMode, setTopicSortMode] = useState('asc');
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [selectedServer, setSelectedServer] = useState(null);
   const [selectedTopic2, setSelectedTopic2] = useState(null);
@@ -140,6 +141,8 @@ export default function App() {
         onTopicSelect={handleTopicSelect}
         topicSearchTerm={topicSearchTerm}
         onTopicSearchChange={setTopicSearchTerm}
+        topicSortMode={topicSortMode}
+        onTopicSortModeChange={setTopicSortMode}
         theme={theme}
         darkMode={darkMode}
         isOpen={sidebarOpen}

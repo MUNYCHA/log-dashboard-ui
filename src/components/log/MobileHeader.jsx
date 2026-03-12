@@ -23,31 +23,38 @@ const MobileHeader = ({
 }) => (
   <>
     <div className="md:hidden">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <button onClick={onOpenSidebar} className={`p-1.5 rounded-md ${theme.textMuted} hover:${theme.text}`} aria-label="Open sidebar">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2">
+          <button onClick={onOpenSidebar} className={`mt-0.5 p-1.5 rounded-lg ${theme.textMuted} hover:${theme.text}`} aria-label="Open sidebar">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <h2 className="text-sm font-semibold truncate max-w-[130px]">
-            {selectedTopic}
-          </h2>
-          <span className={`text-xs font-mono tabular-nums ${theme.textMuted}`}>
-            {displayedLogs?.length || 0}
-          </span>
-          {logRate > 0 && (
-            <span className="inline-flex items-center gap-1 flex-shrink-0">
-              <span className={`text-xs font-mono tabular-nums ${theme.textMuted}`}>
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold">
+              {selectedTopic}
+            </h2>
+            <div className="mt-1.5 flex items-center gap-2 text-[11px]">
+              <span className={`inline-flex items-center rounded-full border px-2 py-1 font-mono tabular-nums ${
+                darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600'
+              }`}>
+                {displayedLogs?.length || 0} logs
+              </span>
+              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 font-mono tabular-nums ${
+                logRate > 0
+                  ? (darkMode ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
+                  : (darkMode ? 'border-gray-800 bg-black/20 text-gray-500' : 'border-gray-200 bg-white text-gray-400')
+              }`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${logRate > 0 ? 'bg-current animate-pulse' : 'bg-current/70'}`} />
                 {logRate}/s
               </span>
-              <HeartbeatLine rate={logRate} darkMode={darkMode} />
-            </span>
-          )}
+              {logRate > 0 && <HeartbeatLine rate={logRate} darkMode={darkMode} />}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
-          <button onClick={onToggleMobileMenu} className={`p-1.5 rounded-md ${theme.textMuted} hover:${theme.text}`}>
+          <button onClick={onToggleMobileMenu} className={`p-1.5 rounded-lg ${theme.textMuted} hover:${theme.text}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
             </svg>
@@ -56,11 +63,11 @@ const MobileHeader = ({
       </div>
 
       {isMobileMenuOpen && (
-        <div className={`space-y-2 mb-3 p-2 rounded-md ${darkMode ? 'bg-[#161b22]' : 'bg-gray-50'} ${mobileMenuReady ? '' : 'pointer-events-none'}`}>
+        <div className={`mb-3 space-y-2.5 rounded-xl border p-2.5 ${darkMode ? 'border-gray-800 bg-[#11161d]' : 'border-gray-200 bg-gray-50'} ${mobileMenuReady ? '' : 'pointer-events-none'}`}>
           <div className="relative w-full">
             <button
               onClick={() => onToggleMobileServerDropdown()}
-              className={`w-full px-3 py-2 rounded-md ${theme.input} text-sm flex items-center justify-between`}
+              className={`w-full px-3 py-2 rounded-xl ${theme.input} text-sm flex items-center justify-between`}
               type="button"
             >
               <span className="truncate">{selectedServer || "All Servers"}</span>
@@ -81,7 +88,7 @@ const MobileHeader = ({
           <div className="relative w-full">
             <button
               onClick={() => selectedServer && onToggleMobilePathDropdown()}
-              className={`w-full px-3 py-2 rounded-md ${theme.input} text-sm flex items-center justify-between
+              className={`w-full px-3 py-2 rounded-xl ${theme.input} text-sm flex items-center justify-between
                         ${!selectedServer ? "opacity-50" : ""}`}
               type="button" disabled={!selectedServer}
             >
@@ -102,13 +109,17 @@ const MobileHeader = ({
             )}
           </div>
 
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {TIME_RANGES.map((r) => (
               <button
                 key={r.value}
                 onClick={() => onTimeRangeChange(r.value)}
-                className={`px-2.5 py-1 rounded-md text-xs transition-colors ${
-                  timeRange === r.value ? accentActive : `${theme.input} ${theme.textMuted}`
+                className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+                  timeRange === r.value
+                    ? accentActive
+                    : darkMode
+                      ? 'border-gray-800 bg-black/20 text-gray-500'
+                      : 'border-gray-200 bg-white text-gray-500'
                 }`}
               >
                 {r.label}
@@ -116,34 +127,34 @@ const MobileHeader = ({
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div className="grid grid-cols-2 gap-2 pt-1">
             <button
               onClick={onTogglePause}
-              className={`flex-1 p-2 rounded-md text-sm ${isPaused ? accentPaused : theme.input}`}
+              className={`p-2 rounded-xl text-sm ${isPaused ? accentPaused : theme.input}`}
             >
               {isPaused ? 'Resume' : 'Pause'}
             </button>
             <button
               onClick={onToggleAutoScroll}
-              className={`flex-1 p-2 rounded-md text-sm ${autoScroll ? accentActive : theme.input}`}
+              className={`p-2 rounded-xl text-sm ${autoScroll ? accentActive : theme.input}`}
             >
               Auto-scroll
             </button>
             <button
               onClick={() => onExport('json')}
-              className={`flex-1 p-2 rounded-md ${theme.input} text-sm`}
+              className={`p-2 rounded-xl ${theme.input} text-sm`}
             >
               JSON
             </button>
             <button
               onClick={() => onExport('csv')}
-              className={`flex-1 p-2 rounded-md ${theme.input} text-sm`}
+              className={`p-2 rounded-xl ${theme.input} text-sm`}
             >
               CSV
             </button>
             <button
               onClick={() => onClearLogs(selectedTopic)}
-              className={`flex-1 p-2 rounded-md ${theme.input} text-sm ${darkMode ? 'hover:text-red-400' : 'hover:text-red-500'}`}
+              className={`col-span-2 p-2 rounded-xl ${theme.input} text-sm ${darkMode ? 'hover:text-red-400' : 'hover:text-red-500'}`}
             >
               Clear
             </button>
@@ -157,7 +168,7 @@ const MobileHeader = ({
         <input
           type="text"
           placeholder={isRegex ? "Regex pattern..." : "Search logs..."}
-          className={`w-full ${theme.input} rounded-md px-3 py-2 pr-16 text-sm focus:outline-none
+          className={`w-full ${theme.input} rounded-xl px-3 py-2 pr-16 text-sm focus:outline-none
                    focus:ring-1 ${regexError ? 'focus:ring-red-500' : 'focus:ring-blue-500'} transition-colors`}
           value={logSearchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -165,8 +176,10 @@ const MobileHeader = ({
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           <button
             onClick={onToggleRegex}
-            className={`text-xs px-1.5 py-0.5 rounded font-mono transition-colors ${
-              isRegex ? (darkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-50 text-blue-600') : theme.textMuted
+            className={`rounded-full border px-2 py-0.5 text-[11px] font-mono transition-colors ${
+              isRegex
+                ? (darkMode ? 'border-blue-500/20 bg-blue-500/10 text-blue-300' : 'border-blue-200 bg-blue-50 text-blue-700')
+                : darkMode ? 'border-gray-800 bg-black/20 text-gray-500' : 'border-gray-200 bg-white text-gray-500'
             }`}
             title="Toggle regex"
           >.*</button>
