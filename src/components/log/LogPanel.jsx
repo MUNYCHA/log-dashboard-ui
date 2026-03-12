@@ -12,11 +12,12 @@ import EmptyState from "./EmptyState";
 import ScrollButtons from "./ScrollButtons";
 import LogEntry from "./LogEntry";
 
-const ESTIMATED_LOG_HEIGHT = 52; // px — rough estimate, virtualizer measures actual
+const ESTIMATED_LOG_HEIGHT = 96;
 
 const VirtualLogList = React.memo(({
   displayedLogs, isPaused, accent, theme, darkMode, keywords, timestampGen,
-  selectedServer, selectedPath, timeRange,
+  selectedServer, selectedPath,
+  emptyState, onClearFilters, unseenCount, onResumeLive,
   scrollRef, atTop, atBottom, scrollToTop, scrollToBottom,
   handleClearPath, handleClearServer, markUserScrollIntent,
 }) => {
@@ -25,7 +26,7 @@ const VirtualLogList = React.memo(({
     count: displayedLogs.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => ESTIMATED_LOG_HEIGHT,
-    overscan: 20,
+    overscan: 10,
   });
 
   return (
@@ -38,11 +39,26 @@ const VirtualLogList = React.memo(({
         onPointerDown={markUserScrollIntent}
       >
         <div className="p-2 sm:p-3 md:p-4">
-          {isPaused && (
-            <div className={`text-center py-1.5 px-3 rounded-md text-xs ${accent.paused} mb-2`}>
-              Paused — display frozen, new logs still incoming
+          {(isPaused || unseenCount > 0) && (
+            <div className={`mb-3 flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-xs ${
+              isPaused ? accent.paused : accent.active
+            }`}>
+              <span className="min-w-0">
+                {isPaused ? 'Paused. New logs continue buffering in the background.' : `${unseenCount} new logs waiting while live tail is off.`}
+              </span>
+              <button
+                onClick={onResumeLive}
+                className={`rounded-full border px-2.5 py-1 font-medium ${
+                  darkMode
+                    ? 'border-white/10 bg-white/5 text-white hover:bg-white/10'
+                    : 'border-black/10 bg-white/80 text-gray-800 hover:bg-white'
+                }`}
+              >
+                {isPaused ? 'Resume live' : 'Jump to latest'}
+              </button>
             </div>
           )}
+
           {displayedLogs.length > 0 ? (
             <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
               {virtualizer.getVirtualItems().map((virtualRow) => {
@@ -68,19 +84,11 @@ const VirtualLogList = React.memo(({
               })}
             </div>
           ) : (
-            <div className={`flex flex-col items-center justify-center h-48 ${theme.textMuted}`}>
-              <p className="text-sm">No logs to display</p>
-              <p className="text-xs mt-1">
-                {selectedServer && selectedPath
-                  ? `No logs from "${selectedServer}" at "${selectedPath}"`
-                  : selectedServer
-                    ? `No logs from "${selectedServer}"`
-                    : timeRange !== 'all'
-                      ? `No logs in the last ${timeRange}`
-                      : "Waiting for incoming logs..."}
-              </p>
+            <div className={`flex h-48 flex-col items-center justify-center ${theme.textMuted}`}>
+              <p className="text-sm font-medium">{emptyState.title}</p>
+              <p className="mt-1 max-w-md text-center text-xs">{emptyState.description}</p>
               {(selectedServer || selectedPath) && (
-                <div className="flex flex-wrap gap-2 mt-3">
+                <div className="mt-3 flex flex-wrap gap-2">
                   {selectedPath && (
                     <button onClick={handleClearPath} className={`px-2.5 py-1.5 rounded-md ${theme.input} text-xs`}>Clear path</button>
                   )}
@@ -89,14 +97,24 @@ const VirtualLogList = React.memo(({
                   )}
                 </div>
               )}
+              {emptyState.showClearFilters && (
+                <button
+                  onClick={onClearFilters}
+                  className={`mt-3 rounded-md px-2.5 py-1.5 text-xs ${theme.input}`}
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
         </div>
       </div>
 
       <ScrollButtons
-        atTop={atTop} atBottom={atBottom}
-        scrollToTop={scrollToTop} scrollToBottom={scrollToBottom}
+        atTop={atTop}
+        atBottom={atBottom}
+        scrollToTop={scrollToTop}
+        scrollToBottom={scrollToBottom}
         darkMode={darkMode}
       />
     </div>
@@ -136,7 +154,6 @@ const LogPanel = ({
   const [showMobilePathDropdown, setShowMobilePathDropdown] = useState(false);
   const [serverSearchTerm, setServerSearchTerm] = useState("");
   const [pathSearchTerm, setPathSearchTerm] = useState("");
-  // selectedPath is tied to the current topic — auto-clears when topic changes
   const [pathForTopic, setPathForTopic] = useState({ topic: null, path: null });
   const selectedPath = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -146,17 +163,13 @@ const LogPanel = ({
   const [keywordMode, setKeywordMode] = useState('or');
   const [isRegex, setIsRegex] = useState(false);
   const [timeRange, setTimeRange] = useState('all');
-  // Debounced versions of text inputs — only these use a delay before sending to server.
-  // Discrete actions (server select, path select, time range, regex toggle) trigger
-  // the filter useEffect immediately because their state changes aren't debounced.
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
-  // Relative timestamp ticker — uses a generation counter to trigger
-  // re-render without passing a changing `now` value to every LogEntry.
   const [timestampGen, setTimestampGen] = useState(0);
+  const [acknowledgedLogId, setAcknowledgedLogId] = useState(0);
 
   const scrollRef = useRef(null);
   const serverButtonRef = useRef(null);
@@ -164,20 +177,21 @@ const LogPanel = ({
   const exportMenuRef = useRef(null);
   const previousScrollTopRef = useRef(0);
   const userScrollIntentUntilRef = useRef(0);
+  const newestDisplayedLogIdRef = useRef(0);
 
   const markUserScrollIntent = useCallback(() => {
     userScrollIntentUntilRef.current = Date.now() + 800;
   }, []);
 
-  // Delay mobile menu interactivity to prevent fast double-tap from hitting buttons
   useEffect(() => {
     if (!isMobileMenuOpen) return;
     const id = setTimeout(() => setMobileMenuReady(true), 300);
-    return () => { clearTimeout(id); setMobileMenuReady(false); };
+    return () => {
+      clearTimeout(id);
+      setMobileMenuReady(false);
+    };
   }, [isMobileMenuOpen]);
 
-  // Ticker for relative timestamps (every 30s) — bumps generation counter
-  // and updates nowMs for time-range filtering (keeps render pure).
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
     const interval = setInterval(() => {
@@ -187,13 +201,11 @@ const LogPanel = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Refresh nowMs immediately when timeRange changes so the cutoff isn't stale
   const handleTimeRangeChange = useCallback((value) => {
     setTimeRange(value);
     if (value !== 'all') setNowMs(Date.now());
   }, []);
 
-  // Close export menu on outside click
   useEffect(() => {
     const handler = (e) => {
       if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
@@ -204,8 +216,6 @@ const LogPanel = ({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Scroll tracking — update atTop/atBottom indicators only.
-  // Auto-scroll is toggled exclusively via the button, never by scrolling.
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
@@ -218,6 +228,7 @@ const LogPanel = ({
     setAtTop(isNearTop);
     setAtBottom(isNearBottom);
     if (userInitiated && didScrollUp && !isNearBottom) {
+      setAcknowledgedLogId(newestDisplayedLogIdRef.current);
       setAutoScroll(false);
     }
   }, []);
@@ -230,7 +241,6 @@ const LogPanel = ({
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll, selectedTopic]);
 
-  // Re-scroll on container resize (window resize, split view toggle, etc.)
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -243,28 +253,27 @@ const LogPanel = ({
     return () => ro.disconnect();
   }, [autoScroll, isPaused, selectedTopic]);
 
-  // Regex validation — local validation keeps split-view state isolated.
   const regexError = useMemo(() => {
     if (!isRegex || !logSearchTerm) return false;
     if (logSearchTerm.length > 512) return true;
-    try { new RegExp(logSearchTerm); return false; } catch { return true; }
+    try {
+      new RegExp(logSearchTerm);
+      return false;
+    } catch {
+      return true;
+    }
   }, [isRegex, logSearchTerm]);
 
-  // Debounce text search input (300ms) — discrete actions send immediately
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(logSearchTerm), 300);
     return () => clearTimeout(t);
   }, [logSearchTerm]);
 
-  // Debounce keyword input (300ms)
   useEffect(() => {
     const t = setTimeout(() => setDebouncedKeywordInput(keywordInput), 300);
     return () => clearTimeout(t);
   }, [keywordInput]);
 
-  // Send filter to server (debounced for text, immediate for discrete actions).
-  // This is a bandwidth optimization — the client-side filter in filteredLogs
-  // provides instant visual feedback, while this reduces unnecessary traffic.
   useEffect(() => {
     if (!sendFilter) return;
 
@@ -277,23 +286,18 @@ const LogPanel = ({
       search: debouncedSearch || null,
       regex: isRegex,
       keywords: allTerms.length > 0 ? { terms: allTerms, mode: keywordMode } : undefined,
-      timeRange: timeRange,
+      timeRange,
     };
 
     const hasAny = filters.server || filters.path || filters.search || filters.keywords || filters.timeRange !== 'all';
     sendFilter(hasAny ? filters : null, panelId);
   }, [selectedServer, selectedPath, debouncedSearch, isRegex, keywords, debouncedKeywordInput, keywordMode, timeRange, sendFilter, panelId]);
 
-  // Unique servers for selected topic (derived from received logs for dropdown population)
   const serversForSelectedTopic = useMemo(
-    () =>
-      selectedTopic
-        ? [...new Set(topicLogs?.map((l) => l.serverName) || [])].sort()
-        : [],
+    () => selectedTopic ? [...new Set(topicLogs?.map((l) => l.serverName) || [])].sort() : [],
     [selectedTopic, topicLogs],
   );
 
-  // Unique paths for selected server
   const pathsForSelectedServer = useMemo(() => {
     if (!selectedTopic || !topicLogs) return [];
     let logs = topicLogs;
@@ -311,19 +315,13 @@ const LogPanel = ({
     [pathsForSelectedServer, pathSearchTerm],
   );
 
-  // Client-side filter for instant visual feedback on every keystroke.
-  // All filters are applied locally so the UI reacts in real time.
-  // The server-side filter (debounced) reduces bandwidth but is not
-  // relied on for display — this memo is the single source of truth.
   const filteredLogs = useMemo(() => {
     if (!selectedTopic || !topicLogs) return [];
     let logs = topicLogs;
 
-    // Server / path exact match
     if (selectedServer) logs = logs.filter((l) => l.serverName === selectedServer);
     if (selectedPath) logs = logs.filter((l) => l.path === selectedPath);
 
-    // Text search (instant — uses logSearchTerm, not debounced)
     if (logSearchTerm) {
       if (isRegex) {
         try {
@@ -332,7 +330,6 @@ const LogPanel = ({
             re.test(String(l.message ?? '')) || re.test(String(l.serverName ?? '')) || re.test(String(l.path ?? ''))
           );
         } catch {
-          // Invalid regex in progress — show nothing until it's valid
           logs = [];
         }
       } else {
@@ -345,7 +342,6 @@ const LogPanel = ({
       }
     }
 
-    // Keywords (instant — uses live keywordInput, not debounced)
     const pendingKw = keywordInput.trim().toLowerCase();
     const allTerms = [
       ...keywords.map((k) => k.text.toLowerCase()),
@@ -360,7 +356,6 @@ const LogPanel = ({
       });
     }
 
-    // Time range — uses nowMs (updated every 30s via effect) to stay pure
     if (timeRange !== 'all') {
       const ranges = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
       const cutoff = nowMs - (ranges[timeRange] || 0);
@@ -374,10 +369,55 @@ const LogPanel = ({
   }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, isRegex, keywords, keywordInput, keywordMode, timeRange, nowMs]);
 
   const displayedLogs = frozenLogs ?? filteredLogs;
+  const bufferedCount = topicLogs?.length || 0;
+  const hasActiveFilters = Boolean(
+    selectedServer || selectedPath || logSearchTerm || keywords.length > 0 || keywordInput.trim() || timeRange !== 'all',
+  );
+  const newestDisplayedLogId = displayedLogs.length > 0 ? displayedLogs[displayedLogs.length - 1]._id : 0;
+  const unseenCount = displayedLogs.reduce((count, log) => (log._id > acknowledgedLogId ? count + 1 : count), 0);
+  const streamMode = isPaused ? 'Paused' : autoScroll && atBottom ? 'Live tail' : 'Manual review';
 
-  // Wrap togglePause to snapshot/release displayed logs
+  useEffect(() => {
+    newestDisplayedLogIdRef.current = newestDisplayedLogId;
+  }, [newestDisplayedLogId]);
+
+  const emptyState = useMemo(() => {
+    if (hasActiveFilters) {
+      return {
+        title: 'No logs match the current filters',
+        description: 'Adjust or clear filters to return to the live stream for this topic.',
+        showClearFilters: true,
+      };
+    }
+
+    if (bufferedCount === 0 && logRate > 0) {
+      return {
+        title: 'Topic is live. Waiting for local buffer',
+        description: 'The topic is receiving traffic now. The panel will fill as soon as recent entries arrive in the local stream buffer.',
+        showClearFilters: false,
+      };
+    }
+
+    if (bufferedCount === 0) {
+      return {
+        title: 'No logs received for this topic yet',
+        description: 'This topic is known to the dashboard, but no log entries have reached the client buffer yet.',
+        showClearFilters: false,
+      };
+    }
+
+    return {
+      title: 'No recent logs in the current view',
+      description: timeRange !== 'all'
+        ? `There are buffered logs for this topic, but none fall inside the last ${timeRange}.`
+        : 'There are buffered logs for this topic, but none are visible in the current view.',
+      showClearFilters: false,
+    };
+  }, [bufferedCount, hasActiveFilters, logRate, timeRange]);
+
   const handleTogglePause = () => {
     if (!isPaused) {
+      setAcknowledgedLogId(newestDisplayedLogId);
       setFrozenLogs(filteredLogs);
     } else {
       setFrozenLogs(null);
@@ -385,7 +425,6 @@ const LogPanel = ({
     togglePause();
   };
 
-  // Auto-scroll to bottom — uses rAF to avoid blocking the main thread.
   useEffect(() => {
     if (!isPaused && autoScroll && scrollRef.current) {
       const el = scrollRef.current;
@@ -396,7 +435,6 @@ const LogPanel = ({
     }
   }, [filteredLogs, autoScroll, isPaused]);
 
-  // Handlers
   const handleServerSelect = (server) => {
     onServerSelect(server);
     setPathForTopic({ topic: selectedTopic, path: null });
@@ -419,10 +457,20 @@ const LogPanel = ({
 
   const handleClearPath = () => setPathForTopic({ topic: selectedTopic, path: null });
 
+  const clearAllFilters = () => {
+    handleClearServer();
+    handleClearPath();
+    setLogSearchTerm("");
+    setKeywords([]);
+    setKeywordInput('');
+    setIsRegex(false);
+    setTimeRange('all');
+  };
+
   const exportLogs = (format) => {
     const safeTopic = selectedTopic.replace(/[^a-z0-9]/gi, '_');
     const exportNow = new Date();
-    const ts = `${exportNow.getFullYear()}-${String(exportNow.getMonth()+1).padStart(2,'0')}-${String(exportNow.getDate()).padStart(2,'0')}_${String(exportNow.getHours()).padStart(2,'0')}-${String(exportNow.getMinutes()).padStart(2,'0')}-${String(exportNow.getSeconds()).padStart(2,'0')}`;
+    const ts = `${exportNow.getFullYear()}-${String(exportNow.getMonth() + 1).padStart(2, '0')}-${String(exportNow.getDate()).padStart(2, '0')}_${String(exportNow.getHours()).padStart(2, '0')}-${String(exportNow.getMinutes()).padStart(2, '0')}-${String(exportNow.getSeconds()).padStart(2, '0')}`;
     const base = `${safeTopic}_${ts}`;
     if (format === 'json') {
       downloadFile(JSON.stringify(displayedLogs, null, 2), `${base}.json`, 'application/json');
@@ -443,8 +491,10 @@ const LogPanel = ({
       setAtTop(true);
       setAtBottom(false);
     }
+    setAcknowledgedLogId(newestDisplayedLogId);
     setAutoScroll(false);
   };
+
   const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -453,23 +503,34 @@ const LogPanel = ({
       setAtBottom(true);
     }
     setAutoScroll(true);
+    setAcknowledgedLogId(newestDisplayedLogId);
   };
 
   const btn = getButtonStyles(darkMode);
   const accent = getAccentStyles(darkMode);
+  const toggleAutoScroll = () => {
+    if (autoScroll) {
+      setAcknowledgedLogId(newestDisplayedLogId);
+      setAutoScroll(false);
+      return;
+    }
+    scrollToBottom();
+  };
 
-  // ─── Empty state ───────────────────────────────────────────────────────────
   if (!selectedTopic) {
     return (
       <EmptyState
-        theme={theme} darkMode={darkMode}
-        splitView={splitView} isActivePanel={isActivePanel}
-        onSetActive={onSetActive} onClosePanel={onClosePanel} onOpenSidebar={onOpenSidebar}
+        theme={theme}
+        darkMode={darkMode}
+        splitView={splitView}
+        isActivePanel={isActivePanel}
+        onSetActive={onSetActive}
+        onClosePanel={onClosePanel}
+        onOpenSidebar={onOpenSidebar}
       />
     );
   }
 
-  // ─── Main panel ────────────────────────────────────────────────────────────
   return (
     <div
       className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-blue-500/40' : ''}`}
@@ -477,60 +538,101 @@ const LogPanel = ({
     >
       <div className={`px-3 sm:px-4 md:px-5 py-2.5 ${theme.header} flex-shrink-0 relative z-10`}>
         <DesktopHeader
-          selectedTopic={selectedTopic} displayedLogs={displayedLogs}
-          logRate={logRate} darkMode={darkMode} theme={theme}
-          splitView={splitView} isActivePanel={isActivePanel}
-          onSetActive={onSetActive} onClosePanel={onClosePanel} onOpenSplit={onOpenSplit}
-          isPaused={isPaused} onTogglePause={handleTogglePause} btn={btn}
-          showExportMenu={showExportMenu} onToggleExportMenu={() => setShowExportMenu((v) => !v)}
-          exportMenuRef={exportMenuRef} onExport={exportLogs}
+          selectedTopic={selectedTopic}
+          displayedLogs={displayedLogs}
+          logRate={logRate}
+          darkMode={darkMode}
+          theme={theme}
+          splitView={splitView}
+          isActivePanel={isActivePanel}
+          onSetActive={onSetActive}
+          onClosePanel={onClosePanel}
+          onOpenSplit={onOpenSplit}
+          isPaused={isPaused}
+          onTogglePause={handleTogglePause}
+          btn={btn}
+          showExportMenu={showExportMenu}
+          onToggleExportMenu={() => setShowExportMenu((v) => !v)}
+          exportMenuRef={exportMenuRef}
+          onExport={exportLogs}
           onThemeToggle={onThemeToggle}
-          autoScroll={autoScroll} onToggleAutoScroll={() => setAutoScroll(!autoScroll)}
+          autoScroll={autoScroll}
+          onToggleAutoScroll={toggleAutoScroll}
           onClearLogs={onClearLogs}
-          logSearchTerm={logSearchTerm} onSearchChange={setLogSearchTerm}
-          isRegex={isRegex} onToggleRegex={() => setIsRegex((v) => !v)} regexError={regexError}
+          logSearchTerm={logSearchTerm}
+          onSearchChange={setLogSearchTerm}
+          isRegex={isRegex}
+          onToggleRegex={() => setIsRegex((v) => !v)}
+          regexError={regexError}
         />
 
         <MobileHeader
-          selectedTopic={selectedTopic} displayedLogs={displayedLogs}
-          logRate={logRate} darkMode={darkMode} theme={theme}
-          onOpenSidebar={onOpenSidebar} onThemeToggle={onThemeToggle}
+          selectedTopic={selectedTopic}
+          displayedLogs={displayedLogs}
+          logRate={logRate}
+          darkMode={darkMode}
+          theme={theme}
+          onOpenSidebar={onOpenSidebar}
+          onThemeToggle={onThemeToggle}
           isMobileMenuOpen={isMobileMenuOpen}
           onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           mobileMenuReady={mobileMenuReady}
-          isPaused={isPaused} onTogglePause={handleTogglePause}
-          autoScroll={autoScroll} onToggleAutoScroll={() => setAutoScroll(!autoScroll)}
-          onExport={exportLogs} onClearLogs={onClearLogs}
-          logSearchTerm={logSearchTerm} onSearchChange={setLogSearchTerm}
-          isRegex={isRegex} onToggleRegex={() => setIsRegex((v) => !v)} regexError={regexError}
+          isPaused={isPaused}
+          onTogglePause={handleTogglePause}
+          autoScroll={autoScroll}
+          onToggleAutoScroll={toggleAutoScroll}
+          onExport={exportLogs}
+          onClearLogs={onClearLogs}
+          logSearchTerm={logSearchTerm}
+          onSearchChange={setLogSearchTerm}
+          isRegex={isRegex}
+          onToggleRegex={() => setIsRegex((v) => !v)}
+          regexError={regexError}
           showMobileServerDropdown={showMobileServerDropdown}
           onToggleMobileServerDropdown={(v) => setShowMobileServerDropdown(v ?? !showMobileServerDropdown)}
           showMobilePathDropdown={showMobilePathDropdown}
           onToggleMobilePathDropdown={(v) => setShowMobilePathDropdown(v ?? !showMobilePathDropdown)}
-          filteredServers={filteredServers} selectedServer={selectedServer}
-          onServerSelect={handleServerSelect} onClearServer={handleClearServer}
-          serverSearchTerm={serverSearchTerm} onServerSearchChange={setServerSearchTerm}
-          filteredPaths={filteredPaths} selectedPath={selectedPath}
-          onPathSelect={handlePathSelect} onClearPath={handleClearPath}
-          pathSearchTerm={pathSearchTerm} onPathSearchChange={setPathSearchTerm}
-          timeRange={timeRange} onTimeRangeChange={handleTimeRangeChange}
-          accentActive={accent.active} accentPaused={accent.paused}
+          filteredServers={filteredServers}
+          selectedServer={selectedServer}
+          onServerSelect={handleServerSelect}
+          onClearServer={handleClearServer}
+          serverSearchTerm={serverSearchTerm}
+          onServerSearchChange={setServerSearchTerm}
+          filteredPaths={filteredPaths}
+          selectedPath={selectedPath}
+          onPathSelect={handlePathSelect}
+          onClearPath={handleClearPath}
+          pathSearchTerm={pathSearchTerm}
+          onPathSearchChange={setPathSearchTerm}
+          timeRange={timeRange}
+          onTimeRangeChange={handleTimeRangeChange}
+          accentActive={accent.active}
+          accentPaused={accent.paused}
         />
 
         <FilterBar
-          theme={theme} darkMode={darkMode}
-          serverButtonRef={serverButtonRef} pathButtonRef={pathButtonRef}
+          theme={theme}
+          darkMode={darkMode}
+          serverButtonRef={serverButtonRef}
+          pathButtonRef={pathButtonRef}
           showServerDropdown={showServerDropdown}
           onToggleServerDropdown={(v) => setShowServerDropdown(v ?? !showServerDropdown)}
           showPathDropdown={showPathDropdown}
           onTogglePathDropdown={(v) => setShowPathDropdown(v ?? !showPathDropdown)}
-          filteredServers={filteredServers} selectedServer={selectedServer}
-          onServerSelect={handleServerSelect} onClearServer={handleClearServer}
-          serverSearchTerm={serverSearchTerm} onServerSearchChange={setServerSearchTerm}
-          filteredPaths={filteredPaths} selectedPath={selectedPath}
-          onPathSelect={handlePathSelect} onClearPath={handleClearPath}
-          pathSearchTerm={pathSearchTerm} onPathSearchChange={setPathSearchTerm}
-          timeRange={timeRange} onTimeRangeChange={handleTimeRangeChange}
+          filteredServers={filteredServers}
+          selectedServer={selectedServer}
+          onServerSelect={handleServerSelect}
+          onClearServer={handleClearServer}
+          serverSearchTerm={serverSearchTerm}
+          onServerSearchChange={setServerSearchTerm}
+          filteredPaths={filteredPaths}
+          selectedPath={selectedPath}
+          onPathSelect={handlePathSelect}
+          onClearPath={handleClearPath}
+          pathSearchTerm={pathSearchTerm}
+          onPathSearchChange={setPathSearchTerm}
+          timeRange={timeRange}
+          onTimeRangeChange={handleTimeRangeChange}
           accentActive={accent.active}
         />
 
@@ -541,7 +643,10 @@ const LogPanel = ({
             onInputChange={setKeywordInput}
             onAdd={(kw) => setKeywords((prev) => [...prev, kw])}
             onRemove={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
-            onClearAll={() => { setKeywords([]); setKeywordInput(''); }}
+            onClearAll={() => {
+              setKeywords([]);
+              setKeywordInput('');
+            }}
             mode={keywordMode}
             onModeChange={setKeywordMode}
             theme={theme}
@@ -550,15 +655,19 @@ const LogPanel = ({
         </div>
 
         <ActiveFilters
-          selectedServer={selectedServer} selectedPath={selectedPath}
-          logSearchTerm={logSearchTerm} keywords={keywords} isRegex={isRegex}
-          darkMode={darkMode} theme={theme}
-          onClearServer={handleClearServer} onClearPath={handleClearPath}
+          selectedServer={selectedServer}
+          selectedPath={selectedPath}
+          logSearchTerm={logSearchTerm}
+          keywords={keywords}
+          isRegex={isRegex}
+          darkMode={darkMode}
+          theme={theme}
+          onClearServer={handleClearServer}
+          onClearPath={handleClearPath}
           onClearSearch={() => setLogSearchTerm("")}
         />
       </div>
 
-      {/* ── Logs Area ──────────────────────────────────────────────────────── */}
       <VirtualLogList
         displayedLogs={displayedLogs}
         isPaused={isPaused}
@@ -569,7 +678,13 @@ const LogPanel = ({
         timestampGen={timestampGen}
         selectedServer={selectedServer}
         selectedPath={selectedPath}
-        timeRange={timeRange}
+        emptyState={emptyState}
+        onClearFilters={clearAllFilters}
+        unseenCount={streamMode === 'Live tail' ? 0 : unseenCount}
+        onResumeLive={() => {
+          if (isPaused) handleTogglePause();
+          scrollToBottom();
+        }}
         scrollRef={scrollRef}
         atTop={atTop}
         atBottom={atBottom}
@@ -580,12 +695,22 @@ const LogPanel = ({
         markUserScrollIntent={markUserScrollIntent}
       />
 
-      {/* ── Status Bar ─────────────────────────────────────────────────────── */}
       <StatusBar
-        isConnected={isConnected} isReconnecting={isReconnecting} isPaused={isPaused}
-        selectedServer={selectedServer} selectedPath={selectedPath}
-        logRate={logRate} darkMode={darkMode} theme={theme}
-        onClearServer={handleClearServer} onClearPath={handleClearPath}
+        isConnected={isConnected}
+        isReconnecting={isReconnecting}
+        isPaused={isPaused}
+        selectedServer={selectedServer}
+        selectedPath={selectedPath}
+        logRate={logRate}
+        darkMode={darkMode}
+        theme={theme}
+        streamMode={streamMode}
+        visibleCount={displayedLogs.length}
+        bufferedCount={bufferedCount}
+        unseenCount={streamMode === 'Live tail' ? 0 : unseenCount}
+        hasActiveFilters={hasActiveFilters}
+        onClearServer={handleClearServer}
+        onClearPath={handleClearPath}
       />
     </div>
   );

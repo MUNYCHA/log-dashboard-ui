@@ -33,7 +33,7 @@ const DesktopHeader = ({
           <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-mono tabular-nums ${
             darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600'
           }`}>
-            {displayedLogs?.length || 0} logs
+            {displayedLogs?.length || 0} recent logs
           </span>
           <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-mono tabular-nums ${
             logRate > 0

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import config from '../config';
 
 const FLUSH_INTERVAL_MS = 150;  // batch log state updates — reduces re-renders dramatically
-const SIDEBAR_LOG_CAP = 50;
+const SIDEBAR_LOG_CAP = 100;
 const isValidTopicList = (topics) =>
   Array.isArray(topics) && topics.every((topic) => typeof topic === 'string' && topic.trim() !== '');
 
@@ -68,6 +68,9 @@ export const useWebSocket = (url, viewedTopics) => {
   const activeFilterRef = useRef(null); // last filter sent — resend on reconnect
   const viewedTopicsRef = useRef(new Set());
   const nextLogIdRef = useRef(1);
+  const lastLogAtRef = useRef({});
+  const statsIntervalMsRef = useRef(2000);
+  const lastRateAtRef = useRef({});
 
   // Keep viewed topics ref in sync (avoids stale closures in flush)
   useEffect(() => {
@@ -107,7 +110,29 @@ export const useWebSocket = (url, viewedTopics) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Log rates are now provided by server-side stats messages (no client-side counting needed)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+
+      setLogRates((prev) => {
+        let changed = false;
+        const next = { ...prev };
+
+        for (const [topic, rate] of Object.entries(prev)) {
+          if (rate <= 0) continue;
+          const lastRateAt = lastRateAtRef.current[topic];
+          if (!lastRateAt || now - lastRateAt >= statsIntervalMsRef.current * 2) {
+            next[topic] = 0;
+            changed = true;
+          }
+        }
+
+        return changed ? next : prev;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // WebSocket with auto-reconnect (exponential backoff, max 30s)
   useEffect(() => {
@@ -136,6 +161,17 @@ export const useWebSocket = (url, viewedTopics) => {
       socket.onclose = () => {
         if (cancelled) return;
         setIsConnected(false);
+        setLogRates((prev) => {
+          let changed = false;
+          const next = {};
+
+          for (const [topic, rate] of Object.entries(prev)) {
+            next[topic] = 0;
+            if (rate !== 0) changed = true;
+          }
+
+          return changed ? next : prev;
+        });
         if (reconnectTimerRef.current) return;
         setIsReconnecting(true);
         const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
@@ -176,19 +212,22 @@ export const useWebSocket = (url, viewedTopics) => {
 
         if (data.type === 'stats') {
           if (!data.topics || typeof data.topics !== 'object') return;
-          const intervalSec = (data.intervalMs || 2000) / 1000;
+          statsIntervalMsRef.current = Number(data.intervalMs) > 0 ? Number(data.intervalMs) : 2000;
+          const intervalSec = statsIntervalMsRef.current / 1000;
           const rates = {};
           const servers = {};
+          const now = Date.now();
           for (const [topic, info] of Object.entries(data.topics)) {
             if (!info || typeof info !== 'object') continue;
             const rate = Number(info.rate);
             rates[topic] = Number.isFinite(rate) ? +(rate / intervalSec).toFixed(1) : 0;
+            lastRateAtRef.current[topic] = now;
             servers[topic] = Array.isArray(info.servers)
               ? info.servers.filter((server) => typeof server === 'string')
               : [];
           }
-          setLogRates(rates);
-          setTopicServers(servers);
+          setLogRates((prev) => ({ ...prev, ...rates }));
+          setTopicServers((prev) => ({ ...prev, ...servers }));
           return;
         }
 
@@ -215,6 +254,7 @@ export const useWebSocket = (url, viewedTopics) => {
         for (const rawEvent of events) {
           const log = normalizeLogEvent(rawEvent, nextLogIdRef.current++);
           if (!log) continue;
+          lastLogAtRef.current[log.topic] = Date.now();
 
           const topicCount = pendingCountRef.current[log.topic] || 0;
           if (topicCount < config.ws.rawBufferPerTopic) {
@@ -246,7 +286,17 @@ export const useWebSocket = (url, viewedTopics) => {
     // Drain any queued logs for this topic so they don't reappear on the next flush
     pendingRef.current = pendingRef.current.filter((log) => log.topic !== topic);
     pendingCountRef.current[topic] = 0;
+    delete lastLogAtRef.current[topic];
     setLogsByTopic((prev) => ({ ...prev, [topic]: [] }));
+  }, []);
+
+  const trimTopicBuffer = useCallback((topic, cap = SIDEBAR_LOG_CAP) => {
+    if (!topic || cap < 0) return;
+    setLogsByTopic((prev) => {
+      const existing = prev[topic];
+      if (!Array.isArray(existing) || existing.length <= cap) return prev;
+      return { ...prev, [topic]: existing.slice(0, cap) };
+    });
   }, []);
 
   const subscribe = useCallback((topicList) => {
@@ -304,5 +354,5 @@ export const useWebSocket = (url, viewedTopics) => {
     }
   }, []);
 
-  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, topicServers, subscribe, sendFilter };
+  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, trimTopicBuffer, logRates, topicServers, subscribe, sendFilter };
 };

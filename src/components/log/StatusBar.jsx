@@ -2,9 +2,10 @@ import React from 'react';
 import { getShortPath } from './constants';
 
 const StatusBar = ({
-  isConnected, isReconnecting, isPaused,
+  isConnected, isReconnecting,
   selectedServer, selectedPath,
   logRate, darkMode, theme,
+  streamMode, visibleCount, bufferedCount, unseenCount, hasActiveFilters,
   onClearServer, onClearPath,
 }) => {
   const connectionTone = isConnected
@@ -12,9 +13,14 @@ const StatusBar = ({
     : isReconnecting
       ? (darkMode ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700')
       : (darkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700');
+  const modeTone = streamMode === 'Live tail'
+    ? (darkMode ? 'border-blue-500/25 bg-blue-500/10 text-blue-300' : 'border-blue-200 bg-blue-50 text-blue-700')
+    : streamMode === 'Paused'
+      ? (darkMode ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700')
+      : (darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600');
 
   return (
-    <div className={`px-3 sm:px-4 md:px-5 py-2 ${theme.statusBar} text-xs ${theme.textMuted} flex items-center justify-between gap-3 flex-shrink-0`}>
+    <div className={`px-3 sm:px-4 md:px-5 py-2 ${theme.statusBar} text-xs ${theme.textMuted} flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:gap-3 flex-shrink-0`}>
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium ${connectionTone}`}>
           <span className={`h-2 w-2 rounded-full ${
@@ -33,11 +39,35 @@ const StatusBar = ({
           {logRate} logs/s
         </span>
 
-        {isPaused && (
-          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-medium ${
-            darkMode ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700'
+        <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-medium ${modeTone}`}>
+          {streamMode}
+        </span>
+
+        <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-mono tabular-nums ${
+          darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600'
+        }`}>
+          {visibleCount} visible
+        </span>
+
+        <span className={`hidden sm:inline-flex items-center rounded-full border px-2.5 py-1 font-mono tabular-nums ${
+          darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600'
+        }`}>
+          {bufferedCount} buffered
+        </span>
+
+        {unseenCount > 0 && (
+          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-mono tabular-nums ${
+            darkMode ? 'border-blue-500/25 bg-blue-500/10 text-blue-300' : 'border-blue-200 bg-blue-50 text-blue-700'
           }`}>
-            Paused
+            {unseenCount} new
+          </span>
+        )}
+
+        {hasActiveFilters && (
+          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-medium ${
+            darkMode ? 'border-violet-500/20 bg-violet-500/10 text-violet-300' : 'border-violet-200 bg-violet-50 text-violet-700'
+          }`}>
+            Filtered
           </span>
         )}
 
@@ -79,10 +109,6 @@ const StatusBar = ({
           </button>
         )}
       </div>
-
-      <span className={`text-xs font-mono tabular-nums whitespace-nowrap ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-        {new Date().toLocaleTimeString()}
-      </span>
     </div>
   );
 };

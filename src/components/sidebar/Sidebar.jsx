@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const TOPIC_SORT_OPTIONS = [
-  { value: 'activity', label: 'By log rate' },
+  { value: 'activity', label: 'Active' },
   { value: 'asc', label: 'A to Z' },
   { value: 'desc', label: 'Z to A' },
 ];
 
-const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, serverCount, darkMode }) => {
+const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkMode }) => {
   const isActive = logRate > 0;
   const itemTone = isSelected
     ? (darkMode
@@ -15,10 +15,6 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, serve
     : (darkMode
       ? 'border-gray-900 bg-[#06090f] text-gray-200 hover:border-gray-800 hover:bg-[#0b1220]'
       : 'border-gray-200 bg-white/90 text-gray-700 hover:border-gray-300 hover:bg-white');
-  const badgeTone = isActive
-    ? (darkMode ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
-    : (darkMode ? 'border-gray-800 bg-black/20 text-gray-500' : 'border-gray-200 bg-white text-gray-400');
-
   return (
     <button
       onClick={() => onTopicSelect(topic)}
@@ -33,32 +29,9 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, serve
         />
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <span className="block truncate text-[13px] font-semibold tracking-[0.01em] md:text-sm">
-                {topic}
-              </span>
-              {serverCount > 0 && (
-                <div className={`mt-0.5 inline-flex items-center gap-1 text-[10px] md:text-[11px] ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                  <svg className="h-3 w-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 12h14M5 12a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2M5 12a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2"
-                    />
-                  </svg>
-                  <span>{serverCount}</span>
-                </div>
-              )}
-            </div>
-
-            <span className={`inline-flex flex-shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-mono tabular-nums md:px-2 md:py-1 md:text-[11px] ${badgeTone}`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-current' : 'bg-current/70'}`} />
-              {logRate > 0 ? `${logRate}/s` : 'idle'}
-            </span>
-          </div>
-
+          <span className="block truncate text-[13px] font-semibold tracking-[0.01em] md:text-sm">
+            {topic}
+          </span>
         </div>
       </div>
     </button>
@@ -78,7 +51,6 @@ const Sidebar = ({
   isOpen,
   onClose,
   logRates,
-  topicServers,
   collapsed,
   onCollapse,
 }) => {
@@ -321,7 +293,6 @@ const Sidebar = ({
                 isSelected={selectedTopic === topic}
                 onTopicSelect={onTopicSelect}
                 logRate={logRates?.[topic] || 0}
-                serverCount={(topicServers?.[topic] || []).length}
                 darkMode={darkMode}
               />
             ))}

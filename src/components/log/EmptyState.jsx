@@ -31,13 +31,13 @@ const EmptyState = ({
       <span className={`ml-3 text-sm ${theme.textMuted}`}>Select a topic</span>
     </div>
     <div className={`flex-1 flex items-center justify-center ${theme.textMuted}`}>
-      <div className="text-center px-4">
+      <div className="max-w-md text-center px-4">
         <svg className="w-10 h-10 mb-3 mx-auto opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <p className="text-sm font-medium">Select a topic to view logs</p>
-        <p className="text-xs mt-1">Choose from the sidebar</p>
+        <p className="text-sm font-medium">Select a topic to start monitoring</p>
+        <p className="text-xs mt-1">Topics stay live in the sidebar. Open one to inspect its recent buffered stream.</p>
         <button onClick={onOpenSidebar} className={`md:hidden mt-3 px-3 py-1.5 rounded-md ${theme.input} text-sm`}>
           Open Topics
         </button>
