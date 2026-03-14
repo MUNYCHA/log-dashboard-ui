@@ -61,6 +61,9 @@ export default function App() {
 
   // ── Stable callbacks (useCallback prevents new refs every render) ──────
   const handleTopicSelect = useCallback((topic) => {
+    setIsPaused1(false);
+    setIsPaused2(false);
+
     if (splitViewRef.current && activePanelRef.current === 2) {
       const previousTopic = selectedTopic2Ref.current;
       if (previousTopic && previousTopic !== topic) {
@@ -68,7 +71,6 @@ export default function App() {
       }
       setSelectedTopic2(topic);
       setSelectedServer2(null);
-      setIsPaused2(false);
     } else {
       const previousTopic = selectedTopic1Ref.current;
       if (previousTopic && previousTopic !== topic) {
@@ -76,7 +78,6 @@ export default function App() {
       }
       setSelectedTopic(topic);
       setSelectedServer(null);
-      setIsPaused1(false);
     }
     // Clear server-side filters for the active panel (start fresh)
     const pid = splitViewRef.current && activePanelRef.current === 2 ? 2 : 1;
@@ -204,3 +205,4 @@ export default function App() {
     </div>
   );
 }
+
