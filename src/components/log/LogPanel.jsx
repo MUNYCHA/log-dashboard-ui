@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { KeywordFilter } from "../filters";
-import { downloadFile, getButtonStyles, getAccentStyles } from "./constants";
+import { downloadFile, getButtonStyles } from "./constants";
 import config from "../../config";
 import DesktopHeader from "./DesktopHeader";
 import MobileHeader from "./MobileHeader";
@@ -15,9 +15,9 @@ import LogEntry from "./LogEntry";
 const ESTIMATED_LOG_HEIGHT = 96;
 
 const VirtualLogList = React.memo(({
-  displayedLogs, isPaused, accent, theme, darkMode, keywords, timestampGen,
+  displayedLogs, isPaused, theme, darkMode, keywords, timestampGen,
   selectedServer, selectedPath,
-  emptyState, onClearFilters, unseenCount, onResumeLive,
+  emptyState, onClearFilters, onResumeLive,
   scrollRef, atTop, atBottom, scrollToTop, scrollToBottom,
   handleClearPath, handleClearServer, markUserScrollIntent,
 }) => {
@@ -31,6 +31,12 @@ const VirtualLogList = React.memo(({
 
   return (
     <div className="flex-1 relative overflow-hidden">
+      {/* Top fade overlay */}
+      <div className={`absolute top-0 left-0 right-0 h-8 z-[1] pointer-events-none ${
+        darkMode
+          ? 'bg-gradient-to-b from-[#111111] to-transparent'
+          : 'bg-gradient-to-b from-white to-transparent'
+      }`} />
       <div
         className="absolute inset-0 overflow-auto font-mono text-sm"
         ref={scrollRef}
@@ -38,23 +44,23 @@ const VirtualLogList = React.memo(({
         onTouchMove={markUserScrollIntent}
         onPointerDown={markUserScrollIntent}
       >
-        <div className="p-2 sm:p-3 md:p-4">
-          {(isPaused || unseenCount > 0) && (
-            <div className={`mb-3 flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-xs ${
-              isPaused ? accent.paused : accent.active
+        <div>
+          {isPaused && (
+            <div className={`flex items-center justify-between gap-3 px-3 py-2 text-xs border-b ${
+              darkMode ? 'border-[#222] bg-[#141414] text-gray-400' : 'border-gray-100 bg-gray-50 text-gray-500'
             }`}>
-              <span className="min-w-0">
-                {isPaused ? 'Paused. New logs continue buffering in the background.' : `${unseenCount} new logs waiting while live tail is off.`}
+              <span className="min-w-0 font-mono">
+                Paused - logs continue buffering.
               </span>
               <button
                 onClick={onResumeLive}
-                className={`rounded-full border px-2.5 py-1 font-medium ${
+                className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${
                   darkMode
-                    ? 'border-white/10 bg-white/5 text-white hover:bg-white/10'
-                    : 'border-black/10 bg-white/80 text-gray-800 hover:bg-white'
+                    ? 'bg-[#1a1a1a] text-gray-300 hover:text-white'
+                    : 'bg-white text-gray-600 hover:text-gray-900'
                 }`}
               >
-                {isPaused ? 'Resume live' : 'Jump to latest'}
+                Resume
               </button>
             </div>
           )}
@@ -76,9 +82,7 @@ const VirtualLogList = React.memo(({
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
-                    <div className="py-1">
-                      <LogEntry log={log} theme={theme} darkMode={darkMode} keywords={keywords} timestampGen={timestampGen} />
-                    </div>
+                    <LogEntry log={log} theme={theme} darkMode={darkMode} keywords={keywords} timestampGen={timestampGen} />
                   </div>
                 );
               })}
@@ -169,7 +173,6 @@ const LogPanel = ({
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
   const [timestampGen, setTimestampGen] = useState(0);
-  const [acknowledgedLogId, setAcknowledgedLogId] = useState(0);
 
   const scrollRef = useRef(null);
   const serverButtonRef = useRef(null);
@@ -177,7 +180,6 @@ const LogPanel = ({
   const exportMenuRef = useRef(null);
   const previousScrollTopRef = useRef(0);
   const userScrollIntentUntilRef = useRef(0);
-  const newestDisplayedLogIdRef = useRef(0);
 
   const markUserScrollIntent = useCallback(() => {
     userScrollIntentUntilRef.current = Date.now() + 800;
@@ -228,7 +230,6 @@ const LogPanel = ({
     setAtTop(isNearTop);
     setAtBottom(isNearBottom);
     if (userInitiated && didScrollUp && !isNearBottom) {
-      setAcknowledgedLogId(newestDisplayedLogIdRef.current);
       setAutoScroll(false);
     }
   }, []);
@@ -373,13 +374,7 @@ const LogPanel = ({
   const hasActiveFilters = Boolean(
     selectedServer || selectedPath || logSearchTerm || keywords.length > 0 || keywordInput.trim() || timeRange !== 'all',
   );
-  const newestDisplayedLogId = displayedLogs.length > 0 ? displayedLogs[displayedLogs.length - 1]._id : 0;
-  const unseenCount = displayedLogs.reduce((count, log) => (log._id > acknowledgedLogId ? count + 1 : count), 0);
   const streamMode = isPaused ? 'Paused' : autoScroll && atBottom ? 'Live tail' : 'Manual review';
-
-  useEffect(() => {
-    newestDisplayedLogIdRef.current = newestDisplayedLogId;
-  }, [newestDisplayedLogId]);
 
   const emptyState = useMemo(() => {
     if (hasActiveFilters) {
@@ -417,7 +412,6 @@ const LogPanel = ({
 
   const handleTogglePause = () => {
     if (!isPaused) {
-      setAcknowledgedLogId(newestDisplayedLogId);
       setFrozenLogs(filteredLogs);
     } else {
       setFrozenLogs(null);
@@ -491,7 +485,6 @@ const LogPanel = ({
       setAtTop(true);
       setAtBottom(false);
     }
-    setAcknowledgedLogId(newestDisplayedLogId);
     setAutoScroll(false);
   };
 
@@ -503,14 +496,11 @@ const LogPanel = ({
       setAtBottom(true);
     }
     setAutoScroll(true);
-    setAcknowledgedLogId(newestDisplayedLogId);
   };
 
   const btn = getButtonStyles(darkMode);
-  const accent = getAccentStyles(darkMode);
   const toggleAutoScroll = () => {
     if (autoScroll) {
-      setAcknowledgedLogId(newestDisplayedLogId);
       setAutoScroll(false);
       return;
     }
@@ -536,7 +526,7 @@ const LogPanel = ({
       className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-blue-500/40' : ''}`}
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
-      <div className={`px-3 sm:px-4 md:px-5 py-2.5 ${theme.header} flex-shrink-0 relative z-10`}>
+      <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.header} flex-shrink-0 relative z-10`}>
         <DesktopHeader
           selectedTopic={selectedTopic}
           displayedLogs={displayedLogs}
@@ -606,8 +596,6 @@ const LogPanel = ({
           onPathSearchChange={setPathSearchTerm}
           timeRange={timeRange}
           onTimeRangeChange={handleTimeRangeChange}
-          accentActive={accent.active}
-          accentPaused={accent.paused}
         />
 
         <FilterBar
@@ -633,10 +621,9 @@ const LogPanel = ({
           onPathSearchChange={setPathSearchTerm}
           timeRange={timeRange}
           onTimeRangeChange={handleTimeRangeChange}
-          accentActive={accent.active}
         />
 
-        <div className="mt-2">
+        <div className="mt-2.5">
           <KeywordFilter
             keywords={keywords}
             inputValue={keywordInput}
@@ -671,7 +658,6 @@ const LogPanel = ({
       <VirtualLogList
         displayedLogs={displayedLogs}
         isPaused={isPaused}
-        accent={accent}
         theme={theme}
         darkMode={darkMode}
         keywords={keywords}
@@ -680,7 +666,6 @@ const LogPanel = ({
         selectedPath={selectedPath}
         emptyState={emptyState}
         onClearFilters={clearAllFilters}
-        unseenCount={streamMode === 'Live tail' ? 0 : unseenCount}
         onResumeLive={() => {
           if (isPaused) handleTogglePause();
           scrollToBottom();
@@ -707,7 +692,6 @@ const LogPanel = ({
         streamMode={streamMode}
         visibleCount={displayedLogs.length}
         bufferedCount={bufferedCount}
-        unseenCount={streamMode === 'Live tail' ? 0 : unseenCount}
         hasActiveFilters={hasActiveFilters}
         onClearServer={handleClearServer}
         onClearPath={handleClearPath}
@@ -717,3 +701,4 @@ const LogPanel = ({
 };
 
 export default React.memo(LogPanel);
+

@@ -5,112 +5,100 @@ const StatusBar = ({
   isConnected, isReconnecting,
   selectedServer, selectedPath,
   logRate, darkMode, theme,
-  streamMode, visibleCount, bufferedCount, unseenCount, hasActiveFilters,
+  streamMode, visibleCount, bufferedCount, hasActiveFilters,
   onClearServer, onClearPath,
 }) => {
-  const connectionTone = isConnected
-    ? (darkMode ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
+  const dotColor = isConnected
+    ? 'bg-green-500'
     : isReconnecting
-      ? (darkMode ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700')
-      : (darkMode ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700');
-  const modeTone = streamMode === 'Live tail'
-    ? (darkMode ? 'border-blue-500/25 bg-blue-500/10 text-blue-300' : 'border-blue-200 bg-blue-50 text-blue-700')
-    : streamMode === 'Paused'
-      ? (darkMode ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700')
-      : (darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600');
+      ? 'bg-yellow-500 animate-pulse'
+      : 'bg-red-500';
+  const connectionLabel = isConnected ? 'Connected' : isReconnecting ? 'Reconnecting' : 'Disconnected';
+
+  const sep = darkMode ? 'text-[#333]' : 'text-gray-300';
 
   return (
-    <div className={`px-3 sm:px-4 md:px-5 py-2 ${theme.statusBar} text-xs ${theme.textMuted} flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:gap-3 flex-shrink-0`}>
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium ${connectionTone}`}>
-          <span className={`h-2 w-2 rounded-full ${
-            isConnected
-              ? 'bg-current animate-pulse'
-              : isReconnecting
-                ? 'bg-current animate-pulse'
-                : 'bg-current'
-          }`} />
-          {isConnected ? 'Connected' : isReconnecting ? 'Reconnecting' : 'Disconnected'}
-        </span>
+    <div className={`px-3 sm:px-4 py-1.5 ${theme.statusBar} text-[11px] font-mono flex items-center gap-0 flex-shrink-0 overflow-x-auto`}>
+      <span className="inline-flex items-center gap-1.5 px-2">
+        <span className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
+        <span className={theme.textMuted}>{connectionLabel}</span>
+      </span>
 
-        <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-mono tabular-nums ${
-          darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600'
-        }`}>
-          {logRate} logs/s
-        </span>
+      <span className={sep}>|</span>
 
-        <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-medium ${modeTone}`}>
-          {streamMode}
-        </span>
+      <span className={`px-2 tabular-nums ${theme.textMuted}`}>
+        {logRate}/s
+      </span>
 
-        <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-mono tabular-nums ${
-          darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600'
-        }`}>
-          {visibleCount} visible
-        </span>
+      <span className={sep}>|</span>
 
-        <span className={`hidden sm:inline-flex items-center rounded-full border px-2.5 py-1 font-mono tabular-nums ${
-          darkMode ? 'border-gray-800 bg-black/20 text-gray-300' : 'border-gray-200 bg-white text-gray-600'
-        }`}>
-          {bufferedCount} buffered
-        </span>
+      <span className={`px-2 ${
+        streamMode === 'Live tail'
+          ? (darkMode ? 'text-blue-400' : 'text-blue-600')
+          : streamMode === 'Paused'
+            ? (darkMode ? 'text-yellow-400' : 'text-yellow-600')
+            : theme.textMuted
+      }`}>
+        {streamMode}
+      </span>
 
-        {unseenCount > 0 && (
-          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-mono tabular-nums ${
-            darkMode ? 'border-blue-500/25 bg-blue-500/10 text-blue-300' : 'border-blue-200 bg-blue-50 text-blue-700'
-          }`}>
-            {unseenCount} new
-          </span>
-        )}
+      <span className={sep}>|</span>
 
-        {hasActiveFilters && (
-          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-medium ${
-            darkMode ? 'border-violet-500/20 bg-violet-500/10 text-violet-300' : 'border-violet-200 bg-violet-50 text-violet-700'
-          }`}>
+      <span className={`px-2 tabular-nums ${theme.textMuted}`}>
+        {visibleCount} visible
+      </span>
+
+      <span className={`hidden sm:inline ${sep}`}>|</span>
+
+      <span className={`hidden sm:inline px-2 tabular-nums ${theme.textMuted}`}>
+        {bufferedCount} buffered
+      </span>
+
+      {hasActiveFilters && (
+        <>
+          <span className={sep}>|</span>
+          <span className={`px-2 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
             Filtered
           </span>
-        )}
+        </>
+      )}
 
-        {selectedServer && (
+      {selectedServer && (
+        <>
+          <span className={sep}>|</span>
           <button
             onClick={onClearServer}
-            className={`inline-flex max-w-[180px] items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors ${
-              darkMode
-                ? 'border-blue-500/20 bg-blue-500/10 text-blue-300 hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-300'
-                : 'border-blue-200 bg-blue-50 text-blue-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700'
+            className={`inline-flex items-center gap-1 px-2 max-w-[160px] transition-colors ${
+              darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            <svg className="h-3 w-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2M5 12a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2" />
-            </svg>
             <span className="truncate">{selectedServer}</span>
             <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        )}
+        </>
+      )}
 
-        {selectedPath && (
+      {selectedPath && (
+        <>
+          <span className={sep}>|</span>
           <button
             onClick={onClearPath}
-            className={`inline-flex max-w-[180px] items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors ${
-              darkMode
-                ? 'border-blue-500/20 bg-blue-500/10 text-blue-300 hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-300'
-                : 'border-blue-200 bg-blue-50 text-blue-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700'
+            className={`inline-flex items-center gap-1 px-2 max-w-[160px] transition-colors ${
+              darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            <svg className="h-3 w-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M6 7V5a1 1 0 011-1h10a1 1 0 011 1v2M6 7v12a1 1 0 001 1h10a1 1 0 001-1V7" />
-            </svg>
             <span className="truncate">{getShortPath(selectedPath)}</span>
             <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };
 
 export default StatusBar;
+
