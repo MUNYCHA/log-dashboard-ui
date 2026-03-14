@@ -8,28 +8,6 @@ export const getLogLevelColor = (level, darkMode) => {
   }
 };
 
-export const formatTimestamp = (timestamp) => {
-  try {
-    const ts = new Date(timestamp).getTime();
-    if (!Number.isFinite(ts)) return String(timestamp ?? '');
-    return new Date(ts).toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      fractionalSecondDigits: 3
-    });
-  } catch {
-    return timestamp;
-  }
-};
-
-export const getServersForTopic = (topic, logsByTopic) => {
-  if (!topic || !logsByTopic[topic]) return [];
-  const servers = new Set(logsByTopic[topic].map(log => log.serverName));
-  return Array.from(servers).sort();
-};
-
 export const getRelativeTime = (timestamp, now) => {
   try {
     const ts = new Date(timestamp).getTime();
