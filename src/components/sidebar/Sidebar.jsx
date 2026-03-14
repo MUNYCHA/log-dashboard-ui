@@ -1,4 +1,7 @@
 import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
+
+const MotionSpan = motion.span;
 
 const TOPIC_SORT_OPTIONS = [
   { value: 'activity', label: 'Active' },
@@ -18,8 +21,15 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkM
   return (
     <button
       onClick={() => onTopicSelect(topic)}
-      className={`w-full rounded-md px-2.5 py-1.5 text-left transition-colors ${itemTone}`}
+      className={`relative w-full overflow-hidden rounded-md px-2.5 py-1.5 text-left transition-colors ${itemTone}`}
     >
+      {isSelected && (
+        <MotionSpan
+          layoutId="topic-selection-indicator"
+          className={`absolute left-0 top-1 bottom-1 w-0.5 rounded-full ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}
+          transition={{ type: 'spring', stiffness: 500, damping: 36 }}
+        />
+      )}
       <div className="flex items-center gap-2">
         <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
           isActive
