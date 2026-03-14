@@ -1,10 +1,7 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import ThemeToggle from '../common/ThemeToggle';
 import { ServerDropdown, PathDropdown } from '../filters';
 import { TIME_RANGES, getShortPath } from './constants';
-
-const MotionDiv = motion.div;
 
 const MobileHeader = ({
   selectedTopic, displayedLogs, logRate, darkMode, theme,
@@ -64,17 +61,12 @@ const MobileHeader = ({
           </div>
         </div>
 
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <MotionDiv
-              className={`mt-2 space-y-2 rounded-md border p-2.5 overflow-hidden ${
-                darkMode ? 'border-[#282828] bg-[#141414]' : 'border-gray-200 bg-gray-50'
-              } ${mobileMenuReady ? '' : 'pointer-events-none'}`}
-              initial={{ opacity: 0, y: -8, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: 'auto' }}
-              exit={{ opacity: 0, y: -8, height: 0 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-            >
+        {isMobileMenuOpen && (
+          <div
+            className={`mt-2 space-y-2 rounded-md border p-2.5 overflow-hidden ${
+              darkMode ? 'border-[#282828] bg-[#141414]' : 'border-gray-200 bg-gray-50'
+            } ${mobileMenuReady ? '' : 'pointer-events-none'}`}
+          >
             {/* Server / Path dropdowns */}
             <div className="relative w-full">
               <button
@@ -189,9 +181,8 @@ const MobileHeader = ({
                 Clear logs
               </button>
             </div>
-            </MotionDiv>
-          )}
-        </AnimatePresence>
+          </div>
+        )}
       </div>
 
       {/* Mobile search */}
