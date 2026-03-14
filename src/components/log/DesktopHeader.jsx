@@ -108,7 +108,7 @@ const DesktopHeader = ({
             type="text"
             placeholder={isRegex ? "Regex pattern..." : "Search logs..."}
             className={`w-full rounded-md border px-3 py-1.5 pr-16 text-xs font-mono focus:outline-none
-                     focus:ring-1 ${regexError ? 'focus:ring-red-500 border-red-500' : 'focus:ring-blue-500'} transition-colors ${
+                     focus:ring-1 ${regexError ? 'focus:ring-red-500 ring-1 ring-red-500/30 border-red-500' : 'focus:ring-blue-500'} transition-colors ${
               darkMode
                 ? 'border-[#282828] bg-[#1a1a1a] text-gray-200 placeholder:text-gray-600'
                 : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
