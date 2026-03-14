@@ -172,7 +172,7 @@ export default function App() {
         {/* Panel 2 — split view only */}
         {splitView && (
           <>
-            <div className={`w-px flex-shrink-0 ${darkMode ? 'bg-gray-800' : 'bg-gray-200'}`} />
+            <div className={`w-px flex-shrink-0 ${darkMode ? 'bg-[#222]' : 'bg-gray-200'}`} />
             <LogPanel
               key={`panel-2-${selectedTopic2 ?? 'none'}`}
               topicLogs={topicLogs2}

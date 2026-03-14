@@ -34,23 +34,23 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen }) => {
 
   return (
     <article
-      className={`rounded-lg border px-3 py-2.5 ${
+      className={`border-b px-3 py-2 ${
         darkMode
-          ? 'border-gray-800 bg-[#0b1016] text-gray-200'
-          : 'border-slate-200 bg-white text-slate-800'
+          ? 'border-[#1e1e1e] text-gray-300 hover:bg-[#161616]'
+          : 'border-gray-100 text-gray-700 hover:bg-gray-50/50'
       }`}
       title={serverName}
     >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-mono leading-4">
-        <span className={`${darkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+      <div className="flex items-center gap-3 text-[11px] font-mono leading-4">
+        <span className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} min-w-[3.5rem]`}>
           {relativeTime || 'now'}
         </span>
-        <span className={`${darkMode ? 'text-sky-300' : 'text-sky-700'}`}>
+        <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>
           {serverName}
         </span>
       </div>
 
-      <div className={`mt-2 whitespace-pre-wrap break-words text-[12px] leading-5 md:text-[13px] ${darkMode ? 'text-gray-100' : 'text-slate-700'}`}>
+      <div className={`mt-1 whitespace-pre-wrap break-words text-[12.5px] leading-[1.6] md:text-[13px] font-mono ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
         {highlightMessage(message, keywords)}
       </div>
     </article>

@@ -26,24 +26,27 @@ export const getShortPath = (path) => {
 };
 
 export const getButtonStyles = (darkMode) => {
-  const btnBase = "inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors";
+  const btnBase = "inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors";
   const btnIdle = darkMode
-    ? "border-gray-800 bg-black/20 text-gray-400 hover:bg-gray-900 hover:text-gray-200"
-    : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700";
+    ? "text-gray-500 hover:text-gray-300 hover:bg-[#1a1a1a]"
+    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100";
+  const btnActive = darkMode
+    ? "text-white bg-[#1a1a1a]"
+    : "text-gray-900 bg-gray-100";
   return {
     pause:    `${btnBase} ${btnIdle}`,
-    paused:   `${btnBase} ${darkMode ? 'border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/15' : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'}`,
+    paused:   `${btnBase} ${btnActive}`,
     export:   `${btnBase} ${btnIdle}`,
     scroll:   `${btnBase} ${btnIdle}`,
-    scrollOn: `${btnBase} ${darkMode ? 'border-blue-500/25 bg-blue-500/10 text-blue-300 hover:bg-blue-500/15' : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'}`,
+    scrollOn: `${btnBase} ${btnActive}`,
     split:    `${btnBase} ${btnIdle}`,
-    splitOn:  `${btnBase} ${darkMode ? 'border-blue-500/25 bg-blue-500/10 text-blue-300 hover:bg-blue-500/15' : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'}`,
-    close:    `${btnBase} ${darkMode ? 'border-gray-800 bg-black/20 text-gray-400 hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-300' : 'border-gray-200 bg-white text-gray-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700'}`,
-    clear:    `${btnBase} ${darkMode ? 'border-gray-800 bg-black/20 text-gray-400 hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-300' : 'border-gray-200 bg-white text-gray-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700'}`,
+    splitOn:  `${btnBase} ${btnActive}`,
+    close:    `${btnBase} ${btnIdle}`,
+    clear:    `${btnBase} ${btnIdle}`,
   };
 };
 
 export const getAccentStyles = (darkMode) => ({
-  active: darkMode ? "border border-blue-500/25 bg-blue-500/10 text-blue-300" : "border border-blue-200 bg-blue-50 text-blue-700",
-  paused: darkMode ? "border border-amber-500/30 bg-amber-500/10 text-amber-300" : "border border-amber-200 bg-amber-50 text-amber-700",
+  active: darkMode ? "border border-[#282828] bg-[#1a1a1a] text-white" : "border border-gray-200 bg-gray-100 text-gray-900",
+  paused: darkMode ? "border border-[#282828] bg-[#1a1a1a] text-white" : "border border-gray-200 bg-gray-100 text-gray-900",
 });
