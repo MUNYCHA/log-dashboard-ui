@@ -69,7 +69,7 @@ const StatusBar = ({
           <button
             onClick={onClearServer}
             className={`inline-flex items-center gap-1 px-2 max-w-[160px] transition-colors ${
-              darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
+              darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
             }`}
           >
             <span className="truncate">{selectedServer}</span>
@@ -86,7 +86,7 @@ const StatusBar = ({
           <button
             onClick={onClearPath}
             className={`inline-flex items-center gap-1 px-2 max-w-[160px] transition-colors ${
-              darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
+              darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
             }`}
           >
             <span className="truncate">{getShortPath(selectedPath)}</span>
