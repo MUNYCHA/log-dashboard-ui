@@ -34,12 +34,11 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Split view** — open two independent log panels side by side (desktop only)
 - **Per-panel independent pause** — each split-view panel has its own pause state
 - **Focus ring** — active panel in split view is highlighted with a focus ring
-- **Heartbeat indicator** — SVG line animation in the status bar reflecting log ingestion rate; color shifts from green to yellow to orange to red based on rate
+- **Heartbeat indicator** — SVG line animation in the DesktopHeader topic info row (desktop only, `lg` breakpoint) reflecting log ingestion rate; color shifts from green to yellow to orange to red based on rate
 - **Log rate indicator** — logs/sec shown per topic in the sidebar
 
 ### Actions
 - **Export logs** — download currently filtered logs as JSON or CSV (timestamped filename)
-- **Copy** any individual log message to clipboard (button appears on hover)
 - **Clear logs** per topic
 - **Auto-scroll** to latest logs with manual override (re-enables when scrolled back to bottom)
 - **Scroll to top / bottom** floating buttons appear when needed
@@ -125,7 +124,7 @@ npm run lint
 
 | Type | Shape | When |
 |---|---|---|
-| Topic list | `string[]` | Once on connect — list of all topic names |
+| Topic list | `{ type: "topics", topics: string[] }` (primary), legacy `string[]` fallback | Once on connect — list of all topic names |
 | Log event | `{ topic, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events (already filtered server-side); single object or batched array |
 | Filter ack | `{ type: "filter-ack", filters: {...}, regexError?: "..." }` | Confirms filter applied; `regexError` present if regex is invalid |
 
@@ -199,8 +198,7 @@ log-dashboard-ui/
     │                          # pause/buffer, log rate tracker,
     │                          # server-side filter dispatch
     ├── utils/
-    │   └── logUtils.js        # formatTimestamp, getRelativeTime,
-    │                          # getServersForTopic
+    │   └── logUtils.js        # getLogLevelColor, getRelativeTime
     └── components/
         ├── common/
         │   ├── HeartbeatLine.jsx   # SVG heartbeat animation reflecting log rate
