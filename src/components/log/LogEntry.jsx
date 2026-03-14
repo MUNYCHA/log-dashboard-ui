@@ -109,16 +109,14 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm, isRege
   const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
   const message = typeof log.message === 'string' ? log.message : String(log.message ?? '');
   const logLevel = useMemo(() => detectLogLevel(message), [message]);
-  const { levelTextClass, isFresh } = useMemo(() => {
+  const { levelTextClass } = useMemo(() => {
     const tone = getLogLevelColor(logLevel, darkMode);
     const textClass = tone.split(' ').find((token) => token.startsWith('text-')) ??
       (darkMode ? 'text-gray-500' : 'text-gray-400');
-    const ts = new Date(log.timestamp).getTime();
     return {
       levelTextClass: textClass,
-      isFresh: Number.isFinite(ts) && Date.now() - ts < 2500,
     };
-  }, [logLevel, darkMode, log.timestamp]);
+  }, [logLevel, darkMode]);
 
   return (
     <article
@@ -126,7 +124,7 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm, isRege
         darkMode
           ? 'border-[#1e1e1e] text-gray-300 hover:bg-[#161616]'
           : 'border-gray-100 text-gray-700 hover:bg-gray-50/50'
-      } ${isFresh ? 'animate-log-entry-in' : ''}`}
+      }`}
       title={serverName}
     >
       <span className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-current ${levelTextClass}`} />
