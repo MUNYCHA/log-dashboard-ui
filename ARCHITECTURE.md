@@ -22,9 +22,7 @@ App.jsx (global)
 │   ├── topics         — string[]
 │   ├── isConnected / isReconnecting
 │   ├── logRates       — Record<topic, number> (logs/sec, 5s window)
-│   ├── filterAck      — last filter-ack from server
 │   ├── clearLogs(topic), subscribe(topics), sendFilter(filters)
-│   └── (isPaused/togglePause from hook are UNUSED — App manages pause per-panel)
 │
 LogPanel.jsx (per-panel local)
 ├── frozenLogs          ← snapshot of logs when paused
@@ -37,8 +35,8 @@ LogPanel.jsx (per-panel local)
 ├── serverSearchTerm / pathSearchTerm
 ├── showExportMenu / isMobileMenuOpen / mobileMenuReady
 ├── atTop / atBottom    ← scroll position indicators
-├── timestampGen        ← counter bumped every 30s for relative time refresh
-└── nowMs               ← Date.now() updated every 30s + on timeRange change (pure render)
+├── timestampGen        ← counter bumped every 5s for relative time refresh
+└── nowMs               ← Date.now() updated every 5s + on timeRange change (pure render)
 ```
 
 ## Render Optimization Strategy
@@ -49,7 +47,7 @@ LogPanel.jsx (per-panel local)
 | `LogPanel` | Yes | `filteredLogs`, `serversForSelectedTopic`, `pathsForSelectedServer`, `filteredServers`, `filteredPaths`, `regexError` | Main orchestrator |
 | `VirtualLogList` | Yes | — | Extracted to avoid re-rendering when LogPanel state changes that don't affect the list |
 | `LogEntry` | Yes | `relativeTime` (via timestampGen) | Only re-renders when its specific log object or keywords change |
-| `TopicItem` (Sidebar) | Yes | `servers` derived from logs | Only re-renders when its topic's log array ref changes |
+| `TopicItem` (Sidebar) | Yes | — | Only re-renders when its topic's log array ref changes |
 | `Sidebar` | Yes | — | Re-renders when `logsByTopic` ref changes (every flush) but children are protected |
 | All other sub-components | **No** | — | DesktopHeader, MobileHeader, FilterBar, ActiveFilters, StatusBar, ScrollButtons, EmptyState, KeywordFilter, FilterDropdown — all pure presentational, re-render with parent |
 
@@ -57,7 +55,7 @@ LogPanel.jsx (per-panel local)
 | Trigger | Frequency | What re-renders | Why it's OK |
 |---|---|---|---|
 | Log flush (150ms) | ~6.6x/sec | `useWebSocket` → `App` → `LogPanel` → `VirtualLogList` | Only ~20-30 visible `LogEntry` via virtualization |
-| `timestampGen` bump | Every 30s | `VirtualLogList` → visible `LogEntry`s | Only visible rows, `useMemo` recalculates relative time |
+| `timestampGen` bump | Every 5s | `VirtualLogList` → visible `LogEntry`s | Only visible rows, `useMemo` recalculates relative time |
 | Filter change | On user action | `LogPanel` + children | One-shot, not continuous |
 | Theme toggle | On user action | Everything | One-shot |
 
@@ -85,8 +83,8 @@ WebSocket frame arrives (single or batch JSON)
 ## Virtualization Details
 
 `VirtualLogList` (inside `LogPanel.jsx`) uses `@tanstack/react-virtual`:
-- `estimateSize`: 52px per row
-- `overscan`: 20 rows (renders 20 extra above/below viewport)
+- `estimateSize`: 96px per row
+- `overscan`: 10 rows (renders 10 extra above/below viewport)
 - `getScrollElement`: the `.overflow-auto` container (scrollRef)
 - Each row uses `measureElement` for dynamic height measurement
 - Rows are absolutely positioned with `transform: translateY()`
@@ -98,7 +96,6 @@ WebSocket frame arrives (single or batch JSON)
 | Ref | Purpose | Cap |
 |---|---|---|
 | `pendingRef` | Logs waiting for next 150ms flush | maxLogsPerTopic per topic (pendingCountRef) |
-| `bufferRef` | Logs held while paused | maxLogsPerTopic per topic (pauseCountRef) |
 | `logCountRef` | Raw count per topic for rate calc | Reset every 5s |
 
 ### Message discrimination
@@ -168,7 +165,7 @@ src/
 ├── hooks/
 │   └── useWebSocket.js         # WebSocket + reconnect + batching + rate tracking + filter dispatch
 ├── utils/
-│   └── logUtils.js             # formatTimestamp, getRelativeTime, getServersForTopic
+│   └── logUtils.js             # getLogLevelColor, getRelativeTime
 └── components/
     ├── common/HeartbeatLine.jsx, ThemeToggle.jsx
     ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, index.js
