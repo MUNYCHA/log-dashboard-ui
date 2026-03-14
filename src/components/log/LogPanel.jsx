@@ -16,6 +16,7 @@ const ESTIMATED_LOG_HEIGHT = 96;
 
 const VirtualLogList = React.memo(({
   displayedLogs, isPaused, theme, darkMode, keywords, timestampGen,
+  logSearchTerm, isRegex,
   selectedServer, selectedPath,
   emptyState, onClearFilters, onResumeLive,
   scrollRef, atTop, atBottom, scrollToTop, scrollToBottom,
@@ -46,7 +47,7 @@ const VirtualLogList = React.memo(({
       >
         <div>
           {isPaused && (
-            <div className={`flex items-center justify-between gap-3 px-3 py-2 text-xs border-b ${
+            <div className={`animate-paused-banner flex items-center justify-between gap-3 px-3 py-2 text-xs border-b ${
               darkMode ? 'border-[#222] bg-[#141414] text-gray-400' : 'border-gray-100 bg-gray-50 text-gray-500'
             }`}>
               <span className="min-w-0 font-mono">
@@ -82,7 +83,14 @@ const VirtualLogList = React.memo(({
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
-                    <LogEntry log={log} theme={theme} darkMode={darkMode} keywords={keywords} timestampGen={timestampGen} />
+                    <LogEntry
+                      log={log}
+                      darkMode={darkMode}
+                      keywords={keywords}
+                      timestampGen={timestampGen}
+                      logSearchTerm={logSearchTerm}
+                      isRegex={isRegex}
+                    />
                   </div>
                 );
               })}
@@ -150,6 +158,7 @@ const LogPanel = ({
   panelId,
 }) => {
   const [frozenLogs, setFrozenLogs] = useState(null);
+  const [frozenTopic, setFrozenTopic] = useState(null);
   const [logSearchTerm, setLogSearchTerm] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
   const [showServerDropdown, setShowServerDropdown] = useState(false);
@@ -159,7 +168,7 @@ const LogPanel = ({
   const [serverSearchTerm, setServerSearchTerm] = useState("");
   const [pathSearchTerm, setPathSearchTerm] = useState("");
   const [pathForTopic, setPathForTopic] = useState({ topic: null, path: null });
-  const selectedPath = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
+  const selectedPathForTopic = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileMenuReady, setMobileMenuReady] = useState(false);
   const [keywords, setKeywords] = useState([]);
@@ -199,7 +208,7 @@ const LogPanel = ({
     const interval = setInterval(() => {
       setTimestampGen((g) => g + 1);
       setNowMs(Date.now());
-    }, 30000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -214,8 +223,8 @@ const LogPanel = ({
         setShowExportMenu(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
   }, []);
 
   const handleScroll = useCallback(() => {
@@ -275,6 +284,28 @@ const LogPanel = ({
     return () => clearTimeout(t);
   }, [keywordInput]);
 
+  const serversForSelectedTopic = useMemo(
+    () => selectedTopic ? [...new Set(topicLogs?.map((l) => l.serverName) || [])].sort() : [],
+    [selectedTopic, topicLogs],
+  );
+
+  const pathsForSelectedServer = useMemo(() => {
+    if (!selectedTopic || !topicLogs) return [];
+    let logs = topicLogs;
+    if (selectedServer) logs = logs.filter((l) => l.serverName === selectedServer);
+    return [...new Set(logs.map((l) => l.path))].sort();
+  }, [selectedTopic, topicLogs, selectedServer]);
+
+  const selectedPath = selectedPathForTopic && pathsForSelectedServer.includes(selectedPathForTopic)
+    ? selectedPathForTopic
+    : null;
+
+  useEffect(() => {
+    if (selectedServer && !serversForSelectedTopic.includes(selectedServer)) {
+      onServerSelect(null);
+    }
+  }, [selectedServer, serversForSelectedTopic, onServerSelect]);
+
   useEffect(() => {
     if (!sendFilter) return;
 
@@ -293,18 +324,6 @@ const LogPanel = ({
     const hasAny = filters.server || filters.path || filters.search || filters.keywords || filters.timeRange !== 'all';
     sendFilter(hasAny ? filters : null, panelId);
   }, [selectedServer, selectedPath, debouncedSearch, isRegex, keywords, debouncedKeywordInput, keywordMode, timeRange, sendFilter, panelId]);
-
-  const serversForSelectedTopic = useMemo(
-    () => selectedTopic ? [...new Set(topicLogs?.map((l) => l.serverName) || [])].sort() : [],
-    [selectedTopic, topicLogs],
-  );
-
-  const pathsForSelectedServer = useMemo(() => {
-    if (!selectedTopic || !topicLogs) return [];
-    let logs = topicLogs;
-    if (selectedServer) logs = logs.filter((l) => l.serverName === selectedServer);
-    return [...new Set(logs.map((l) => l.path))].sort();
-  }, [selectedTopic, topicLogs, selectedServer]);
 
   const filteredServers = useMemo(
     () => serversForSelectedTopic.filter((s) => s.toLowerCase().includes(serverSearchTerm.toLowerCase())),
@@ -369,8 +388,20 @@ const LogPanel = ({
     return [...logs].slice(0, config.ws.maxLogsPerTopic).reverse();
   }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, isRegex, keywords, keywordInput, keywordMode, timeRange, nowMs]);
 
-  const displayedLogs = frozenLogs ?? filteredLogs;
+  const displayedLogs = frozenLogs != null && frozenTopic === selectedTopic
+    ? frozenLogs
+    : filteredLogs;
   const bufferedCount = topicLogs?.length || 0;
+  const displayKeywords = useMemo(() => {
+    const pending = debouncedKeywordInput.trim();
+    if (!pending) return keywords;
+
+    const exists = keywords.some((k) => k.text.toLowerCase() === pending.toLowerCase());
+    if (exists) return keywords;
+
+    return [...keywords, { text: pending, color: '#888888' }];
+  }, [keywords, debouncedKeywordInput]);
+
   const hasActiveFilters = Boolean(
     selectedServer || selectedPath || logSearchTerm || keywords.length > 0 || keywordInput.trim() || timeRange !== 'all',
   );
@@ -412,8 +443,10 @@ const LogPanel = ({
 
   const handleTogglePause = () => {
     if (!isPaused) {
+      setFrozenTopic(selectedTopic);
       setFrozenLogs(filteredLogs);
     } else {
+      setFrozenTopic(null);
       setFrozenLogs(null);
     }
     togglePause();
@@ -652,6 +685,7 @@ const LogPanel = ({
           onClearServer={handleClearServer}
           onClearPath={handleClearPath}
           onClearSearch={() => setLogSearchTerm("")}
+          onRemoveKeyword={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
         />
       </div>
 
@@ -660,8 +694,10 @@ const LogPanel = ({
         isPaused={isPaused}
         theme={theme}
         darkMode={darkMode}
-        keywords={keywords}
+        keywords={displayKeywords}
         timestampGen={timestampGen}
+        logSearchTerm={logSearchTerm}
+        isRegex={isRegex}
         selectedServer={selectedServer}
         selectedPath={selectedPath}
         emptyState={emptyState}
