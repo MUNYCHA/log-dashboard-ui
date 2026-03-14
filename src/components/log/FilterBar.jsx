@@ -79,7 +79,7 @@ const FilterBar = ({
         onClick={() => onTimeRangeChange(r.value)}
         className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors ${
           timeRange === r.value
-            ? (darkMode ? 'bg-[#1a1a1a] text-white' : 'bg-gray-900 text-white')
+            ? (darkMode ? 'bg-blue-500/15 text-blue-300 ring-1 ring-blue-500/30' : 'bg-gray-900 text-white')
             : darkMode
               ? 'text-gray-600 hover:text-gray-300'
               : 'text-gray-400 hover:text-gray-700'
