@@ -32,12 +32,6 @@ const VirtualLogList = React.memo(({
 
   return (
     <div className="flex-1 relative overflow-hidden">
-      {/* Top fade overlay */}
-      <div className={`absolute top-0 left-0 right-0 h-8 z-[1] pointer-events-none ${
-        darkMode
-          ? 'bg-gradient-to-b from-[#111111] to-transparent'
-          : 'bg-gradient-to-b from-white to-transparent'
-      }`} />
       <div
         className="absolute inset-0 overflow-auto font-mono text-sm"
         ref={scrollRef}
