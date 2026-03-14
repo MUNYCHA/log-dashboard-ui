@@ -21,8 +21,8 @@ React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 
 
 **State ownership:**
 - `App.jsx` — selectedTopic/Server (per panel), darkMode, sidebarOpen/collapsed, splitView, activePanel, isPaused1/2, viewedTopics
-- `LogPanel.jsx` — path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, timestampGen, nowMs
-- `useWebSocket` — logsByTopic, topics, isConnected, logRates, filterAck
+- `LogPanel.jsx` — path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, frozenTopic, timestampGen, nowMs
+- `useWebSocket` — logsByTopic, topics, isConnected, logRates
 
 **Component tree:**
 ```
@@ -48,7 +48,7 @@ App
 
 - `selectedPath` is local to LogPanel, auto-clears on topic change via `pathForTopic` pattern
 - `selectedServer` is global (App.jsx) — Sidebar badges depend on it
-- All filters reset on topic change (render-phase check: `prevTopic !== selectedTopic`)
+- All filters reset on topic change via key-based component remount (`key=panel-X-${selectedTopic}` in App.jsx forces full LogPanel remount)
 - Active filters resent on WS reconnect (stored in `activeFilterRef`)
 - Auto-scroll is button-toggled only — manual scrolling does NOT disable it
 - Mobile menu: 300ms `pointer-events-none` guard against double-tap
