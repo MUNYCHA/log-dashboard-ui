@@ -12,7 +12,7 @@ const DesktopHeader = ({
   onClearLogs,
   logSearchTerm, onSearchChange, isRegex, onToggleRegex, regexError,
 }) => {
-  const sep = darkMode ? 'bg-[#222]' : 'bg-gray-200';
+  const sep = darkMode ? 'bg-[#222]' : 'bg-slate-300';
 
   return (
     <div className="hidden md:block">
@@ -24,7 +24,7 @@ const DesktopHeader = ({
               className={`h-2 w-2 rounded-full flex-shrink-0 transition-colors ${
                 isActivePanel
                   ? 'bg-blue-500'
-                  : `${darkMode ? 'bg-[#333]' : 'bg-gray-300'}`
+                  : `${darkMode ? 'bg-[#333]' : 'bg-slate-400'}`
               }`}
               title={isActivePanel ? 'Active panel' : 'Click to make active'}
             />
@@ -39,7 +39,7 @@ const DesktopHeader = ({
             <span className={`inline-flex items-center gap-1.5 text-[11px] font-mono tabular-nums ${
               logRate > 0 ? (darkMode ? 'text-green-400' : 'text-green-600') : theme.textMuted
             }`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${logRate > 0 ? 'bg-green-500' : (darkMode ? 'bg-[#333]' : 'bg-gray-300')}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${logRate > 0 ? 'bg-green-500' : (darkMode ? 'bg-[#333]' : 'bg-slate-400')}`} />
               {logRate}/s
             </span>
             {logRate > 0 && (
@@ -72,7 +72,7 @@ const DesktopHeader = ({
             </button>
             {showExportMenu && (
               <div className={`absolute right-0 top-8 z-50 w-24 rounded-md shadow-lg border overflow-hidden ${
-                darkMode ? 'border-[#282828] bg-[#141414]' : 'border-gray-200 bg-white'
+                darkMode ? 'border-[#282828] bg-[#141414]' : 'border-slate-300 bg-white shadow-md'
               }`}>
                 <button onClick={() => onExport('json')} className={`w-full text-left px-3 py-1.5 text-[11px] ${theme.hover} ${theme.textSecondary}`}>JSON</button>
                 <button onClick={() => onExport('csv')} className={`w-full text-left px-3 py-1.5 text-[11px] ${theme.hover} ${theme.textSecondary}`}>CSV</button>

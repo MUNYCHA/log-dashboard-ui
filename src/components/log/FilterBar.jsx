@@ -19,12 +19,12 @@ const FilterBar = ({
         <button
           ref={serverButtonRef}
           onClick={onToggleServerDropdown}
-          className={`px-2.5 py-1 rounded-md border text-xs flex items-center gap-1.5 max-w-[140px] justify-between
-                    cursor-pointer transition-colors ${
-            darkMode
-              ? 'border-[#282828] bg-[#1a1a1a] text-gray-400 hover:text-gray-200'
-              : 'border-gray-200 bg-white text-gray-600 hover:text-gray-800'
-          }`}
+          className={`px-3 py-1.5 rounded-md border text-xs font-medium flex items-center gap-1.5
+    max-w-[140px] justify-between transition-all duration-150 ease-in-out active:scale-95
+    ${darkMode
+      ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+      : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+    }`}
           type="button"
         >
           <span className="truncate">{selectedServer || "All Servers"}</span>
@@ -45,12 +45,13 @@ const FilterBar = ({
         <button
           ref={pathButtonRef}
           onClick={() => selectedServer && onTogglePathDropdown()}
-          className={`px-2.5 py-1 rounded-md border text-xs flex items-center gap-1.5 max-w-[140px] justify-between
-                    ${!selectedServer ? "opacity-40 cursor-not-allowed" : "cursor-pointer transition-colors"} ${
-            darkMode
-              ? 'border-[#282828] bg-[#1a1a1a] text-gray-400 hover:text-gray-200'
-              : 'border-gray-200 bg-white text-gray-600 hover:text-gray-800'
-          }`}
+          className={`px-3 py-1.5 rounded-md border text-xs font-medium flex items-center gap-1.5
+    max-w-[140px] justify-between transition-all duration-150 ease-in-out active:scale-95
+    ${!selectedServer ? 'opacity-40 cursor-not-allowed' : ''}
+    ${darkMode
+      ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+      : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+    }`}
           type="button" disabled={!selectedServer}
           title={!selectedServer ? "Select a server first" : "Filter by path"}
         >
@@ -77,13 +78,14 @@ const FilterBar = ({
       <button
         key={r.value}
         onClick={() => onTimeRangeChange(r.value)}
-        className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors ${
-          timeRange === r.value
-            ? (darkMode ? 'bg-blue-500/15 text-blue-300 ring-1 ring-blue-500/30' : 'bg-gray-900 text-white')
-            : darkMode
-              ? 'text-gray-600 hover:text-gray-300'
-              : 'text-gray-400 hover:text-gray-700'
-        }`}
+        className={`px-3 py-1.5 text-[11px] font-medium rounded-md border
+    transition-all duration-150 ease-in-out active:scale-95
+    ${timeRange === r.value
+      ? 'border-[#0070f3] bg-[#0070f3] text-white hover:bg-[#0060d3] hover:border-[#0060d3]'
+      : darkMode
+        ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+        : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+    }`}
       >
         {r.label}
       </button>

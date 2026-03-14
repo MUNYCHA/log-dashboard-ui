@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { getLogLevelColor, getRelativeTime } from '../../utils/logUtils';
+import { getRelativeTime } from '../../utils/logUtils';
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -94,51 +94,38 @@ const highlightMessage = (message, keywords, darkMode, logSearchTerm, isRegex) =
   return combined.length === 1 ? combined[0] : combined;
 };
 
-const detectLogLevel = (message) => {
-  const source = String(message ?? '').toLowerCase();
-  if (/\b(error|err|fatal|critical|crit)\b/.test(source)) return 'error';
-  if (/\b(warn|warning)\b/.test(source)) return 'warn';
-  if (/\b(info|notice)\b/.test(source)) return 'info';
-  if (/\b(debug|trace)\b/.test(source)) return 'debug';
-  return null;
-};
-
 const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm, isRegex }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
   const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
   const message = typeof log.message === 'string' ? log.message : String(log.message ?? '');
-  const logLevel = useMemo(() => detectLogLevel(message), [message]);
-  const { levelTextClass } = useMemo(() => {
-    const tone = getLogLevelColor(logLevel, darkMode);
-    const textClass = tone.split(' ').find((token) => token.startsWith('text-')) ??
-      (darkMode ? 'text-gray-500' : 'text-gray-400');
+  const { isFresh } = useMemo(() => {
+    const ts = new Date(log.timestamp).getTime();
     return {
-      levelTextClass: textClass,
+      isFresh: Number.isFinite(ts) && Date.now() - ts < 2500,
     };
-  }, [logLevel, darkMode]);
+  }, [log.timestamp]);
+  void isFresh;
 
   return (
     <article
       className={`relative border-b px-3 py-2 ${
         darkMode
-          ? 'border-[#1e1e1e] text-gray-300 hover:bg-[#161616]'
-          : 'border-gray-100 text-gray-700 hover:bg-gray-50/50'
+          ? 'border-[#1f1f1f] text-gray-300 hover:bg-[#1a1a1a]'
+          : 'border-[#efefef] text-gray-700 hover:bg-[#fafafa]'
       }`}
       title={serverName}
     >
-      <span className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-current ${levelTextClass}`} />
-
       <div className="flex items-center gap-3 text-[11px] font-mono leading-4">
-        <span className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} min-w-[3.5rem]`}>
+        <span className={`${darkMode ? 'text-cyan-500' : 'text-cyan-600'} min-w-[3.5rem]`}>
           {relativeTime || 'now'}
         </span>
-        <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>
+        <span className={`${darkMode ? 'text-violet-400' : 'text-violet-600'} truncate`}>
           {serverName}
         </span>
       </div>
 
-      <div className={`mt-1 whitespace-pre-wrap break-words text-[12.5px] leading-[1.6] md:text-[13px] font-mono ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+      <div className={`mt-1 whitespace-pre-wrap break-words text-[12.5px] leading-[1.6] md:text-[13px] font-mono ${darkMode ? 'text-[#fafafa]' : 'text-[#0a0a0a]'}`}>
         {highlightMessage(message, keywords, darkMode, logSearchTerm, isRegex)}
       </div>
     </article>

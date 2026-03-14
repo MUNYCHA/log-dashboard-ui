@@ -20,12 +20,15 @@ const MobileHeader = ({
   timeRange, onTimeRangeChange,
 }) => {
   const btnIdle = darkMode
-    ? 'text-gray-500 hover:text-gray-300 hover:bg-[#1a1a1a]'
-    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100';
+    ? 'rounded-md border border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+    : 'rounded-md border border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]';
   const btnActive = darkMode
-    ? 'text-white bg-[#1a1a1a]'
-    : 'text-gray-900 bg-gray-100';
-  const btnBase = 'inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors';
+    ? 'rounded-md border border-[#fafafa] bg-[#fafafa] text-[#0a0a0a] hover:bg-[#e5e5e5] hover:border-[#e5e5e5]'
+    : 'rounded-md border border-[#0a0a0a] bg-[#0a0a0a] text-[#fafafa] hover:bg-[#242424] hover:border-[#242424]';
+  const btnAccent = 'rounded-md border border-[#0070f3] bg-[#0070f3] text-white hover:bg-[#0060d3] hover:border-[#0060d3]';
+  const btnBase = 'inline-flex h-8 w-8 items-center justify-center transition-all duration-150 ease-in-out active:scale-95';
+  const actionButtonIdle = `py-2 rounded-md border text-xs font-medium transition-all duration-150 ease-in-out active:scale-95 ${darkMode ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]' : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'}`;
+  const actionButtonActive = `py-2 rounded-md border text-xs font-medium transition-all duration-150 ease-in-out active:scale-95 ${btnActive}`;
 
   return (
     <>
@@ -44,9 +47,9 @@ const MobileHeader = ({
               {displayedLogs?.length || 0}
             </span>
             <span className={`inline-flex items-center gap-1 text-[11px] font-mono tabular-nums ${
-              logRate > 0 ? (darkMode ? 'text-green-400' : 'text-green-600') : theme.textMuted
+              logRate > 0 ? 'text-[#0070f3]' : theme.textMuted
             }`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${logRate > 0 ? 'bg-green-500' : (darkMode ? 'bg-[#333]' : 'bg-gray-300')}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${logRate > 0 ? 'bg-[#0070f3]' : (darkMode ? 'bg-[#333]' : 'bg-slate-400')}`} />
               {logRate}/s
             </span>
           </div>
@@ -64,15 +67,17 @@ const MobileHeader = ({
         {isMobileMenuOpen && (
           <div
             className={`mt-2 space-y-2 rounded-md border p-2.5 overflow-hidden ${
-              darkMode ? 'border-[#282828] bg-[#141414]' : 'border-gray-200 bg-gray-50'
+              darkMode ? 'border-[#2e2e2e] bg-[#0f0f0f]' : 'border-[#e5e5e5] bg-[#fafafa]'
             } ${mobileMenuReady ? '' : 'pointer-events-none'}`}
           >
             {/* Server / Path dropdowns */}
             <div className="relative w-full">
               <button
                 onClick={() => onToggleMobileServerDropdown()}
-                className={`w-full px-2.5 py-1.5 rounded-md border text-xs flex items-center justify-between transition-colors ${
-                  darkMode ? 'border-[#282828] bg-[#1a1a1a] text-gray-400' : 'border-gray-200 bg-white text-gray-600'
+                className={`w-full px-2.5 py-1.5 rounded-md border text-xs font-medium flex items-center justify-between transition-all duration-150 ease-in-out active:scale-95 ${
+                  darkMode
+                    ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+                    : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
                 }`}
                 type="button"
               >
@@ -94,9 +99,11 @@ const MobileHeader = ({
             <div className="relative w-full">
               <button
                 onClick={() => selectedServer && onToggleMobilePathDropdown()}
-                className={`w-full px-2.5 py-1.5 rounded-md border text-xs flex items-center justify-between transition-colors
+                className={`w-full px-2.5 py-1.5 rounded-md border text-xs font-medium flex items-center justify-between transition-all duration-150 ease-in-out active:scale-95
                           ${!selectedServer ? "opacity-40 cursor-not-allowed" : ""} ${
-                  darkMode ? 'border-[#282828] bg-[#1a1a1a] text-gray-400' : 'border-gray-200 bg-white text-gray-600'
+                  darkMode
+                    ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+                    : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
                 }`}
                 type="button" disabled={!selectedServer}
               >
@@ -119,18 +126,16 @@ const MobileHeader = ({
 
             {/* Time range — segmented toggle */}
             <div className={`inline-flex rounded-md border overflow-hidden ${
-              darkMode ? 'border-[#282828]' : 'border-gray-200'
+              darkMode ? 'border-[#2e2e2e]' : 'border-[#e5e5e5]'
             }`}>
               {TIME_RANGES.map((r) => (
                 <button
                   key={r.value}
                   onClick={() => onTimeRangeChange(r.value)}
-                  className={`px-2.5 py-1 text-[11px] font-mono transition-colors ${
+                  className={`px-3 py-1.5 text-[11px] font-medium rounded-md border transition-all duration-150 ease-in-out active:scale-95 ${
                     timeRange === r.value
-                      ? (darkMode ? 'bg-[#1a1a1a] text-white' : 'bg-gray-100 text-gray-900')
-                      : darkMode
-                        ? 'text-gray-600 hover:text-gray-300'
-                        : 'text-gray-400 hover:text-gray-700'
+                      ? btnAccent
+                      : (darkMode ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]' : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]')
                   }`}
                 >
                   {r.label}
@@ -142,41 +147,31 @@ const MobileHeader = ({
             <div className="grid grid-cols-2 gap-1.5">
               <button
                 onClick={onTogglePause}
-                className={`py-1.5 rounded-md text-xs font-medium transition-colors ${isPaused ? btnActive : `border ${
-                  darkMode ? 'border-[#282828] text-gray-400' : 'border-gray-200 text-gray-600'
-                }`}`}
+                className={isPaused ? actionButtonActive : actionButtonIdle}
               >
                 {isPaused ? 'Resume' : 'Pause'}
               </button>
               <button
                 onClick={onToggleAutoScroll}
-                className={`py-1.5 rounded-md text-xs font-medium transition-colors ${autoScroll ? btnActive : `border ${
-                  darkMode ? 'border-[#282828] text-gray-400' : 'border-gray-200 text-gray-600'
-                }`}`}
+                className={autoScroll ? actionButtonActive : actionButtonIdle}
               >
                 Auto-scroll
               </button>
               <button
                 onClick={() => onExport('json')}
-                className={`py-1.5 rounded-md border text-xs transition-colors ${
-                  darkMode ? 'border-[#282828] text-gray-400 hover:text-gray-200' : 'border-gray-200 text-gray-600 hover:text-gray-800'
-                }`}
+                className={actionButtonIdle}
               >
                 Export JSON
               </button>
               <button
                 onClick={() => onExport('csv')}
-                className={`py-1.5 rounded-md border text-xs transition-colors ${
-                  darkMode ? 'border-[#282828] text-gray-400 hover:text-gray-200' : 'border-gray-200 text-gray-600 hover:text-gray-800'
-                }`}
+                className={actionButtonIdle}
               >
                 Export CSV
               </button>
               <button
                 onClick={() => onClearLogs(selectedTopic)}
-                className={`col-span-2 py-1.5 rounded-md border text-xs transition-colors ${
-                  darkMode ? 'border-[#282828] text-gray-500 hover:text-gray-300' : 'border-gray-200 text-gray-400 hover:text-gray-600'
-                }`}
+                className={`col-span-2 ${actionButtonIdle}`}
               >
                 Clear logs
               </button>
@@ -192,7 +187,7 @@ const MobileHeader = ({
             type="text"
             placeholder={isRegex ? "Regex pattern..." : "Search logs..."}
             className={`w-full rounded-md border px-3 py-1.5 pr-16 text-xs font-mono focus:outline-none
-                     focus:ring-1 ${regexError ? 'focus:ring-red-500 ring-1 ring-red-500/30 border-red-500' : 'focus:ring-blue-500'} transition-colors ${
+                     focus:ring-1 ${regexError ? 'focus:ring-red-500 ring-1 ring-red-500/30 border-red-500' : 'focus:ring-[#0070f3]'} transition-all duration-150 ease-in-out ${
               darkMode
                 ? 'border-[#282828] bg-[#1a1a1a] text-gray-200 placeholder:text-gray-600'
                 : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
@@ -203,10 +198,10 @@ const MobileHeader = ({
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
             <button
               onClick={onToggleRegex}
-              className={`rounded px-1.5 py-0.5 text-[10px] font-mono transition-colors ${
+              className={`px-1.5 py-0.5 text-[10px] font-mono rounded-md border transition-all duration-150 ease-in-out active:scale-95 ${
                 isRegex
-                  ? darkMode ? 'bg-[#1a1a1a] text-white' : 'bg-gray-100 text-gray-900'
-                  : darkMode ? 'text-gray-600 hover:text-gray-400' : 'text-gray-400 hover:text-gray-600'
+                  ? btnAccent
+                  : (darkMode ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]' : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]')
               }`}
               title="Toggle regex"
             >.*</button>

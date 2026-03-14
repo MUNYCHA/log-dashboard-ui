@@ -26,23 +26,37 @@ export const getShortPath = (path) => {
 };
 
 export const getButtonStyles = (darkMode) => {
-  const btnBase = "inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors";
-  const btnIdle = darkMode
-    ? "text-gray-500 hover:text-gray-300 hover:bg-[#1a1a1a]"
-    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100";
-  const btnActive = darkMode
-    ? "text-white bg-[#1a1a1a]"
-    : "text-gray-900 bg-gray-100";
+  const base = `inline-flex h-8 w-8 items-center justify-center rounded-md border
+      transition-all duration-150 ease-in-out active:scale-95`;
+
+  const idle = darkMode
+    ? `bg-[#1a1a1a] border-[#2e2e2e] text-[#a3a3a3]
+         hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]`
+    : `bg-white border-[#e5e5e5] text-[#525252]
+         hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]`;
+
+  const active = darkMode
+    ? `bg-[#fafafa] border-[#fafafa] text-[#0a0a0a]
+         hover:bg-[#e5e5e5] hover:border-[#e5e5e5]`
+    : `bg-[#0a0a0a] border-[#0a0a0a] text-[#fafafa]
+         hover:bg-[#242424] hover:border-[#242424]`;
+
+  const danger = darkMode
+    ? `bg-[#1a1a1a] border-[#2e2e2e] text-[#a3a3a3]
+         hover:bg-[#2a1515] hover:text-[#f87171] hover:border-[#7f1d1d]`
+    : `bg-white border-[#e5e5e5] text-[#525252]
+         hover:bg-[#fff5f5] hover:text-[#dc2626] hover:border-[#fca5a5]`;
+
   return {
-    pause:    `${btnBase} ${btnIdle}`,
-    paused:   `${btnBase} ${btnActive}`,
-    export:   `${btnBase} ${btnIdle}`,
-    scroll:   `${btnBase} ${btnIdle}`,
-    scrollOn: `${btnBase} ${btnActive}`,
-    split:    `${btnBase} ${btnIdle}`,
-    splitOn:  `${btnBase} ${btnActive}`,
-    close:    `${btnBase} ${btnIdle}`,
-    clear:    `${btnBase} ${btnIdle}`,
+    pause:    `${base} ${idle}`,
+    paused:   `${base} ${active}`,
+    export:   `${base} ${idle}`,
+    scroll:   `${base} ${idle}`,
+    scrollOn: `${base} ${active}`,
+    split:    `${base} ${idle}`,
+    splitOn:  `${base} ${active}`,
+    close:    `${base} ${idle}`,
+    clear:    `${base} ${danger}`,
   };
 };
 

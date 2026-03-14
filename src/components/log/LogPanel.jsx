@@ -42,18 +42,19 @@ const VirtualLogList = React.memo(({
         <div>
           {isPaused && (
             <div className={`animate-paused-banner flex items-center justify-between gap-3 px-3 py-2 text-xs border-b ${
-              darkMode ? 'border-[#222] bg-[#141414] text-gray-400' : 'border-gray-100 bg-gray-50 text-gray-500'
+              darkMode ? 'border-[#1f1f1f] bg-[#0f0f0f] text-[#a3a3a3]' : 'border-[#e5e5e5] bg-white text-[#525252]'
             }`}>
               <span className="min-w-0 font-mono">
                 Paused - logs continue buffering.
               </span>
               <button
                 onClick={onResumeLive}
-                className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                  darkMode
-                    ? 'bg-[#1a1a1a] text-gray-300 hover:text-white'
-                    : 'bg-white text-gray-600 hover:text-gray-900'
-                }`}
+                className={`rounded-md border px-3 py-1 text-xs font-medium
+    transition-all duration-150 ease-in-out active:scale-95
+    ${darkMode
+      ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+      : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+    }`}
               >
                 Resume
               </button>
@@ -96,17 +97,39 @@ const VirtualLogList = React.memo(({
               {(selectedServer || selectedPath) && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {selectedPath && (
-                    <button onClick={handleClearPath} className={`px-2.5 py-1.5 rounded-md ${theme.input} text-xs`}>Clear path</button>
+                    <button
+                      onClick={handleClearPath}
+                      className={`px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all duration-150 ease-in-out active:scale-95 ${
+                        darkMode
+                          ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+                          : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+                      }`}
+                    >
+                      Clear path
+                    </button>
                   )}
                   {selectedServer && (
-                    <button onClick={handleClearServer} className={`px-2.5 py-1.5 rounded-md ${theme.input} text-xs`}>Clear server</button>
+                    <button
+                      onClick={handleClearServer}
+                      className={`px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all duration-150 ease-in-out active:scale-95 ${
+                        darkMode
+                          ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+                          : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+                      }`}
+                    >
+                      Clear server
+                    </button>
                   )}
                 </div>
               )}
               {emptyState.showClearFilters && (
                 <button
                   onClick={onClearFilters}
-                  className={`mt-3 rounded-md px-2.5 py-1.5 text-xs ${theme.input}`}
+                  className={`mt-3 rounded-md px-2.5 py-1.5 text-xs font-medium border transition-all duration-150 ease-in-out active:scale-95 ${
+                    darkMode
+                      ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+                      : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+                  }`}
                 >
                   Clear filters
                 </button>
@@ -550,7 +573,7 @@ const LogPanel = ({
 
   return (
     <div
-      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-blue-500/40' : ''}`}
+      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-[#0070f3]/40' : ''}`}
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
       <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.header} flex-shrink-0 relative z-10`}>

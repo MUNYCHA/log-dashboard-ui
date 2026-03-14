@@ -13,28 +13,28 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkM
   const isActive = logRate > 0;
   const itemTone = isSelected
     ? (darkMode
-      ? 'bg-[#1a1a1a] text-white'
-      : 'bg-white text-gray-900 shadow-sm')
+      ? 'bg-[#fafafa] text-[#0a0a0a]'
+      : 'bg-[#0a0a0a] text-[#fafafa]')
     : (darkMode
-      ? 'text-gray-400 hover:text-gray-200 hover:bg-[#161616]'
-      : 'text-gray-600 hover:text-gray-900 hover:bg-white');
+      ? 'text-[#a3a3a3] hover:text-[#fafafa] hover:bg-[#1a1a1a]'
+      : 'text-[#525252] hover:text-[#0a0a0a] hover:bg-[#f0f0f0]');
   return (
     <button
       onClick={() => onTopicSelect(topic)}
-      className={`relative w-full overflow-hidden rounded-md px-2.5 py-1.5 text-left transition-colors ${itemTone}`}
+      className={`relative w-full overflow-hidden rounded-md px-2.5 py-1.5 text-left transition-all duration-150 ease-in-out active:scale-95 ${itemTone}`}
     >
       {isSelected && (
         <MotionSpan
           layoutId="topic-selection-indicator"
-          className={`absolute left-0 top-1 bottom-1 w-0.5 rounded-full ${darkMode ? 'bg-blue-400' : 'bg-blue-500'}`}
+          className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full bg-[#0070f3]"
           transition={{ type: 'spring', stiffness: 500, damping: 36 }}
         />
       )}
       <div className="flex items-center gap-2">
         <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
           isActive
-            ? 'bg-green-500'
-            : darkMode ? 'bg-[#333]' : 'bg-gray-300'
+            ? 'bg-[#0070f3]'
+            : darkMode ? 'bg-[#333]' : 'bg-slate-400'
         }`}
         />
         <span className="truncate text-[13px] font-medium">
@@ -104,10 +104,11 @@ const Sidebar = ({
           <button
             onClick={onCollapse}
             title="Show sidebar"
-            className={`p-1 rounded-md transition-colors
-              ${darkMode
-                ? 'text-gray-600 hover:text-gray-300'
-                : 'text-gray-400 hover:text-gray-600'}`}
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-md border transition-all duration-150 ease-in-out active:scale-95
+    ${darkMode
+      ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+      : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+    }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -129,8 +130,10 @@ const Sidebar = ({
               </span>
               <button
                 onClick={onClose}
-                className={`md:hidden p-1 rounded-md transition-colors ${
-                  darkMode ? 'text-gray-600 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+                className={`md:hidden inline-flex h-7 w-7 items-center justify-center rounded-md border transition-all duration-150 ease-in-out active:scale-95 ${
+                  darkMode
+                    ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+                    : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
                 }`}
                 aria-label="Close sidebar"
               >
@@ -162,10 +165,10 @@ const Sidebar = ({
               <input
                 type="text"
                 placeholder="Search..."
-                className={`w-full rounded-md border px-8 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors ${
+                className={`w-full rounded-md border px-8 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#0070f3] transition-all duration-150 ease-in-out ${
                   darkMode
                     ? 'border-[#282828] bg-[#141414] placeholder:text-gray-600 text-gray-200'
-                    : 'border-gray-200 bg-white placeholder:text-gray-400 text-gray-900'
+                    : 'border-slate-300 bg-white placeholder:text-gray-500 text-gray-900'
                 }`}
                 value={topicSearchTerm}
                 onChange={(e) => onTopicSearchChange(e.target.value)}
@@ -175,11 +178,11 @@ const Sidebar = ({
               onClick={onCollapse}
               title="Hide sidebar"
               aria-label="Collapse sidebar"
-              className={`hidden md:flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md transition-colors ${
-                darkMode
-                  ? 'text-gray-600 hover:text-gray-300 hover:bg-[#1a1a1a]'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-              }`}
+              className={`hidden md:inline-flex h-7 w-7 items-center justify-center rounded-md border transition-all duration-150 ease-in-out active:scale-95
+    ${darkMode
+      ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+      : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+    }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -190,8 +193,8 @@ const Sidebar = ({
 
         {/* Sort — inline segmented toggle */}
         <div className="px-3 pb-2 flex-shrink-0">
-          <div className={`inline-flex rounded-md border overflow-hidden ${
-            darkMode ? 'border-[#282828]' : 'border-gray-200'
+          <div className={`grid grid-cols-3 gap-0.5 rounded-md border p-0.5 ${
+            darkMode ? 'border-[#2e2e2e] bg-[#0f0f0f]' : 'border-[#e5e5e5] bg-[#f5f5f5]'
           }`}>
             {TOPIC_SORT_OPTIONS.map((option) => {
               const isSelected = option.value === topicSortMode;
@@ -200,11 +203,15 @@ const Sidebar = ({
                   key={option.value}
                   type="button"
                   onClick={() => onTopicSortModeChange(option.value)}
-                  className={`px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                    isSelected
-                      ? (darkMode ? 'bg-[#1a1a1a] text-white' : 'bg-gray-100 text-gray-900')
-                      : (darkMode ? 'text-gray-600 hover:text-gray-300 hover:bg-[#141414]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50')
-                  }`}
+                  className={`w-full rounded-[6px] px-3 py-1.5 text-center text-[11px] font-medium transition-all duration-150 ease-in-out active:scale-95
+    ${isSelected
+      ? darkMode
+        ? 'bg-[#fafafa] text-[#0a0a0a] hover:bg-[#e5e5e5]'
+        : 'bg-[#0a0a0a] text-[#fafafa] hover:bg-[#242424]'
+      : darkMode
+        ? 'text-[#a3a3a3] hover:bg-[#1a1a1a] hover:text-[#fafafa]'
+        : 'text-[#525252] hover:bg-white hover:text-[#0a0a0a]'
+    }`}
                 >
                   {option.label}
                 </button>

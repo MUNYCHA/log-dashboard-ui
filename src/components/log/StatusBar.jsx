@@ -15,7 +15,7 @@ const StatusBar = ({
       : 'bg-red-500';
   const connectionLabel = isConnected ? 'Connected' : isReconnecting ? 'Reconnecting' : 'Disconnected';
 
-  const sep = darkMode ? 'text-[#333]' : 'text-gray-300';
+  const sep = darkMode ? 'text-[#333]' : 'text-slate-400';
 
   return (
     <div className={`px-3 sm:px-4 py-1.5 ${theme.statusBar} text-[11px] font-mono flex items-center gap-0 flex-shrink-0 overflow-x-auto`}>

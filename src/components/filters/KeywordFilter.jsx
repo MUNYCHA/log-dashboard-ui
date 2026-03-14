@@ -39,19 +39,19 @@ const KeywordFilter = ({
   const canAdd = inputValue.trim().length > 0;
   const showColorPicker = canAdd;
   const modeButtonClass = (isActive) => (
-    `rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+    `px-3 py-1.5 text-[11px] font-medium rounded-md border transition-all duration-150 ease-in-out active:scale-95 ${
       isActive
-        ? (darkMode
-          ? 'border-blue-500/25 bg-blue-500/10 text-blue-300'
-          : 'border-blue-200 bg-blue-50 text-blue-700')
-        : (darkMode
-          ? 'border-gray-800 bg-black/20 text-gray-400 hover:bg-gray-900 hover:text-gray-200'
-          : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700')
+        ? darkMode
+          ? 'border-[#fafafa] bg-[#fafafa] text-[#0a0a0a] hover:bg-[#e5e5e5] hover:border-[#e5e5e5]'
+          : 'border-[#0a0a0a] bg-[#0a0a0a] text-[#fafafa] hover:bg-[#242424] hover:border-[#242424]'
+        : darkMode
+          ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
+          : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
     }`
   );
 
   return (
-    <div className={`rounded-xl border p-2.5 ${darkMode ? 'border-gray-800 bg-black/10' : 'border-gray-200 bg-white/70'}`}>
+    <div className={`rounded-md border p-2.5 ${darkMode ? 'border-[#2e2e2e] bg-[#0f0f0f]' : 'border-[#e5e5e5] bg-white'}`}>
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${theme.textMuted}`}>
@@ -81,7 +81,9 @@ const KeywordFilter = ({
           <button
             type="button"
             onClick={onClearAll}
-            className={`text-[11px] ${theme.textMuted} ${darkMode ? 'hover:text-red-400' : 'hover:text-red-500'} transition-colors`}
+            className={`text-xs transition-all duration-150 ease-in-out active:scale-95 ${
+              darkMode ? 'text-[#a3a3a3] hover:text-[#f87171]' : 'text-[#a3a3a3] hover:text-[#dc2626]'
+            }`}
           >
             Clear
           </button>
@@ -117,8 +119,8 @@ const KeywordFilter = ({
 
       <div
         onClick={() => inputRef.current?.focus()}
-        className={`flex min-h-[42px] w-full items-center gap-2 rounded-xl border px-2.5 py-2 transition-colors ${
-          darkMode ? 'border-gray-800 bg-black/20' : 'border-gray-200 bg-white'
+        className={`flex min-h-[42px] w-full items-center gap-2 rounded-md border px-2.5 py-2 transition-all duration-150 ease-in-out ${
+          darkMode ? 'border-[#2e2e2e] bg-[#1a1a1a]' : 'border-[#e5e5e5] bg-[#fafafa]'
         }`}
       >
         <div className="flex flex-1 flex-wrap items-center gap-1.5">
@@ -137,7 +139,11 @@ const KeywordFilter = ({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onRemove(kw.text); }}
-                className="leading-none transition-colors hover:text-red-400"
+                className={`leading-none rounded-md border px-1 py-0.5 transition-all duration-150 ease-in-out active:scale-95 ${
+                  darkMode
+                    ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#2a1515] hover:text-[#f87171] hover:border-[#7f1d1d]'
+                    : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#fff5f5] hover:text-[#dc2626] hover:border-[#fca5a5]'
+                }`}
                 aria-label={`Remove keyword ${kw.text}`}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,15 +169,16 @@ const KeywordFilter = ({
           type="button"
           onClick={() => commit(inputValue)}
           disabled={!canAdd}
-          className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors ${
-            canAdd
-              ? (darkMode
-                ? 'border-blue-500/25 bg-blue-500/10 text-blue-300 hover:bg-blue-500/15'
-                : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100')
-              : (darkMode
-                ? 'border-gray-800 bg-black/20 text-gray-600'
-                : 'border-gray-200 bg-white text-gray-400')
-          }`}
+          className={`rounded-md px-3 py-1.5 text-[11px] font-semibold border
+    transition-all duration-150 ease-in-out active:scale-95
+    ${canAdd
+      ? darkMode
+        ? 'bg-white text-black border-white hover:bg-[#e5e5e5]'
+        : 'bg-black text-white border-black hover:bg-[#242424]'
+      : darkMode
+        ? 'border-transparent bg-transparent text-[#525252] opacity-40 cursor-not-allowed'
+        : 'border-transparent bg-transparent text-[#a3a3a3] opacity-40 cursor-not-allowed'
+    }`}
         >
           Add
         </button>

@@ -1,10 +1,10 @@
 export const getLogLevelColor = (level, darkMode) => {
   switch(level?.toLowerCase()) {
-    case 'error': return darkMode ? 'text-red-400 bg-red-400/10' : 'text-red-600 bg-red-100';
-    case 'warn': return darkMode ? 'text-yellow-400 bg-yellow-400/10' : 'text-yellow-600 bg-yellow-100';
-    case 'info': return darkMode ? 'text-blue-400 bg-blue-400/10' : 'text-blue-600 bg-blue-100';
-    case 'debug': return darkMode ? 'text-purple-400 bg-purple-400/10' : 'text-purple-600 bg-purple-100';
-    default: return darkMode ? 'text-gray-400 bg-gray-400/10' : 'text-gray-600 bg-gray-100';
+    case 'error': return darkMode ? 'text-red-400 bg-red-500/10' : 'text-red-600 bg-red-50';
+    case 'warn': return darkMode ? 'text-amber-400 bg-amber-500/10' : 'text-amber-600 bg-amber-50';
+    case 'info': return darkMode ? 'text-sky-400 bg-sky-500/10' : 'text-sky-600 bg-sky-50';
+    case 'debug': return darkMode ? 'text-violet-400 bg-violet-500/10' : 'text-violet-600 bg-violet-50';
+    default: return darkMode ? 'text-gray-400 bg-gray-500/10' : 'text-gray-500 bg-gray-50';
   }
 };
 
