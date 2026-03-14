@@ -48,7 +48,6 @@ const normalizeLogEvent = (value, nextId) => {
  *   isConnected   - boolean — live connection status
  *   isReconnecting - boolean — true while waiting to reconnect
  *   logRates      - Record<topic, number> — logs/sec per topic (from server stats)
- *   topicServers  - Record<topic, string[]> — active servers per topic (from server stats)
  *   clearLogs     - (topic: string) => void
  */
 export const useWebSocket = (url, viewedTopics) => {
@@ -57,7 +56,6 @@ export const useWebSocket = (url, viewedTopics) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [logRates, setLogRates] = useState({});
-  const [topicServers, setTopicServers] = useState({});
 
   const pendingRef = useRef([]);        // logs waiting for next flush
   const pendingCountRef = useRef({});   // per-topic count in pendingRef — enforces cap
@@ -193,6 +191,7 @@ export const useWebSocket = (url, viewedTopics) => {
         try {
           data = JSON.parse(event.data);
         } catch {
+          if (import.meta.env.DEV) console.warn('[ws] unrecognized message:', event.data);
           return; // malformed message — skip silently
         }
 
@@ -215,19 +214,14 @@ export const useWebSocket = (url, viewedTopics) => {
           statsIntervalMsRef.current = Number(data.intervalMs) > 0 ? Number(data.intervalMs) : 2000;
           const intervalSec = statsIntervalMsRef.current / 1000;
           const rates = {};
-          const servers = {};
           const now = Date.now();
           for (const [topic, info] of Object.entries(data.topics)) {
             if (!info || typeof info !== 'object') continue;
             const rate = Number(info.rate);
             rates[topic] = Number.isFinite(rate) ? +(rate / intervalSec).toFixed(1) : 0;
             lastRateAtRef.current[topic] = now;
-            servers[topic] = Array.isArray(info.servers)
-              ? info.servers.filter((server) => typeof server === 'string')
-              : [];
           }
           setLogRates((prev) => ({ ...prev, ...rates }));
-          setTopicServers((prev) => ({ ...prev, ...servers }));
           return;
         }
 
@@ -354,5 +348,5 @@ export const useWebSocket = (url, viewedTopics) => {
     }
   }, []);
 
-  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, trimTopicBuffer, logRates, topicServers, subscribe, sendFilter };
+  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, trimTopicBuffer, logRates, subscribe, sendFilter };
 };
