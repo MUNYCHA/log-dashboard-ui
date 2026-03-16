@@ -8,6 +8,16 @@ export const TIME_RANGES = [
 
 export const TIME_RANGE_MS = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
 
+export const formatDurationMs = (ms) => {
+  if (!ms) return '';
+  if (ms % 3600000 === 0) return `${ms / 3600000}h`;
+  if (ms % 60000  === 0) return `${ms / 60000}m`;
+  if (ms % 1000   === 0) return `${ms / 1000}s`;
+  if (ms >= 3600000) return `${(ms / 3600000).toFixed(1)}h`;
+  if (ms >= 60000)   return `${(ms / 60000).toFixed(1)}m`;
+  return `${(ms / 1000).toFixed(1)}s`;
+};
+
 export const downloadFile = (content, filename, mimeType) => {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);

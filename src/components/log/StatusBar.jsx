@@ -49,7 +49,10 @@ const StatusBar = ({
 
       {/* Counts */}
       <span className={`tabular-nums flex-shrink-0 ${theme.textMuted}`}>
-        {visibleCount} <span className="opacity-50">/</span> {bufferedCount}
+        {visibleCount} shown
+        {bufferedCount > visibleCount && (
+          <span className="opacity-60"> · {bufferedCount} buffered</span>
+        )}
       </span>
 
       {hasActiveFilters && (

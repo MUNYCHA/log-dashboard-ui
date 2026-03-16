@@ -1,7 +1,7 @@
 import React from 'react';
 
 const ScrollButtons = ({ atTop, atBottom, scrollToTop, scrollToBottom, darkMode }) => (
-  <div className="absolute right-3 bottom-3 flex flex-col gap-1.5 z-10">
+  <div className="absolute right-3 bottom-3 flex flex-col gap-1.5 z-10 opacity-0 group-hover/logpanel:opacity-100 pointer-events-none group-hover/logpanel:pointer-events-auto transition-opacity duration-100">
     {!atTop && (
       <button
         onClick={scrollToTop}

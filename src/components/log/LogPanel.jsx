@@ -66,7 +66,7 @@ const VirtualLogList = React.memo(({
     : 0;
 
   return (
-    <div className="flex-1 relative overflow-hidden">
+    <div className="flex-1 relative overflow-hidden group/logpanel">
       <div
         className="absolute inset-0 overflow-auto font-mono text-sm"
         ref={scrollRef}
@@ -219,6 +219,7 @@ const LogPanel = ({
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordMode, setKeywordMode] = useState('or');
   const [timeRange, setTimeRange] = useState('all');
+  const [customRangeMs, setCustomRangeMs] = useState(0);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -255,8 +256,9 @@ const LogPanel = ({
     return () => clearInterval(interval);
   }, []);
 
-  const handleTimeRangeChange = useCallback((value) => {
+  const handleTimeRangeChange = useCallback((value, ms = 0) => {
     setTimeRange(value);
+    setCustomRangeMs(ms);
     if (value !== 'all') setNowMs(Date.now());
   }, []);
 
@@ -349,12 +351,14 @@ const LogPanel = ({
       path: selectedPath || null,
       search: debouncedSearch || null,
       keywords: allTerms.length > 0 ? { terms: allTerms, mode: keywordMode } : undefined,
-      timeRange,
+      timeRange: timeRange,
+      ...(timeRange === 'custom' && customRangeMs > 0 ? { timeRangeMs: customRangeMs } : {}),
     };
 
-    const hasAny = filters.server || filters.path || filters.search || filters.keywords || filters.timeRange !== 'all';
+    const hasAny = filters.server || filters.path || filters.search || filters.keywords ||
+      (filters.timeRange && filters.timeRange !== 'all' && (filters.timeRange !== 'custom' || customRangeMs > 0));
     sendFilter(hasAny ? filters : null, panelId);
-  }, [selectedServer, selectedPath, debouncedSearch, keywords, debouncedKeywordInput, keywordMode, timeRange, sendFilter, panelId]);
+  }, [selectedServer, selectedPath, debouncedSearch, keywords, debouncedKeywordInput, keywordMode, timeRange, customRangeMs, sendFilter, panelId]);
 
   const filteredServers = useMemo(
     () => serversForSelectedTopic.filter((s) => s.toLowerCase().includes(serverSearchTerm.toLowerCase())),
@@ -397,16 +401,19 @@ const LogPanel = ({
     }
 
     if (timeRange !== 'all') {
-      const ranges = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
-      const cutoff = nowMs - (ranges[timeRange] || 0);
-      logs = logs.filter((l) => {
-        const ts = new Date(l.timestamp).getTime();
-        return Number.isFinite(ts) && ts >= cutoff;
-      });
+      const PRESET_MS = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
+      const rangeMs = timeRange === 'custom' ? customRangeMs : (PRESET_MS[timeRange] || 0);
+      if (rangeMs > 0) {
+        const cutoff = nowMs - rangeMs;
+        logs = logs.filter((l) => {
+          const ts = new Date(l.timestamp).getTime();
+          return Number.isFinite(ts) && ts >= cutoff;
+        });
+      }
     }
 
     return [...logs].slice(0, config.ws.maxLogsPerTopic).reverse();
-  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, keywords, keywordInput, keywordMode, timeRange, nowMs]);
+  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, keywords, keywordInput, keywordMode, timeRange, customRangeMs, nowMs]);
 
   const displayedLogs = frozenLogs != null && frozenTopic === selectedTopic
     ? frozenLogs
@@ -639,6 +646,7 @@ const LogPanel = ({
           pathSearchTerm={pathSearchTerm}
           onPathSearchChange={setPathSearchTerm}
           timeRange={timeRange}
+          customRangeMs={customRangeMs}
           onTimeRangeChange={handleTimeRangeChange}
         />
 
@@ -664,6 +672,7 @@ const LogPanel = ({
           pathSearchTerm={pathSearchTerm}
           onPathSearchChange={setPathSearchTerm}
           timeRange={timeRange}
+          customRangeMs={customRangeMs}
           onTimeRangeChange={handleTimeRangeChange}
           logSearchTerm={logSearchTerm}
           onSearchChange={setLogSearchTerm}

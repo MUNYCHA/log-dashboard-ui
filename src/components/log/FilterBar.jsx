@@ -1,6 +1,6 @@
 import React from 'react';
-import { ServerDropdown, PathDropdown } from '../filters';
-import { TIME_RANGES, getShortPath } from './constants';
+import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../filters';
+import { getShortPath } from './constants';
 
 const chip = (active, darkMode) =>
   `h-8 inline-flex items-center gap-1.5 rounded-full border px-4 text-[13px] font-medium
@@ -21,7 +21,7 @@ const FilterBar = ({
   serverSearchTerm, onServerSearchChange,
   filteredPaths, selectedPath, onPathSelect, onClearPath,
   pathSearchTerm, onPathSearchChange,
-  timeRange, onTimeRangeChange,
+  timeRange, customRangeMs, onTimeRangeChange,
   logSearchTerm, onSearchChange,
 }) => (
   <div className="hidden md:flex items-center gap-2 mt-3 flex-wrap">
@@ -48,7 +48,7 @@ const FilterBar = ({
           </>
         ) : (
           <>
-            <span>Server</span>
+            <span>All servers</span>
             <svg className={`w-3.5 h-3.5 opacity-50 transition-transform ${showServerDropdown ? 'rotate-180' : ''}`}
                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -88,7 +88,7 @@ const FilterBar = ({
           </>
         ) : (
           <>
-            <span>Path</span>
+            <span>All paths</span>
             <svg className={`w-3.5 h-3.5 opacity-50 transition-transform ${showPathDropdown ? 'rotate-180' : ''}`}
                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -110,16 +110,8 @@ const FilterBar = ({
     {/* Thin divider */}
     <div className={`w-px h-5 ${darkMode ? 'bg-[#4A4540]' : 'bg-[#DDD7D0]'}`} />
 
-    {/* Time range chips */}
-    {TIME_RANGES.map((r) => (
-      <button
-        key={r.value}
-        onClick={() => onTimeRangeChange(r.value)}
-        className={chip(timeRange === r.value, darkMode)}
-      >
-        {r.label}
-      </button>
-    ))}
+    {/* Time range */}
+    <TimeRangeSelector timeRange={timeRange} customRangeMs={customRangeMs} onTimeRangeChange={onTimeRangeChange} darkMode={darkMode} />
 
     {/* Thin divider */}
     <div className={`w-px h-5 ${darkMode ? 'bg-[#4A4540]' : 'bg-[#DDD7D0]'}`} />

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ThemeToggle from '../common/ThemeToggle';
-import { ServerDropdown, PathDropdown } from '../filters';
-import { TIME_RANGES, getShortPath } from './constants';
+import HeartbeatLine from '../common/HeartbeatLine';
+import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../filters';
+import { getShortPath } from './constants';
 
 const MobileHeader = ({
   selectedTopic, displayedLogs, logRate, darkMode, theme,
@@ -17,7 +18,7 @@ const MobileHeader = ({
   serverSearchTerm, onServerSearchChange,
   filteredPaths, selectedPath, onPathSelect, onClearPath,
   pathSearchTerm, onPathSearchChange,
-  timeRange, onTimeRangeChange,
+  timeRange, customRangeMs, onTimeRangeChange,
 }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportRef = useRef(null);
@@ -42,7 +43,6 @@ const MobileHeader = ({
   const btnDanger = darkMode
     ? 'rounded-xl border border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#4A2A2A] hover:text-[#F28B82] hover:border-[#8B3C36]'
     : 'rounded-xl border border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#FCE8E6] hover:text-[#C5221F] hover:border-[#F5C6C2]';
-  const btnAccent = 'rounded-xl border border-[#0B57D0] bg-[#0B57D0] text-white hover:bg-[#0842A0] hover:border-[#0842A0]';
   const btnBase = 'inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95';
   const btnGhost = darkMode
     ? 'text-[#CAC4BC] hover:text-[#E8E2DC] hover:bg-[#2E2B28]'
@@ -70,6 +70,7 @@ const MobileHeader = ({
               <span className={`h-1.5 w-1.5 rounded-full ${logRate > 0 ? 'bg-emerald-500' : (darkMode ? 'bg-[#49443E]' : 'bg-[#C5BEB7]')}`} />
               {logRate}/s
             </span>
+            {logRate > 0 && <HeartbeatLine rate={logRate} darkMode={darkMode} />}
           </div>
 
           <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -84,7 +85,7 @@ const MobileHeader = ({
 
         {isMobileMenuOpen && (
           <div
-            className={`mt-2 space-y-2 rounded-xl border p-2.5 overflow-hidden ${
+            className={`mt-2 space-y-2 rounded-xl border p-2.5 ${
               darkMode ? 'border-[#3A3530] bg-[#1E1C1A]' : 'border-[#E4DDD6] bg-[#F7F4F1]'
             } ${mobileMenuReady ? '' : 'pointer-events-none'}`}
           >
@@ -143,21 +144,7 @@ const MobileHeader = ({
             </div>
 
             {/* Time range */}
-            <div className="flex flex-wrap gap-1">
-              {TIME_RANGES.map((r) => (
-                <button
-                  key={r.value}
-                  onClick={() => onTimeRangeChange(r.value)}
-                  className={`px-3 py-1.5 text-[11px] font-medium rounded-lg border transition-all duration-150 ease-in-out active:scale-95 ${
-                    timeRange === r.value
-                      ? btnAccent
-                      : (darkMode ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]' : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]')
-                  }`}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
+            <TimeRangeSelector timeRange={timeRange} customRangeMs={customRangeMs} onTimeRangeChange={onTimeRangeChange} darkMode={darkMode} />
 
             {/* Action buttons */}
             <div className="grid grid-cols-2 gap-1.5">
