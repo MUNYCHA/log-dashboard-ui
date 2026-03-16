@@ -90,14 +90,8 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
   const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
   const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
   const message = typeof log.message === 'string' ? log.message : String(log.message ?? '');
-  const { isFresh } = useMemo(() => {
-    const ts = new Date(log.timestamp).getTime();
-    return { isFresh: Number.isFinite(ts) && Date.now() - ts < 2500 };
-  }, [log.timestamp]);
-  void isFresh;
-
   return (
-    <article className="px-3 pt-1.5 pb-0">
+    <article className="px-3 pt-1.5 pb-1.5">
       <div className={`min-h-[80px] rounded-2xl px-4 py-3.5 transition-colors duration-100 ${
         darkMode
           ? 'bg-[#1E1C1A] border border-[#2A2724] hover:bg-[#252320]'

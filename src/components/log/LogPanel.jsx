@@ -12,7 +12,7 @@ import EmptyState from "./EmptyState";
 import ScrollButtons from "./ScrollButtons";
 import LogEntry from "./LogEntry";
 
-const ESTIMATED_LOG_HEIGHT = 108;
+const ESTIMATED_LOG_HEIGHT = 114;
 
 const VirtualLogList = React.memo(({
   displayedLogs, isPaused, theme, darkMode, keywords, timestampGen,
@@ -28,7 +28,42 @@ const VirtualLogList = React.memo(({
     getScrollElement: () => scrollRef.current,
     estimateSize: () => ESTIMATED_LOG_HEIGHT,
     overscan: 10,
+    getItemKey: (index) => displayedLogs[index]._id,
   });
+
+  // Stable callback ref so effects below never go stale
+  const measureRef = useRef(() => {});
+  measureRef.current = () => virtualizer.measure();
+
+  // Dark/light switch changes card styling — clear cached heights
+  useEffect(() => {
+    measureRef.current();
+  }, [darkMode]);
+
+  // Width change (resize / split-view) causes text reflow — invalidate cache
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let prevWidth = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      const w = el.clientWidth;
+      if (w !== prevWidth) {
+        prevWidth = w;
+        measureRef.current();
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const virtualItems = virtualizer.getVirtualItems();
+  // Padding spacers stand in for off-screen items above and below the
+  // rendered window. Visible items are in normal document flow so the
+  // browser — not JS estimates — controls the gaps between them.
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom = virtualItems.length > 0
+    ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
+    : 0;
 
   return (
     <div className="flex-1 relative overflow-hidden">
@@ -39,7 +74,7 @@ const VirtualLogList = React.memo(({
         onTouchMove={markUserScrollIntent}
         onPointerDown={markUserScrollIntent}
       >
-        <div>
+        <div className="pb-4">
           {isPaused && (
             <div className={`animate-paused-banner flex items-center justify-between gap-3 px-4 py-2 text-xs border-b ${
               darkMode ? 'border-[#302C29] bg-[#1E1C1A] text-[#938D87]' : 'border-[#E4DDD6] bg-[#FFFDF9] text-[#79736D]'
@@ -62,21 +97,14 @@ const VirtualLogList = React.memo(({
           )}
 
           {displayedLogs.length > 0 ? (
-            <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
-              {virtualizer.getVirtualItems().map((virtualRow) => {
+            <div style={{ paddingTop, paddingBottom }}>
+              {virtualItems.map((virtualRow) => {
                 const log = displayedLogs[virtualRow.index];
                 return (
                   <div
                     key={log._id}
                     data-index={virtualRow.index}
                     ref={virtualizer.measureElement}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
                   >
                     <LogEntry
                       log={log}

@@ -37,63 +37,67 @@ const KeywordFilter = ({
   };
 
   const canAdd = inputValue.trim().length > 0;
-  const showColorPicker = canAdd;
-
-  const modeBtn = (isActive) =>
-    `rounded-xl px-3 py-1.5 text-[12.5px] font-medium transition-all duration-150 ease-in-out active:scale-95 ${
-      isActive
-        ? 'bg-[#0B57D0] text-white'
-        : darkMode
-          ? 'text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC]'
-          : 'text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A]'
-    }`;
 
   return (
-    <div className={`rounded-2xl border px-4 py-3.5 ${darkMode ? 'border-[#3A3530] bg-[#1E1C1A]' : 'border-[#E4DDD6] bg-[#FFFDF9]'}`}>
-      <div className="mb-3 flex flex-wrap items-center gap-2.5">
-        <div className="flex items-center gap-2">
-          <span className={`text-[13px] font-semibold ${theme.text}`}>Keywords</span>
-          {keywords.length > 0 && (
-            <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium ${
-              darkMode ? 'bg-[#252320] text-[#938D87]' : 'bg-[#EEE8E2] text-[#79736D]'
-            }`}>{keywords.length}</span>
-          )}
-        </div>
+    <div
+      onClick={() => inputRef.current?.focus()}
+      className={`flex min-h-[36px] w-full items-center gap-2 rounded-full border px-3 py-1 cursor-text transition-all duration-150 ease-in-out focus-within:ring-2 ${
+        darkMode
+          ? 'bg-[#252219] border-[#4A4540] focus-within:ring-[#A8C7FA]/20 focus-within:border-[#A8C7FA]'
+          : 'bg-white border-[#C5BEB7] focus-within:ring-[#0B57D0]/20 focus-within:border-[#0B57D0]'
+      }`}
+    >
+      {/* Tag icon */}
+      <svg className={`w-3.5 h-3.5 flex-shrink-0 ${theme.textMuted}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 014-4z" />
+      </svg>
 
-        {/* Mode toggle */}
-        <div className={`inline-flex items-center rounded-2xl border p-1 ${
-          darkMode ? 'border-[#3F3A34] bg-[#252320]' : 'border-[#DDD7D0] bg-[#EEE8E2]'
-        }`}>
-          <button type="button" onClick={() => onModeChange('or')} className={modeBtn(mode === 'or')} title="Any keyword matches">
-            Any
-          </button>
-          <button type="button" onClick={() => onModeChange('and')} className={modeBtn(mode === 'and')} title="All keywords must match">
-            All
-          </button>
-        </div>
-
-        {keywords.length > 0 && (
-          <button
-            type="button"
-            onClick={onClearAll}
-            className={`ml-auto text-[12.5px] font-medium transition-all duration-150 ease-in-out ${
-              darkMode ? 'text-[#938D87] hover:text-[#F28B82]' : 'text-[#79736D] hover:text-[#C5221F]'
-            }`}
+      {/* Chips + input */}
+      <div className="flex flex-1 flex-wrap items-center gap-1.5 min-w-0">
+        {keywords.map((kw) => (
+          <span
+            key={kw.text}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-medium leading-none"
+            style={{ backgroundColor: `${kw.color}1A`, color: kw.color }}
           >
-            Clear all
-          </button>
-        )}
+            <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: kw.color }} />
+            {kw.text}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onRemove(kw.text); }}
+              className="ml-0.5 opacity-50 hover:opacity-100 transition-opacity leading-none"
+              aria-label={`Remove ${kw.text}`}
+            >
+              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </span>
+        ))}
+
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={(e) => onInputChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={keywords.length === 0 ? 'Add keyword…' : '…'}
+          className={`min-w-[80px] flex-1 bg-transparent text-[13px] outline-none ${
+            darkMode ? 'text-[#ECE6DF] placeholder:text-[#6E6862]' : 'text-[#1C1B1A] placeholder:text-[#A39E97]'
+          }`}
+        />
       </div>
 
-      {showColorPicker && (
-        <div className={`mb-3 inline-flex items-center gap-2.5 rounded-xl border px-3 py-2 ${
-          darkMode ? 'border-[#3F3A34] bg-[#252320]' : 'border-[#DDD7D0] bg-[#EEE8E2]'
-        }`}>
-          <span className={`text-[12.5px] ${theme.textMuted}`}>Highlight color</span>
+      {/* Right controls */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+
+        {/* Color swatch — only while typing */}
+        {canAdd && (
           <label
-            className="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/30"
-            style={{ boxShadow: `0 0 0 2px ${selectedColor}50` }}
-            title="Choose keyword color"
+            className="relative inline-flex h-5 w-5 cursor-pointer items-center justify-center rounded-full flex-shrink-0 transition-transform active:scale-95"
+            style={{ boxShadow: `0 0 0 1.5px ${selectedColor}55` }}
+            title="Highlight color"
+            onClick={(e) => e.stopPropagation()}
           >
             <input
               type="color"
@@ -101,78 +105,68 @@ const KeywordFilter = ({
               onChange={(e) => setSelectedColor(e.target.value)}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
-            <span className="h-4 w-4 rounded-full" style={{ backgroundColor: selectedColor }} />
+            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: selectedColor }} />
           </label>
-          <span className={`text-[12px] font-mono ${theme.textMuted}`}>{selectedColor.toUpperCase()}</span>
-        </div>
-      )}
+        )}
 
-      {/* Input area */}
-      <div
-        onClick={() => inputRef.current?.focus()}
-        className={`flex min-h-[48px] w-full items-center gap-2 rounded-2xl border px-3 py-2.5 cursor-text transition-all duration-150 ease-in-out focus-within:ring-2 ${
-          darkMode
-            ? 'bg-[#252219] border-[#4A4540] focus-within:ring-[#A8C7FA]/20 focus-within:border-[#A8C7FA]'
-            : 'bg-white border-[#C5BEB7] focus-within:ring-[#0B57D0]/20 focus-within:border-[#0B57D0]'
-        }`}
-      >
-        <div className="flex flex-1 flex-wrap items-center gap-1.5">
-          {keywords.map((kw) => (
-            <span
-              key={kw.text}
-              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium"
-              style={{
-                borderColor: `${kw.color}38`,
-                backgroundColor: `${kw.color}14`,
-                color: kw.color,
-              }}
+        {/* Add — + icon, only while typing */}
+        {canAdd && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); commit(inputValue); }}
+            className="h-6 w-6 rounded-full bg-[#0B57D0] text-white flex items-center justify-center flex-shrink-0 transition-all duration-150 active:scale-95 hover:bg-[#0842A0]"
+            title="Add keyword (Enter)"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        )}
+
+        {/* Divider */}
+        <div className={`w-px h-4 mx-0.5 ${darkMode ? 'bg-[#4A4540]' : 'bg-[#DDD7D0]'}`} />
+
+        {/* or / and mode toggle */}
+        <div className={`inline-flex items-center rounded-full p-0.5 ${
+          darkMode ? 'bg-[#2A2724]' : 'bg-[#EEE8E2]'
+        }`}>
+          {['or', 'and'].map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onModeChange(m); }}
+              title={m === 'or' ? 'Match any keyword' : 'Match all keywords'}
+              className={`rounded-full px-2 py-0.5 text-[11px] font-medium transition-all duration-150 ease-in-out ${
+                mode === m
+                  ? 'bg-[#0B57D0] text-white shadow-sm'
+                  : darkMode
+                    ? 'text-[#938D87] hover:text-[#CAC4BC]'
+                    : 'text-[#79736D] hover:text-[#4A4540]'
+              }`}
             >
-              <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: kw.color }} />
-              <span>{kw.text}</span>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onRemove(kw.text); }}
-                className="leading-none transition-opacity opacity-60 hover:opacity-100"
-                aria-label={`Remove ${kw.text}`}
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </span>
+              {m.toUpperCase()}
+            </button>
           ))}
-
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) => onInputChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={keywords.length === 0 ? 'Type a keyword, press Enter' : 'Add another'}
-            className={`min-w-[180px] flex-1 bg-transparent text-[13px] outline-none ${
-              darkMode ? 'text-[#ECE6DF] placeholder:text-[#8E8882]' : 'text-[#1C1B1A] placeholder:text-[#79736D]'
-            }`}
-          />
         </div>
 
-        <button
-          type="button"
-          onClick={() => commit(inputValue)}
-          disabled={!canAdd}
-          className={`rounded-xl px-4 py-1.5 text-[12.5px] font-semibold flex-shrink-0 border
-            transition-all duration-150 ease-in-out active:scale-95
-            ${canAdd
-              ? 'bg-[#0B57D0] text-white border-[#0B57D0] hover:bg-[#0842A0] hover:border-[#0842A0]'
-              : 'border-transparent bg-transparent text-[#79736D] opacity-40 cursor-not-allowed'
+        {/* Clear all — trash icon */}
+        {keywords.length > 0 && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onClearAll(); }}
+            className={`h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150 ease-in-out active:scale-95 ${
+              darkMode
+                ? 'text-[#6E6862] hover:text-[#F28B82] hover:bg-[#2E2B28]'
+                : 'text-[#A39E97] hover:text-[#C5221F] hover:bg-[#EEE8E2]'
             }`}
-        >
-          Add
-        </button>
+            title="Clear all keywords"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        )}
       </div>
-
-      <p className={`mt-2 px-1 text-[12px] ${theme.textMuted}`}>
-        Enter or comma to add · Backspace removes last · Any = broad, All = narrow
-      </p>
     </div>
   );
 };
