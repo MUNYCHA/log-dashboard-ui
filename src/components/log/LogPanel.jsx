@@ -15,7 +15,7 @@ import LogEntry from "./LogEntry";
 const ESTIMATED_LOG_HEIGHT = 114;
 
 const VirtualLogList = React.memo(({
-  displayedLogs, isPaused, theme, darkMode, keywords, timestampGen,
+  displayedLogs, isPaused, autoScroll, theme, darkMode, keywords, timestampGen,
   logSearchTerm,
   selectedServer, selectedPath,
   emptyState, onClearFilters, onResumeLive,
@@ -31,24 +31,48 @@ const VirtualLogList = React.memo(({
     getItemKey: (index) => displayedLogs[index]._id,
   });
 
-  // Stable callback ref so effects below never go stale
+  // Stable refs so ResizeObserver closure never goes stale
   const measureRef = useRef(() => {});
   measureRef.current = () => virtualizer.measure();
+  const autoScrollRef = useRef(autoScroll);
+  autoScrollRef.current = autoScroll;
+  const isPausedRef = useRef(isPaused);
+  isPausedRef.current = isPaused;
 
-  // Width change (resize / split-view) causes text reflow — invalidate cache
+  // Auto-scroll: fires on new logs AND when virtualizer remeasures card heights.
+  // Without the totalSize dep, scrollHeight grows after estimated→actual measurement
+  // and the scroll position falls behind the real bottom.
+  const totalSize = virtualizer.getTotalSize();
+  useEffect(() => {
+    if (!autoScroll || isPaused) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }, [displayedLogs, totalSize, autoScroll, isPaused, scrollRef]);
+
+  // Width change (resize / split-view) causes text reflow — invalidate cache.
+  // Debounce measure() so it fires once after resize settles, not on every pixel.
+  // Immediately rAF-scroll on each resize frame so auto-scroll keeps up.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     let prevWidth = el.clientWidth;
+    let measureTimer;
     const ro = new ResizeObserver(() => {
       const w = el.clientWidth;
       if (w !== prevWidth) {
         prevWidth = w;
-        measureRef.current();
+        if (autoScrollRef.current && !isPausedRef.current) {
+          requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+        }
+        clearTimeout(measureTimer);
+        measureTimer = setTimeout(() => measureRef.current(), 150);
       }
     });
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => { ro.disconnect(); clearTimeout(measureTimer); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const virtualItems = virtualizer.getVirtualItems();
@@ -69,7 +93,7 @@ const VirtualLogList = React.memo(({
         onTouchMove={markUserScrollIntent}
         onPointerDown={markUserScrollIntent}
       >
-        <div className="pb-4">
+        <div className="pt-1.5 pb-1.5">
           {isPaused && (
             <div className={`animate-paused-banner flex items-center justify-between gap-3 px-4 py-2 text-xs border-b ${
               darkMode ? 'border-[#302C29] bg-[#1E1C1A] text-[#938D87]' : 'border-[#E4DDD6] bg-[#FFFDF9] text-[#79736D]'
@@ -474,15 +498,6 @@ const LogPanel = ({
     togglePause();
   };
 
-  useEffect(() => {
-    if (!isPaused && autoScroll && scrollRef.current) {
-      const el = scrollRef.current;
-      requestAnimationFrame(() => {
-        el.scrollTop = el.scrollHeight;
-        previousScrollTopRef.current = el.scrollTop;
-      });
-    }
-  }, [filteredLogs, autoScroll, isPaused]);
 
   const handleServerSelect = (server) => {
     onServerSelect(server);
@@ -708,6 +723,7 @@ const LogPanel = ({
       <VirtualLogList
         displayedLogs={displayedLogs}
         isPaused={isPaused}
+        autoScroll={autoScroll}
         theme={theme}
         darkMode={darkMode}
         keywords={displayKeywords}
