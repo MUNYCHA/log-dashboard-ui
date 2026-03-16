@@ -35,11 +35,6 @@ const VirtualLogList = React.memo(({
   const measureRef = useRef(() => {});
   measureRef.current = () => virtualizer.measure();
 
-  // Dark/light switch changes card styling — clear cached heights
-  useEffect(() => {
-    measureRef.current();
-  }, [darkMode]);
-
   // Width change (resize / split-view) causes text reflow — invalidate cache
   useEffect(() => {
     const el = scrollRef.current;
