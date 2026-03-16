@@ -13,33 +13,40 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkM
   const isActive = logRate > 0;
   const itemTone = isSelected
     ? (darkMode
-      ? 'bg-[#fafafa] text-[#0a0a0a]'
-      : 'bg-[#0a0a0a] text-[#fafafa]')
+      ? 'bg-[#0842A0]/30 text-[#A8C7FA]'
+      : 'bg-[#D3E3FD] text-[#0B57D0]')
     : (darkMode
-      ? 'text-[#a3a3a3] hover:text-[#fafafa] hover:bg-[#1a1a1a]'
-      : 'text-[#525252] hover:text-[#0a0a0a] hover:bg-[#f0f0f0]');
+      ? 'text-[#CAC4BC] hover:text-[#E8E2DC] hover:bg-[#2E2B28]'
+      : 'text-[#4A4540] hover:text-[#1C1B1A] hover:bg-[#EEE8E2]');
+
   return (
     <button
       onClick={() => onTopicSelect(topic)}
-      className={`relative w-full overflow-hidden rounded-md px-2.5 py-1.5 text-left transition-all duration-150 ease-in-out active:scale-95 ${itemTone}`}
+      className={`relative w-full overflow-hidden rounded-xl px-4 py-2.5 text-left transition-all duration-150 ease-in-out active:scale-[0.98] ${itemTone}`}
     >
       {isSelected && (
         <MotionSpan
           layoutId="topic-selection-indicator"
-          className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full bg-[#0070f3]"
+          className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-full ${darkMode ? 'bg-[#A8C7FA]' : 'bg-[#0B57D0]'}`}
           transition={{ type: 'spring', stiffness: 500, damping: 36 }}
         />
       )}
-      <div className="flex items-center gap-2">
-        <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
+      <div className="flex items-center gap-2.5">
+        <span className={`h-2 w-2 rounded-full flex-shrink-0 ${
           isActive
-            ? 'bg-[#0070f3]'
-            : darkMode ? 'bg-[#333]' : 'bg-slate-400'
-        }`}
-        />
-        <span className="truncate text-[13px] font-medium">
+            ? 'bg-emerald-500'
+            : darkMode ? 'bg-[#49443E]' : 'bg-[#C5BEB7]'
+        }`} />
+        <span className="truncate text-[13.5px] font-medium">
           {topic}
         </span>
+        {isActive && (
+          <span className={`ml-auto text-[11px] font-mono tabular-nums flex-shrink-0 ${
+            darkMode ? 'text-emerald-400' : 'text-emerald-600'
+          }`}>
+            {logRate}/s
+          </span>
+        )}
       </div>
     </button>
   );
@@ -62,7 +69,7 @@ const Sidebar = ({
   onCollapse,
 }) => {
   const sortedTopics = useMemo(() => {
-    const filtered = topics.filter(t => t.toLowerCase().includes(topicSearchTerm.toLowerCase()));
+    const filtered = topics.filter((t) => t.toLowerCase().includes(topicSearchTerm.toLowerCase()));
 
     if (topicSortMode === 'asc') {
       return filtered.sort((a, b) => a.localeCompare(b));
@@ -83,9 +90,13 @@ const Sidebar = ({
   }, [topics, topicSearchTerm, topicSortMode, logRates]);
 
   const activeCount = useMemo(
-    () => topics.filter(t => (logRates?.[t] || 0) > 0).length,
+    () => topics.filter((t) => (logRates?.[t] || 0) > 0).length,
     [topics, logRates],
   );
+
+  const ghostBtn = darkMode
+    ? 'text-[#CAC4BC] hover:text-[#E8E2DC] hover:bg-[#2E2B28]'
+    : 'text-[#4A4540] hover:text-[#1C1B1A] hover:bg-[#EEE8E2]';
 
   return (
     <div
@@ -95,106 +106,88 @@ const Sidebar = ({
         transform transition-transform duration-200
         md:relative md:translate-x-0 md:z-auto md:transition-[width] md:duration-200
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${collapsed ? 'md:w-10 md:overflow-hidden' : 'md:w-56 lg:w-64'}
+        ${collapsed ? 'md:w-10 md:overflow-hidden' : 'md:w-60 lg:w-68'}
       `}
     >
-      {/* Collapsed strip */}
       {collapsed && (
-        <div className="hidden md:flex flex-col items-center justify-start pt-2.5 flex-1">
+        <div className="hidden md:flex flex-col items-center justify-start pt-3 flex-1">
           <button
             onClick={onCollapse}
             title="Show sidebar"
-            className={`inline-flex h-7 w-7 items-center justify-center rounded-md border transition-all duration-150 ease-in-out active:scale-95
-    ${darkMode
-      ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
-      : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
-    }`}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
       )}
 
       <div className={`flex flex-col flex-1 min-h-0 ${collapsed ? 'md:hidden' : ''}`}>
+
         {/* Header */}
-        <div className="px-3 pt-3 pb-1.5 flex-shrink-0">
+        <div className="px-4 pt-4 pb-3 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <h1 className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${theme.textMuted}`}>
-              Topics
-            </h1>
-            <div className="flex items-center gap-2">
-              <span className={`text-[11px] font-mono tabular-nums ${theme.textMuted}`}>
+            <div className="flex items-center gap-2.5">
+              <h1 className={`text-[13px] font-semibold ${theme.text}`}>Topics</h1>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium tabular-nums ${
+                darkMode ? 'bg-[#252320] text-[#938D87]' : 'bg-[#EEE8E2] text-[#79736D]'
+              }`}>
                 {activeCount}/{topics.length}
               </span>
+            </div>
+            <div className="flex items-center gap-1">
               <button
                 onClick={onClose}
-                className={`md:hidden inline-flex h-7 w-7 items-center justify-center rounded-md border transition-all duration-150 ease-in-out active:scale-95 ${
-                  darkMode
-                    ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
-                    : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
-                }`}
+                className={`md:hidden inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
                 aria-label="Close sidebar"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <button
+                onClick={onCollapse}
+                title="Hide sidebar"
+                aria-label="Collapse sidebar"
+                className={`hidden md:inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Search */}
-        <div className="px-3 pb-1.5 flex-shrink-0">
-          <div className="flex items-center gap-1.5">
-            <div className="relative flex-1 min-w-0">
-              <svg
-                className={`absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${theme.textMuted}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search..."
-                className={`w-full rounded-md border px-8 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#0070f3] transition-all duration-150 ease-in-out ${
-                  darkMode
-                    ? 'border-[#282828] bg-[#141414] placeholder:text-gray-600 text-gray-200'
-                    : 'border-slate-300 bg-white placeholder:text-gray-500 text-gray-900'
-                }`}
-                value={topicSearchTerm}
-                onChange={(e) => onTopicSearchChange(e.target.value)}
-              />
-            </div>
-            <button
-              onClick={onCollapse}
-              title="Hide sidebar"
-              aria-label="Collapse sidebar"
-              className={`hidden md:inline-flex h-7 w-7 items-center justify-center rounded-md border transition-all duration-150 ease-in-out active:scale-95
-    ${darkMode
-      ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
-      : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
-    }`}
+        {/* Search — rounded-full */}
+        <div className="px-4 pb-3 flex-shrink-0">
+          <div className="relative">
+            <svg
+              className={`absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 ${theme.textMuted}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search topics"
+              className={`w-full h-9 rounded-full border pl-10 pr-4 text-[13px] focus:outline-none focus:ring-2 transition-all duration-150 ease-in-out ${
+                darkMode
+                  ? 'bg-[#252219] border-[#4A4540] text-[#ECE6DF] placeholder:text-[#8E8882] focus:ring-[#A8C7FA]/20 focus:border-[#A8C7FA]'
+                  : 'bg-white border-[#C5BEB7] text-[#1C1B1A] placeholder:text-[#79736D] focus:ring-[#0B57D0]/20 focus:border-[#0B57D0]'
+              }`}
+              value={topicSearchTerm}
+              onChange={(e) => onTopicSearchChange(e.target.value)}
+            />
           </div>
         </div>
 
-        {/* Sort — inline segmented toggle */}
-        <div className="px-3 pb-2 flex-shrink-0">
-          <div className={`grid grid-cols-3 gap-0.5 rounded-md border p-0.5 ${
-            darkMode ? 'border-[#2e2e2e] bg-[#0f0f0f]' : 'border-[#e5e5e5] bg-[#f5f5f5]'
+        {/* Sort tabs */}
+        <div className="px-4 pb-3 flex-shrink-0">
+          <div className={`grid grid-cols-3 gap-0.5 rounded-2xl border p-1 ${
+            darkMode ? 'border-[#3F3A34] bg-[#252320]' : 'border-[#DDD7D0] bg-[#EEE8E2]'
           }`}>
             {TOPIC_SORT_OPTIONS.map((option) => {
               const isSelected = option.value === topicSortMode;
@@ -203,15 +196,15 @@ const Sidebar = ({
                   key={option.value}
                   type="button"
                   onClick={() => onTopicSortModeChange(option.value)}
-                  className={`w-full rounded-[6px] px-3 py-1.5 text-center text-[11px] font-medium transition-all duration-150 ease-in-out active:scale-95
-    ${isSelected
-      ? darkMode
-        ? 'bg-[#fafafa] text-[#0a0a0a] hover:bg-[#e5e5e5]'
-        : 'bg-[#0a0a0a] text-[#fafafa] hover:bg-[#242424]'
-      : darkMode
-        ? 'text-[#a3a3a3] hover:bg-[#1a1a1a] hover:text-[#fafafa]'
-        : 'text-[#525252] hover:bg-white hover:text-[#0a0a0a]'
-    }`}
+                  className={`w-full rounded-xl py-1.5 text-center text-[12px] font-medium transition-all duration-150 ease-in-out active:scale-95
+                    ${isSelected
+                      ? darkMode
+                        ? 'bg-[#0842A0]/30 text-[#A8C7FA]'
+                        : 'bg-white text-[#0B57D0] shadow-sm'
+                      : darkMode
+                        ? 'text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC]'
+                        : 'text-[#4A4540] hover:bg-[#F7F4F1] hover:text-[#1C1B1A]'
+                    }`}
                 >
                   {option.label}
                 </button>
@@ -221,9 +214,9 @@ const Sidebar = ({
         </div>
 
         {/* Topic list */}
-        <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-2 py-0.5`}>
+        <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-3 pb-3`}>
           <div className="flex flex-col gap-0.5">
-            {sortedTopics.map(topic => (
+            {sortedTopics.map((topic) => (
               <TopicItem
                 key={topic}
                 topic={topic}

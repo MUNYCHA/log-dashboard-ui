@@ -26,41 +26,35 @@ export const getShortPath = (path) => {
 };
 
 export const getButtonStyles = (darkMode) => {
-  const base = `inline-flex h-8 w-8 items-center justify-center rounded-md border
+  const base = `inline-flex h-10 w-10 items-center justify-center rounded-xl
       transition-all duration-150 ease-in-out active:scale-95`;
 
-  const idle = darkMode
-    ? `bg-[#1a1a1a] border-[#2e2e2e] text-[#a3a3a3]
-         hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]`
-    : `bg-white border-[#e5e5e5] text-[#525252]
-         hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]`;
+  const ghost = darkMode
+    ? `text-[#CAC4BC] hover:text-[#E8E2DC] hover:bg-[#2E2B28]`
+    : `text-[#4A4540] hover:text-[#1C1B1A] hover:bg-[#EEE8E2]`;
 
-  const active = darkMode
-    ? `bg-[#fafafa] border-[#fafafa] text-[#0a0a0a]
-         hover:bg-[#e5e5e5] hover:border-[#e5e5e5]`
-    : `bg-[#0a0a0a] border-[#0a0a0a] text-[#fafafa]
-         hover:bg-[#242424] hover:border-[#242424]`;
+  const ghostActive = darkMode
+    ? `text-[#A8C7FA] hover:bg-[#0842A0]/20`
+    : `text-[#0B57D0] hover:bg-[#D3E3FD]/70`;
 
-  const danger = darkMode
-    ? `bg-[#1a1a1a] border-[#2e2e2e] text-[#a3a3a3]
-         hover:bg-[#2a1515] hover:text-[#f87171] hover:border-[#7f1d1d]`
-    : `bg-white border-[#e5e5e5] text-[#525252]
-         hover:bg-[#fff5f5] hover:text-[#dc2626] hover:border-[#fca5a5]`;
+  const ghostDanger = darkMode
+    ? `text-[#CAC4BC] hover:text-[#F28B82] hover:bg-[#4A2A2A]`
+    : `text-[#4A4540] hover:text-[#C5221F] hover:bg-[#FCE8E6]`;
 
   return {
-    pause:    `${base} ${idle}`,
-    paused:   `${base} ${active}`,
-    export:   `${base} ${idle}`,
-    scroll:   `${base} ${idle}`,
-    scrollOn: `${base} ${active}`,
-    split:    `${base} ${idle}`,
-    splitOn:  `${base} ${active}`,
-    close:    `${base} ${idle}`,
-    clear:    `${base} ${danger}`,
+    pause:    `${base} ${ghost}`,
+    paused:   `${base} ${ghostActive}`,
+    export:   `${base} ${ghost}`,
+    scroll:   `${base} ${ghost}`,
+    scrollOn: `${base} ${ghostActive}`,
+    split:    `${base} ${ghost}`,
+    splitOn:  `${base} ${ghostActive}`,
+    close:    `${base} ${ghost}`,
+    clear:    `${base} ${ghostDanger}`,
   };
 };
 
 export const getAccentStyles = (darkMode) => ({
-  active: darkMode ? "border border-[#282828] bg-[#1a1a1a] text-white" : "border border-gray-200 bg-gray-100 text-gray-900",
-  paused: darkMode ? "border border-[#282828] bg-[#1a1a1a] text-white" : "border border-gray-200 bg-gray-100 text-gray-900",
+  active: darkMode ? "border border-[#A8C7FA]/40 bg-[#0842A0]/30 text-[#A8C7FA]" : "border border-[#A8C7FA] bg-[#D3E3FD] text-[#0B57D0]",
+  paused: darkMode ? "border border-[#A8C7FA]/40 bg-[#0842A0]/30 text-[#A8C7FA]" : "border border-[#A8C7FA] bg-[#D3E3FD] text-[#0B57D0]",
 });

@@ -26,7 +26,7 @@ const highlightSearchInText = (text, searchRegex, darkMode, keyBase) => {
     parts.push(
       <mark
         key={`${keyBase}-${match.index}-${parts.length}`}
-        className={`rounded px-0.5 text-inherit ${darkMode ? 'bg-yellow-200/30' : 'bg-yellow-200/60'}`}
+        className={`rounded px-0.5 text-inherit ${darkMode ? 'bg-yellow-300/25' : 'bg-yellow-200/70'}`}
       >
         {matched}
       </mark>,
@@ -42,7 +42,7 @@ const highlightSearchInText = (text, searchRegex, darkMode, keyBase) => {
   return parts.length > 0 ? parts : [text];
 };
 
-const highlightMessage = (message, keywords, darkMode, logSearchTerm, isRegex) => {
+const highlightMessage = (message, keywords, darkMode, logSearchTerm) => {
   const safeMessage = typeof message === 'string' ? message : String(message ?? '');
 
   const keywordNodes = (() => {
@@ -58,7 +58,7 @@ const highlightMessage = (message, keywords, darkMode, logSearchTerm, isRegex) =
         <mark
           key={`kw-${part}-${i}`}
           className="rounded px-0.5 font-semibold"
-          style={{ backgroundColor: `${match.color}${darkMode ? '40' : '25'}`, color: match.color }}
+          style={{ backgroundColor: `${match.color}${darkMode ? '38' : '22'}`, color: match.color }}
         >
           {part}
         </mark>
@@ -71,16 +71,7 @@ const highlightMessage = (message, keywords, darkMode, logSearchTerm, isRegex) =
     return keywordNodes.length === 1 ? keywordNodes[0] : keywordNodes;
   }
 
-  let searchRegex;
-  if (isRegex) {
-    try {
-      searchRegex = new RegExp(searchTerm, 'i');
-    } catch {
-      return keywordNodes.length === 1 ? keywordNodes[0] : keywordNodes;
-    }
-  } else {
-    searchRegex = new RegExp(escapeRegExp(searchTerm), 'i');
-  }
+  const searchRegex = new RegExp(escapeRegExp(searchTerm), 'i');
 
   const combined = [];
   keywordNodes.forEach((node, index) => {
@@ -94,39 +85,40 @@ const highlightMessage = (message, keywords, darkMode, logSearchTerm, isRegex) =
   return combined.length === 1 ? combined[0] : combined;
 };
 
-const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm, isRegex }) => {
+const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
   const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
   const message = typeof log.message === 'string' ? log.message : String(log.message ?? '');
   const { isFresh } = useMemo(() => {
     const ts = new Date(log.timestamp).getTime();
-    return {
-      isFresh: Number.isFinite(ts) && Date.now() - ts < 2500,
-    };
+    return { isFresh: Number.isFinite(ts) && Date.now() - ts < 2500 };
   }, [log.timestamp]);
   void isFresh;
 
   return (
-    <article
-      className={`relative border-b px-3 py-2 ${
+    <article className="px-3 pt-1.5 pb-0">
+      <div className={`min-h-[80px] rounded-2xl px-4 py-3.5 transition-colors duration-100 ${
         darkMode
-          ? 'border-[#1f1f1f] text-gray-300 hover:bg-[#1a1a1a]'
-          : 'border-[#efefef] text-gray-700 hover:bg-[#fafafa]'
-      }`}
-      title={serverName}
-    >
-      <div className="flex items-center gap-3 text-[11px] font-mono leading-4">
-        <span className={`${darkMode ? 'text-cyan-500' : 'text-cyan-600'} min-w-[3.5rem]`}>
-          {relativeTime || 'now'}
-        </span>
-        <span className={`${darkMode ? 'text-violet-400' : 'text-violet-600'} truncate`}>
-          {serverName}
-        </span>
-      </div>
+          ? 'bg-[#1E1C1A] border border-[#2A2724] hover:bg-[#252320]'
+          : 'bg-white border border-[#E8E2DC] shadow-sm hover:shadow-md hover:bg-[#FDFCFA]'
+      }`}>
+        <div className="flex items-center gap-2 mb-2.5">
+          <span className={`text-[11.5px] font-mono tabular-nums flex-shrink-0 ${darkMode ? 'text-[#938D87]' : 'text-[#79736D]'}`}>
+            {relativeTime || 'now'}
+          </span>
+          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-wide flex-shrink-0 ${
+            darkMode ? 'bg-[#0842A0]/30 text-[#A8C7FA]' : 'bg-[#D3E3FD] text-[#0B57D0]'
+          }`}>
+            {serverName}
+          </span>
+        </div>
 
-      <div className={`mt-1 whitespace-pre-wrap break-words text-[12.5px] leading-[1.6] md:text-[13px] font-mono ${darkMode ? 'text-[#fafafa]' : 'text-[#0a0a0a]'}`}>
-        {highlightMessage(message, keywords, darkMode, logSearchTerm, isRegex)}
+        <div className={`whitespace-pre-wrap break-words text-[13.5px] leading-[1.65] font-mono ${
+          darkMode ? 'text-[#E8E2DC]' : 'text-[#1C1B1A]'
+        }`}>
+          {highlightMessage(message, keywords, darkMode, logSearchTerm)}
+        </div>
       </div>
     </article>
   );

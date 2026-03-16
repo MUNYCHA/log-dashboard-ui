@@ -13,7 +13,6 @@ const FilterDropdown = ({
   placeholder = 'Search...',
   emptyLabel = 'No items found',
   selectedClass,
-  focusRingClass,
   renderItem,
   theme,
   width = 'w-64',
@@ -40,24 +39,24 @@ const FilterDropdown = ({
   return (
     <div
       ref={dropdownRef}
-      className={`absolute left-0 mt-1 ${width} rounded-md shadow-lg ${theme.card} border ${theme.popupBorder} z-50`}
+      className={`absolute left-0 mt-2 ${width} rounded-2xl shadow-xl ${theme.card} border ${theme.popupBorder} z-50 overflow-hidden`}
     >
-      <div className="p-2">
+      <div className="p-3">
         <input
           type="text"
           placeholder={placeholder}
-          className={`w-full ${theme.input} rounded-md px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-1 ${focusRingClass}`}
+          className={`w-full rounded-xl border px-3 py-2 text-[13px] mb-2 focus:outline-none focus:ring-2 transition-all duration-150 ${theme.input} focus:ring-[#0B57D0]/20 focus:border-[#0B57D0]`}
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           autoFocus
         />
 
-        <div className="max-h-60 overflow-y-auto">
+        <div className="max-h-60 overflow-y-auto -mx-1 px-1">
           <button
             type="button"
             onClick={() => { onClearItem(); onClose(); }}
-            className={`w-full text-left px-3 py-1.5 text-sm rounded-md transition-colors cursor-pointer
-              ${!selectedItem ? selectedClass : theme.hover}`}
+            className={`w-full text-left px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-150 ease-in-out cursor-pointer
+              ${!selectedItem ? selectedClass : theme.hover} ${!selectedItem ? '' : theme.textSecondary}`}
           >
             {allLabel}
           </button>
@@ -72,21 +71,21 @@ const FilterDropdown = ({
                   key={item}
                   type="button"
                   onClick={() => { onSelectItem(item); onClose(); }}
-                  className={`w-full text-left px-3 py-1.5 text-sm rounded-md transition-colors cursor-pointer
-                    ${selectedItem === item ? selectedClass : theme.hover}`}
+                  className={`w-full text-left px-3 py-2.5 text-[13px] font-medium rounded-xl transition-all duration-150 ease-in-out cursor-pointer
+                    ${selectedItem === item ? selectedClass : `${theme.hover} ${theme.textSecondary}`}`}
                 >
                   <div className="flex items-center justify-between min-w-0">
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="truncate" title={item}>{primary}</span>
                       {secondary && (
-                        <span className={`text-xs ${theme.textMuted} truncate`}>
+                        <span className={`text-[11.5px] ${theme.textMuted} truncate mt-0.5`}>
                           {secondary}
                         </span>
                       )}
                     </div>
                     {selectedItem === item && (
                       <svg className="w-4 h-4 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
                     )}
                   </div>
@@ -94,7 +93,7 @@ const FilterDropdown = ({
               );
             })
           ) : (
-            <div className={`px-3 py-4 text-center ${theme.textMuted} text-sm`}>
+            <div className={`px-3 py-5 text-center ${theme.textMuted} text-[13px]`}>
               {emptyLabel}
             </div>
           )}

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 
-const DEFAULT_COLOR = '#3b82f6'; // blue-500
+const DEFAULT_COLOR = '#0B57D0';
 
 const KeywordFilter = ({
   keywords,
@@ -38,66 +38,61 @@ const KeywordFilter = ({
 
   const canAdd = inputValue.trim().length > 0;
   const showColorPicker = canAdd;
-  const modeButtonClass = (isActive) => (
-    `px-3 py-1.5 text-[11px] font-medium rounded-md border transition-all duration-150 ease-in-out active:scale-95 ${
+
+  const modeBtn = (isActive) =>
+    `rounded-xl px-3 py-1.5 text-[12.5px] font-medium transition-all duration-150 ease-in-out active:scale-95 ${
       isActive
-        ? darkMode
-          ? 'border-[#fafafa] bg-[#fafafa] text-[#0a0a0a] hover:bg-[#e5e5e5] hover:border-[#e5e5e5]'
-          : 'border-[#0a0a0a] bg-[#0a0a0a] text-[#fafafa] hover:bg-[#242424] hover:border-[#242424]'
+        ? 'bg-[#0B57D0] text-white'
         : darkMode
-          ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
-          : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
-    }`
-  );
+          ? 'text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC]'
+          : 'text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A]'
+    }`;
 
   return (
-    <div className={`rounded-md border p-2.5 ${darkMode ? 'border-[#2e2e2e] bg-[#0f0f0f]' : 'border-[#e5e5e5] bg-white'}`}>
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <div className={`rounded-2xl border px-4 py-3.5 ${darkMode ? 'border-[#3A3530] bg-[#1E1C1A]' : 'border-[#E4DDD6] bg-[#FFFDF9]'}`}>
+      <div className="mb-3 flex flex-wrap items-center gap-2.5">
         <div className="flex items-center gap-2">
-          <span className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${theme.textMuted}`}>
-            Keywords
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => onModeChange('or')}
-              className={modeButtonClass(mode === 'or')}
-              title="Show logs matching any keyword"
-            >
-              Any match
-            </button>
-            <button
-              type="button"
-              onClick={() => onModeChange('and')}
-              className={modeButtonClass(mode === 'and')}
-              title="Show logs matching all keywords"
-            >
-              All match
-            </button>
-          </div>
+          <span className={`text-[13px] font-semibold ${theme.text}`}>Keywords</span>
+          {keywords.length > 0 && (
+            <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium ${
+              darkMode ? 'bg-[#252320] text-[#938D87]' : 'bg-[#EEE8E2] text-[#79736D]'
+            }`}>{keywords.length}</span>
+          )}
+        </div>
+
+        {/* Mode toggle */}
+        <div className={`inline-flex items-center rounded-2xl border p-1 ${
+          darkMode ? 'border-[#3F3A34] bg-[#252320]' : 'border-[#DDD7D0] bg-[#EEE8E2]'
+        }`}>
+          <button type="button" onClick={() => onModeChange('or')} className={modeBtn(mode === 'or')} title="Any keyword matches">
+            Any
+          </button>
+          <button type="button" onClick={() => onModeChange('and')} className={modeBtn(mode === 'and')} title="All keywords must match">
+            All
+          </button>
         </div>
 
         {keywords.length > 0 && (
           <button
             type="button"
             onClick={onClearAll}
-            className={`text-xs transition-all duration-150 ease-in-out active:scale-95 ${
-              darkMode ? 'text-[#a3a3a3] hover:text-[#f87171]' : 'text-[#a3a3a3] hover:text-[#dc2626]'
+            className={`ml-auto text-[12.5px] font-medium transition-all duration-150 ease-in-out ${
+              darkMode ? 'text-[#938D87] hover:text-[#F28B82]' : 'text-[#79736D] hover:text-[#C5221F]'
             }`}
           >
-            Clear
+            Clear all
           </button>
         )}
       </div>
 
       {showColorPicker && (
-        <div className="mb-2 flex items-center gap-2">
-          <span className={`text-[11px] ${theme.textMuted}`}>Color</span>
+        <div className={`mb-3 inline-flex items-center gap-2.5 rounded-xl border px-3 py-2 ${
+          darkMode ? 'border-[#3F3A34] bg-[#252320]' : 'border-[#DDD7D0] bg-[#EEE8E2]'
+        }`}>
+          <span className={`text-[12.5px] ${theme.textMuted}`}>Highlight color</span>
           <label
-            className={`relative inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border ${
-              darkMode ? 'border-gray-800 bg-black/20' : 'border-gray-200 bg-white'
-            }`}
-            style={{ boxShadow: `0 0 0 2px ${selectedColor}40` }}
+            className="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/30"
+            style={{ boxShadow: `0 0 0 2px ${selectedColor}50` }}
             title="Choose keyword color"
           >
             <input
@@ -106,45 +101,39 @@ const KeywordFilter = ({
               onChange={(e) => setSelectedColor(e.target.value)}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
-            <span
-              className="h-3.5 w-3.5 rounded-full border border-white/60"
-              style={{ backgroundColor: selectedColor }}
-            />
+            <span className="h-4 w-4 rounded-full" style={{ backgroundColor: selectedColor }} />
           </label>
-          <span className={`text-[11px] font-mono ${theme.textMuted}`}>
-            {selectedColor.toUpperCase()}
-          </span>
+          <span className={`text-[12px] font-mono ${theme.textMuted}`}>{selectedColor.toUpperCase()}</span>
         </div>
       )}
 
+      {/* Input area */}
       <div
         onClick={() => inputRef.current?.focus()}
-        className={`flex min-h-[42px] w-full items-center gap-2 rounded-md border px-2.5 py-2 transition-all duration-150 ease-in-out ${
-          darkMode ? 'border-[#2e2e2e] bg-[#1a1a1a]' : 'border-[#e5e5e5] bg-[#fafafa]'
+        className={`flex min-h-[48px] w-full items-center gap-2 rounded-2xl border px-3 py-2.5 cursor-text transition-all duration-150 ease-in-out focus-within:ring-2 ${
+          darkMode
+            ? 'bg-[#252219] border-[#4A4540] focus-within:ring-[#A8C7FA]/20 focus-within:border-[#A8C7FA]'
+            : 'bg-white border-[#C5BEB7] focus-within:ring-[#0B57D0]/20 focus-within:border-[#0B57D0]'
         }`}
       >
         <div className="flex flex-1 flex-wrap items-center gap-1.5">
           {keywords.map((kw) => (
             <span
               key={kw.text}
-              className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-medium"
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium"
               style={{
-                borderColor: `${kw.color}40`,
+                borderColor: `${kw.color}38`,
                 backgroundColor: `${kw.color}14`,
                 color: kw.color,
               }}
             >
-              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: kw.color }} />
+              <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: kw.color }} />
               <span>{kw.text}</span>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onRemove(kw.text); }}
-                className={`leading-none rounded-md border px-1 py-0.5 transition-all duration-150 ease-in-out active:scale-95 ${
-                  darkMode
-                    ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#2a1515] hover:text-[#f87171] hover:border-[#7f1d1d]'
-                    : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#fff5f5] hover:text-[#dc2626] hover:border-[#fca5a5]'
-                }`}
-                aria-label={`Remove keyword ${kw.text}`}
+                className="leading-none transition-opacity opacity-60 hover:opacity-100"
+                aria-label={`Remove ${kw.text}`}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -159,9 +148,10 @@ const KeywordFilter = ({
             value={inputValue}
             onChange={(e) => onInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={keywords.length === 0 ? 'Type a keyword...' : 'Add keyword...'}
-            className={`min-w-[160px] flex-1 bg-transparent text-sm outline-none ${theme.text}
-              ${darkMode ? 'placeholder:text-gray-600' : 'placeholder:text-gray-400'}`}
+            placeholder={keywords.length === 0 ? 'Type a keyword, press Enter' : 'Add another'}
+            className={`min-w-[180px] flex-1 bg-transparent text-[13px] outline-none ${
+              darkMode ? 'text-[#ECE6DF] placeholder:text-[#8E8882]' : 'text-[#1C1B1A] placeholder:text-[#79736D]'
+            }`}
           />
         </div>
 
@@ -169,24 +159,20 @@ const KeywordFilter = ({
           type="button"
           onClick={() => commit(inputValue)}
           disabled={!canAdd}
-          className={`rounded-md px-3 py-1.5 text-[11px] font-semibold border
-    transition-all duration-150 ease-in-out active:scale-95
-    ${canAdd
-      ? darkMode
-        ? 'bg-white text-black border-white hover:bg-[#e5e5e5]'
-        : 'bg-black text-white border-black hover:bg-[#242424]'
-      : darkMode
-        ? 'border-transparent bg-transparent text-[#525252] opacity-40 cursor-not-allowed'
-        : 'border-transparent bg-transparent text-[#a3a3a3] opacity-40 cursor-not-allowed'
-    }`}
+          className={`rounded-xl px-4 py-1.5 text-[12.5px] font-semibold flex-shrink-0 border
+            transition-all duration-150 ease-in-out active:scale-95
+            ${canAdd
+              ? 'bg-[#0B57D0] text-white border-[#0B57D0] hover:bg-[#0842A0] hover:border-[#0842A0]'
+              : 'border-transparent bg-transparent text-[#79736D] opacity-40 cursor-not-allowed'
+            }`}
         >
           Add
         </button>
       </div>
 
-      <div className={`mt-1.5 px-1 text-[11px] ${theme.textMuted}`}>
-        Press Enter to add. Use Any match for broad filtering or All match for stricter results.
-      </div>
+      <p className={`mt-2 px-1 text-[12px] ${theme.textMuted}`}>
+        Enter or comma to add · Backspace removes last · Any = broad, All = narrow
+      </p>
     </div>
   );
 };

@@ -12,11 +12,11 @@ import EmptyState from "./EmptyState";
 import ScrollButtons from "./ScrollButtons";
 import LogEntry from "./LogEntry";
 
-const ESTIMATED_LOG_HEIGHT = 96;
+const ESTIMATED_LOG_HEIGHT = 108;
 
 const VirtualLogList = React.memo(({
   displayedLogs, isPaused, theme, darkMode, keywords, timestampGen,
-  logSearchTerm, isRegex,
+  logSearchTerm,
   selectedServer, selectedPath,
   emptyState, onClearFilters, onResumeLive,
   scrollRef, atTop, atBottom, scrollToTop, scrollToBottom,
@@ -41,19 +41,19 @@ const VirtualLogList = React.memo(({
       >
         <div>
           {isPaused && (
-            <div className={`animate-paused-banner flex items-center justify-between gap-3 px-3 py-2 text-xs border-b ${
-              darkMode ? 'border-[#1f1f1f] bg-[#0f0f0f] text-[#a3a3a3]' : 'border-[#e5e5e5] bg-white text-[#525252]'
+            <div className={`animate-paused-banner flex items-center justify-between gap-3 px-4 py-2 text-xs border-b ${
+              darkMode ? 'border-[#302C29] bg-[#1E1C1A] text-[#938D87]' : 'border-[#E4DDD6] bg-[#FFFDF9] text-[#79736D]'
             }`}>
               <span className="min-w-0 font-mono">
-                Paused - logs continue buffering.
+                Paused — logs continue buffering.
               </span>
               <button
                 onClick={onResumeLive}
-                className={`rounded-md border px-3 py-1 text-xs font-medium
+                className={`rounded-lg border px-3 py-1 text-xs font-medium
     transition-all duration-150 ease-in-out active:scale-95
     ${darkMode
-      ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
-      : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+      ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
+      : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
     }`}
               >
                 Resume
@@ -84,7 +84,6 @@ const VirtualLogList = React.memo(({
                       keywords={keywords}
                       timestampGen={timestampGen}
                       logSearchTerm={logSearchTerm}
-                      isRegex={isRegex}
                     />
                   </div>
                 );
@@ -99,10 +98,10 @@ const VirtualLogList = React.memo(({
                   {selectedPath && (
                     <button
                       onClick={handleClearPath}
-                      className={`px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all duration-150 ease-in-out active:scale-95 ${
+                      className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-150 ease-in-out active:scale-95 ${
                         darkMode
-                          ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
-                          : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+                          ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
+                          : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
                       }`}
                     >
                       Clear path
@@ -111,10 +110,10 @@ const VirtualLogList = React.memo(({
                   {selectedServer && (
                     <button
                       onClick={handleClearServer}
-                      className={`px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all duration-150 ease-in-out active:scale-95 ${
+                      className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-150 ease-in-out active:scale-95 ${
                         darkMode
-                          ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
-                          : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+                          ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
+                          : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
                       }`}
                     >
                       Clear server
@@ -125,10 +124,10 @@ const VirtualLogList = React.memo(({
               {emptyState.showClearFilters && (
                 <button
                   onClick={onClearFilters}
-                  className={`mt-3 rounded-md px-2.5 py-1.5 text-xs font-medium border transition-all duration-150 ease-in-out active:scale-95 ${
+                  className={`mt-3 rounded-lg px-2.5 py-1.5 text-xs font-medium border transition-all duration-150 ease-in-out active:scale-95 ${
                     darkMode
-                      ? 'border-[#2e2e2e] bg-[#1a1a1a] text-[#a3a3a3] hover:bg-[#242424] hover:text-[#fafafa] hover:border-[#3a3a3a]'
-                      : 'border-[#e5e5e5] bg-white text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0a0a0a] hover:border-[#d4d4d4]'
+                      ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
+                      : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
                   }`}
                 >
                   Clear filters
@@ -191,7 +190,6 @@ const LogPanel = ({
   const [keywords, setKeywords] = useState([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordMode, setKeywordMode] = useState('or');
-  const [isRegex, setIsRegex] = useState(false);
   const [timeRange, setTimeRange] = useState('all');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
@@ -280,17 +278,6 @@ const LogPanel = ({
     return () => ro.disconnect();
   }, [autoScroll, isPaused, selectedTopic]);
 
-  const regexError = useMemo(() => {
-    if (!isRegex || !logSearchTerm) return false;
-    if (logSearchTerm.length > 512) return true;
-    try {
-      new RegExp(logSearchTerm);
-      return false;
-    } catch {
-      return true;
-    }
-  }, [isRegex, logSearchTerm]);
-
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(logSearchTerm), 300);
     return () => clearTimeout(t);
@@ -333,14 +320,13 @@ const LogPanel = ({
       server: selectedServer || null,
       path: selectedPath || null,
       search: debouncedSearch || null,
-      regex: isRegex,
       keywords: allTerms.length > 0 ? { terms: allTerms, mode: keywordMode } : undefined,
       timeRange,
     };
 
     const hasAny = filters.server || filters.path || filters.search || filters.keywords || filters.timeRange !== 'all';
     sendFilter(hasAny ? filters : null, panelId);
-  }, [selectedServer, selectedPath, debouncedSearch, isRegex, keywords, debouncedKeywordInput, keywordMode, timeRange, sendFilter, panelId]);
+  }, [selectedServer, selectedPath, debouncedSearch, keywords, debouncedKeywordInput, keywordMode, timeRange, sendFilter, panelId]);
 
   const filteredServers = useMemo(
     () => serversForSelectedTopic.filter((s) => s.toLowerCase().includes(serverSearchTerm.toLowerCase())),
@@ -360,23 +346,12 @@ const LogPanel = ({
     if (selectedPath) logs = logs.filter((l) => l.path === selectedPath);
 
     if (logSearchTerm) {
-      if (isRegex) {
-        try {
-          const re = new RegExp(logSearchTerm, 'i');
-          logs = logs.filter((l) =>
-            re.test(String(l.message ?? '')) || re.test(String(l.serverName ?? '')) || re.test(String(l.path ?? ''))
-          );
-        } catch {
-          logs = [];
-        }
-      } else {
-        const lower = logSearchTerm.toLowerCase();
-        logs = logs.filter((l) =>
-          String(l.message ?? '').toLowerCase().includes(lower) ||
-          String(l.serverName ?? '').toLowerCase().includes(lower) ||
-          String(l.path ?? '').toLowerCase().includes(lower)
-        );
-      }
+      const lower = logSearchTerm.toLowerCase();
+      logs = logs.filter((l) =>
+        String(l.message ?? '').toLowerCase().includes(lower) ||
+        String(l.serverName ?? '').toLowerCase().includes(lower) ||
+        String(l.path ?? '').toLowerCase().includes(lower)
+      );
     }
 
     const pendingKw = keywordInput.trim().toLowerCase();
@@ -403,7 +378,7 @@ const LogPanel = ({
     }
 
     return [...logs].slice(0, config.ws.maxLogsPerTopic).reverse();
-  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, isRegex, keywords, keywordInput, keywordMode, timeRange, nowMs]);
+  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, keywords, keywordInput, keywordMode, timeRange, nowMs]);
 
   const displayedLogs = frozenLogs != null && frozenTopic === selectedTopic
     ? frozenLogs
@@ -507,7 +482,6 @@ const LogPanel = ({
     setLogSearchTerm("");
     setKeywords([]);
     setKeywordInput('');
-    setIsRegex(false);
     setTimeRange('all');
   };
 
@@ -573,7 +547,7 @@ const LogPanel = ({
 
   return (
     <div
-      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-[#0070f3]/40' : ''}`}
+      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-[#0B57D0]/35' : ''}`}
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
       <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.header} flex-shrink-0 relative z-10`}>
@@ -599,11 +573,6 @@ const LogPanel = ({
           autoScroll={autoScroll}
           onToggleAutoScroll={toggleAutoScroll}
           onClearLogs={onClearLogs}
-          logSearchTerm={logSearchTerm}
-          onSearchChange={setLogSearchTerm}
-          isRegex={isRegex}
-          onToggleRegex={() => setIsRegex((v) => !v)}
-          regexError={regexError}
         />
 
         <MobileHeader
@@ -625,9 +594,6 @@ const LogPanel = ({
           onClearLogs={onClearLogs}
           logSearchTerm={logSearchTerm}
           onSearchChange={setLogSearchTerm}
-          isRegex={isRegex}
-          onToggleRegex={() => setIsRegex((v) => !v)}
-          regexError={regexError}
           showMobileServerDropdown={showMobileServerDropdown}
           onToggleMobileServerDropdown={(v) => setShowMobileServerDropdown(v ?? !showMobileServerDropdown)}
           showMobilePathDropdown={showMobilePathDropdown}
@@ -671,6 +637,8 @@ const LogPanel = ({
           onPathSearchChange={setPathSearchTerm}
           timeRange={timeRange}
           onTimeRangeChange={handleTimeRangeChange}
+          logSearchTerm={logSearchTerm}
+          onSearchChange={setLogSearchTerm}
         />
 
         <div className="mt-2.5">
@@ -696,12 +664,11 @@ const LogPanel = ({
           selectedPath={selectedPath}
           logSearchTerm={logSearchTerm}
           keywords={keywords}
-          isRegex={isRegex}
           darkMode={darkMode}
           theme={theme}
           onClearServer={handleClearServer}
           onClearPath={handleClearPath}
-          onClearSearch={() => setLogSearchTerm("")}
+          onClearSearch={() => setLogSearchTerm('')}
           onRemoveKeyword={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
         />
       </div>
@@ -714,7 +681,6 @@ const LogPanel = ({
         keywords={displayKeywords}
         timestampGen={timestampGen}
         logSearchTerm={logSearchTerm}
-        isRegex={isRegex}
         selectedServer={selectedServer}
         selectedPath={selectedPath}
         emptyState={emptyState}
