@@ -21,13 +21,14 @@ const VirtualLogList = React.memo(({
   emptyState, onClearFilters, onResumeLive,
   scrollRef, atTop, atBottom, scrollToTop, scrollToBottom,
   handleClearPath, handleClearServer, markUserScrollIntent,
+  virtualizerScrollToBottomRef,
 }) => {
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual is designed this way
   const virtualizer = useVirtualizer({
     count: displayedLogs.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => ESTIMATED_LOG_HEIGHT,
-    overscan: 10,
+    overscan: 20,
     getItemKey: (index) => displayedLogs[index]._id,
   });
 
@@ -36,40 +37,111 @@ const VirtualLogList = React.memo(({
   measureRef.current = () => virtualizer.measure();
   const autoScrollRef = useRef(autoScroll);
   autoScrollRef.current = autoScroll;
-  const isPausedRef = useRef(isPaused);
-  isPausedRef.current = isPaused;
+  const atBottomRef = useRef(atBottom);
+  atBottomRef.current = atBottom;
 
-  // Auto-scroll: fires on new logs AND when virtualizer remeasures card heights.
-  // Without the totalSize dep, scrollHeight grows after estimated→actual measurement
-  // and the scroll position falls behind the real bottom.
+  // Captures current virtualizer + count so ResizeObserver can scroll without
+  // stale closures. Updated every render.
+  const scrollToLastRef = useRef(() => {});
+  scrollToLastRef.current = () => {
+    if (displayedLogs.length > 0) {
+      virtualizer.scrollToIndex(displayedLogs.length - 1, { align: 'end' });
+    }
+  };
+
+  // Scroll to a specific item index — used to restore paused position after
+  // remeasurement. Always points to the latest virtualizer instance.
+  const scrollToIndexRef = useRef(() => {});
+  scrollToIndexRef.current = (index) => {
+    if (index >= 0 && index < displayedLogs.length) {
+      virtualizer.scrollToIndex(index, { align: 'start' });
+    }
+  };
+
+  // Captures the first item whose bottom edge is at or past the current scrollTop —
+  // i.e. the topmost visible item. Called before measure() so we know what to
+  // restore once item sizes update. Updated every render for fresh virtualizer ref.
+  const anchorIndexRef = useRef(null);
+  const captureAnchorRef = useRef(() => {});
+  captureAnchorRef.current = () => {
+    if (!scrollRef.current || displayedLogs.length === 0) return;
+    const scrollTop = scrollRef.current.scrollTop;
+    const items = virtualizer.getVirtualItems();
+    if (items.length === 0) return;
+    const first = items.find((item) => item.end >= scrollTop) ?? items[items.length - 1];
+    anchorIndexRef.current = first.index;
+  };
+
+  // Expose virtualizer-based scroll to LogPanel so scrollToBottom() uses the
+  // same coordinate system as auto-scroll (avoids mid-item landing on spacers).
+  // Wraps scrollToLastRef.current so LogPanel always calls the latest version.
+  if (virtualizerScrollToBottomRef) {
+    virtualizerScrollToBottomRef.current = () => scrollToLastRef.current();
+  }
+
   const totalSize = virtualizer.getTotalSize();
+
+  // Effect 1 — new logs: scroll to bottom when live logs arrive.
+  // Blocked by pause intentionally (frozen view should not move on incoming logs).
   useEffect(() => {
-    if (!autoScroll || isPaused) return;
-    const el = scrollRef.current;
-    if (!el) return;
-    requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight;
-    });
-  }, [displayedLogs, totalSize, autoScroll, isPaused, scrollRef]);
+    if (!autoScroll || isPaused || displayedLogs.length === 0) return;
+    requestAnimationFrame(() => scrollToLastRef.current());
+  }, [displayedLogs, autoScroll, isPaused]);
+
+  // Effect 2 — remeasurement re-anchor: fires when item sizes update after
+  // text reflow (resize, theme toggle, font load). Not blocked by pause.
+  // • At bottom → scroll to last item (keep tail pinned).
+  // • Scrolled up with a captured anchor → restore that item at the top of
+  //   the viewport so the same card stays visible after reflow.
+  useEffect(() => {
+    if (displayedLogs.length === 0) return;
+    if (atBottomRef.current) {
+      anchorIndexRef.current = null;
+      requestAnimationFrame(() => scrollToLastRef.current());
+    } else if (anchorIndexRef.current !== null) {
+      const idx = anchorIndexRef.current;
+      anchorIndexRef.current = null;
+      requestAnimationFrame(() => scrollToIndexRef.current(idx));
+    }
+  }, [totalSize]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Width change (resize / split-view) causes text reflow — invalidate cache.
   // Debounce measure() so it fires once after resize settles, not on every pixel.
-  // Immediately rAF-scroll on each resize frame so auto-scroll keeps up.
+  // Immediately rAF-scroll on each resize frame if at the bottom.
+  // For mid-scroll positions, capture the topmost visible item once per resize
+  // gesture (anchorCaptured prevents overwriting on subsequent drag events);
+  // Effect 2 restores it after totalSize updates from remeasurement.
+  // Height shrink (pause banner, mobile menu) is handled by atBottomRef check.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     let prevWidth = el.clientWidth;
+    let prevHeight = el.clientHeight;
     let measureTimer;
+    let anchorCaptured = false;
     const ro = new ResizeObserver(() => {
       const w = el.clientWidth;
+      const h = el.clientHeight;
       if (w !== prevWidth) {
         prevWidth = w;
-        if (autoScrollRef.current && !isPausedRef.current) {
-          requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+        if (atBottomRef.current) {
+          anchorCaptured = false;
+          anchorIndexRef.current = null;
+          requestAnimationFrame(() => scrollToLastRef.current());
+        } else if (!anchorCaptured) {
+          captureAnchorRef.current();
+          anchorCaptured = true;
         }
         clearTimeout(measureTimer);
-        measureTimer = setTimeout(() => measureRef.current(), 150);
+        measureTimer = setTimeout(() => {
+          measureRef.current();
+          anchorCaptured = false; // reset for next resize gesture
+        }, 150);
       }
+      if (h < prevHeight && atBottomRef.current) {
+        requestAnimationFrame(() => scrollToLastRef.current());
+      }
+      prevHeight = h;
     });
     ro.observe(el);
     return () => { ro.disconnect(); clearTimeout(measureTimer); };
@@ -85,36 +157,36 @@ const VirtualLogList = React.memo(({
     : 0;
 
   return (
-    <div className="flex-1 relative overflow-hidden group/logpanel">
-      <div
-        className="absolute inset-0 overflow-auto font-mono text-sm"
+    <div className="flex-1 flex flex-col overflow-hidden group/logpanel">
+      {isPaused && (
+        <div className={`animate-paused-banner flex items-center justify-between gap-3 px-4 py-2 text-xs border-b flex-shrink-0 ${
+          darkMode ? 'border-[#302C29] bg-[#1E1C1A] text-[#938D87]' : 'border-[#E4DDD6] bg-[#FFFDF9] text-[#79736D]'
+        }`}>
+          <span className="min-w-0 font-mono">
+            Paused — logs continue buffering.
+          </span>
+          <button
+            onClick={onResumeLive}
+            className={`rounded-lg border px-3 py-1 text-xs font-medium
+    transition-all duration-150 ease-in-out active:scale-95
+    ${darkMode
+      ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
+      : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
+    }`}
+          >
+            Resume
+          </button>
+        </div>
+      )}
+      <div className="flex-1 relative overflow-hidden">
+        <div
+          className="absolute inset-0 overflow-auto font-mono text-sm"
         ref={scrollRef}
         onWheel={markUserScrollIntent}
         onTouchMove={markUserScrollIntent}
         onPointerDown={markUserScrollIntent}
       >
         <div className="pt-1.5 pb-1.5">
-          {isPaused && (
-            <div className={`animate-paused-banner flex items-center justify-between gap-3 px-4 py-2 text-xs border-b ${
-              darkMode ? 'border-[#302C29] bg-[#1E1C1A] text-[#938D87]' : 'border-[#E4DDD6] bg-[#FFFDF9] text-[#79736D]'
-            }`}>
-              <span className="min-w-0 font-mono">
-                Paused — logs continue buffering.
-              </span>
-              <button
-                onClick={onResumeLive}
-                className={`rounded-lg border px-3 py-1 text-xs font-medium
-    transition-all duration-150 ease-in-out active:scale-95
-    ${darkMode
-      ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
-      : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
-    }`}
-              >
-                Resume
-              </button>
-            </div>
-          )}
-
           {displayedLogs.length > 0 ? (
             <div style={{ paddingTop, paddingBottom }}>
               {virtualItems.map((virtualRow) => {
@@ -192,6 +264,7 @@ const VirtualLogList = React.memo(({
         scrollToBottom={scrollToBottom}
         darkMode={darkMode}
       />
+      </div>
     </div>
   );
 });
@@ -247,6 +320,7 @@ const LogPanel = ({
   const [timestampGen, setTimestampGen] = useState(0);
 
   const scrollRef = useRef(null);
+  const virtualizerScrollToBottomRef = useRef(null);
   const serverButtonRef = useRef(null);
   const pathButtonRef = useRef(null);
   const exportMenuRef = useRef(null);
@@ -315,17 +389,6 @@ const LogPanel = ({
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll, selectedTopic]);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-      if (autoScroll && !isPaused) {
-        el.scrollTop = el.scrollHeight;
-      }
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [autoScroll, isPaused, selectedTopic]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(logSearchTerm), 300);
@@ -405,7 +468,7 @@ const LogPanel = ({
       );
     }
 
-    const pendingKw = keywordInput.trim().toLowerCase();
+    const pendingKw = debouncedKeywordInput.trim().toLowerCase();
     const allTerms = [
       ...keywords.map((k) => k.text.toLowerCase()),
       ...(pendingKw ? [pendingKw] : []),
@@ -432,7 +495,7 @@ const LogPanel = ({
     }
 
     return [...logs].slice(0, config.ws.maxLogsPerTopic).reverse();
-  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, keywords, keywordInput, keywordMode, timeRange, customRangeMs, nowMs]);
+  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, keywords, debouncedKeywordInput, keywordMode, timeRange, customRangeMs, nowMs]);
 
   const displayedLogs = frozenLogs != null && frozenTopic === selectedTopic
     ? frozenLogs
@@ -558,12 +621,18 @@ const LogPanel = ({
   };
 
   const scrollToBottom = () => {
-    if (scrollRef.current) {
+    // Prefer virtualizer-based scroll so we land exactly on the last item,
+    // not mid-item when padding spacers are active.
+    if (virtualizerScrollToBottomRef.current) {
+      virtualizerScrollToBottomRef.current();
+    } else if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      previousScrollTopRef.current = scrollRef.current.scrollTop;
-      setAtTop(false);
-      setAtBottom(true);
     }
+    if (scrollRef.current) {
+      previousScrollTopRef.current = scrollRef.current.scrollTop;
+    }
+    setAtTop(false);
+    setAtBottom(true);
     setAutoScroll(true);
   };
 
@@ -745,6 +814,7 @@ const LogPanel = ({
         handleClearPath={handleClearPath}
         handleClearServer={handleClearServer}
         markUserScrollIntent={markUserScrollIntent}
+        virtualizerScrollToBottomRef={virtualizerScrollToBottomRef}
       />
 
       <StatusBar

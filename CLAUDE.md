@@ -40,9 +40,9 @@ App
 
 **WS protocol:** Server sends `string[]` (topics) on connect, then `LogEvent` objects or **batched JSON arrays**, plus `{ type: "filter-ack" }` acks. Hook normalizes both formats. Each log gets `_id` (monotonic counter) for stable React keys.
 
-**Client-side filtering:** All filtering (server, path, search, keywords, regex, timeRange) runs client-side in `filteredLogs` useMemo for instant real-time feedback. Server-side filter (debounced 300ms) is a bandwidth optimization only — UI does not depend on it for display.
+**Client-side filtering:** All filtering (server, path, search, keywords, timeRange) runs client-side in `filteredLogs` useMemo for instant real-time feedback. Keyword input uses `debouncedKeywordInput` (300ms) so the filter and the pending keyword chip appear in sync. Server-side filter (debounced 300ms) is a bandwidth optimization only — UI does not depend on it for display.
 
-**Topic subscription:** All topics auto-subscribed on connect. Viewed topics get full 500-log cap; non-viewed topics capped at 50 (sidebar info only).
+**Topic subscription:** All topics auto-subscribed on connect. Viewed topics get full 500-log cap; non-viewed topics capped at 100 (sidebar info only).
 
 ## Key Rules
 
@@ -50,14 +50,20 @@ App
 - `selectedServer` is global (App.jsx) — Sidebar badges depend on it
 - All filters reset on topic change via key-based component remount (`key=panel-X-${selectedTopic}` in App.jsx forces full LogPanel remount)
 - Active filters resent on WS reconnect (stored in `activeFilterRef`)
-- Auto-scroll is button-toggled only — manual scrolling does NOT disable it
+- Auto-scroll is disabled only by user-initiated upward scrolling (guarded by an 800ms `userScrollIntentUntilRef` window — prevents programmatic `scrollToIndex` from being misidentified as user intent). Scrolling back to the bottom re-enables it.
 - Mobile menu: 300ms `pointer-events-none` guard against double-tap
 
 ## Performance Rules (DO NOT REGRESS)
 
 - **Keys**: `LogEntry` MUST use `log._id` — NEVER array index (shifted keys = full re-render of 500 items)
-- **Virtualization**: Log list MUST use `@tanstack/react-virtual` — only visible rows rendered
+- **Virtualization**: Log list MUST use `@tanstack/react-virtual` flow mode — items in normal document flow between CSS `paddingTop`/`paddingBottom` spacers. NEVER switch to absolutely-positioned mode (breaks flow layout).
+- **Auto-scroll — two effects, do not merge:**
+  - Effect 1 `[displayedLogs, autoScroll, isPaused]`: scrolls on new logs — blocked by `isPaused` intentionally.
+  - Effect 2 `[totalSize]`: re-anchors after remeasurement (text reflow on resize) — NOT blocked by `isPaused`. Guards via `atBottomRef` (scroll to last) or `anchorIndexRef` (restore captured item).
 - **Auto-scroll**: MUST use `useEffect` + `requestAnimationFrame` — NEVER `useLayoutEffect` (blocks main thread)
+- **Scroll position on resize**: ResizeObserver captures the topmost visible item index (`anchorIndexRef`) before `measure()` fires, restores it in Effect 2 after `totalSize` updates. `atBottomRef` used as the single gate for all resize compensation — works whether paused or live.
+- **`scrollToBottom()`**: MUST use `virtualizerScrollToBottomRef` (virtualizer-based `scrollToIndex`) — NEVER raw `scrollTop = scrollHeight` (lands mid-item on spacer boundaries).
+- **Paused banner**: rendered OUTSIDE the scroll container as a `flex-shrink-0` element in the flex column. NEVER inside the `overflow-auto` div (would scroll out of view).
 - **Timestamps**: `LogEntry` receives `timestampGen` counter, computes `Date.now()` internally via `useMemo` — NEVER pass a changing `now` prop (breaks memo for all entries)
 - **Flush interval**: 150ms in useWebSocket — balances responsiveness vs re-render frequency
 - Sub-components (DesktopHeader, MobileHeader, etc.) are intentionally NOT memo'd — they're cheap renders, memo overhead isn't worth it
@@ -69,7 +75,7 @@ App
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL |
-| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs in memory per viewed topic (non-viewed: 50) |
+| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs in memory per viewed topic (non-viewed: 100) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate messages longer than this (chars) |
 
 ## ESLint

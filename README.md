@@ -19,8 +19,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Server filter** — searchable dropdown to filter logs by server name
 - **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
 - **Text search** — instant client-side search across message, server name, and path
-- **Regex search** — toggle `.*` button to switch to regex mode with instant validation
-- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h (client-side)
+- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h / Custom (client-side)
 - **Keyword filter** — add multiple keywords as colored chips; matches are highlighted in log messages
 - **AND / OR mode** toggle for keyword filter logic
 - **Custom keyword colors** — color wheel picker with hex/RGB input for each keyword
@@ -40,7 +39,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 ### Actions
 - **Export logs** — download currently filtered logs as JSON or CSV (timestamped filename)
 - **Clear logs** per topic
-- **Auto-scroll** to latest logs with manual override (re-enables when scrolled back to bottom)
+- **Auto-scroll** to latest logs — disabled only by user-initiated upward scrolling; re-enables automatically when scrolled back to the bottom
 - **Scroll to top / bottom** floating buttons appear when needed
 
 ---
@@ -125,15 +124,16 @@ npm run lint
 | Type | Shape | When |
 |---|---|---|
 | Topic list | `{ type: "topics", topics: string[] }` (primary), legacy `string[]` fallback | Once on connect — list of all topic names |
+| Stats | `{ type: "stats", topics: { [topic]: { rate, servers } }, intervalMs }` | Periodic (~every 2s) — per-topic log rate and server info |
 | Log event | `{ topic, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events (already filtered server-side); single object or batched array |
-| Filter ack | `{ type: "filter-ack", filters: {...}, regexError?: "..." }` | Confirms filter applied; `regexError` present if regex is invalid |
+| Filter ack | `{ type: "filter-ack", filters: {...} }` | Confirms filter applied server-side |
 
 ### Client → Server
 
 | Action | Shape | Description |
 |---|---|---|
 | Subscribe | `{ action: "subscribe", topics: [...] }` | Subscribe to topics (all topics on connect) |
-| Filter | `{ action: "filter", filters: { server, path, search, regex, keywords: { terms, mode }, timeRange } }` | Set server-side filter (bandwidth optimization — client filters locally for display) |
+| Filter | `{ action: "filter", filters: { server, path, search, keywords: { terms, mode }, timeRange, timeRangeMs? } }` | Set server-side filter (bandwidth optimization — client filters locally for display) |
 | Clear filters | `{ action: "clear-filters" }` | Remove all filters for this session |
 
 ### Log entry fields
@@ -168,7 +168,6 @@ npm run lint
   "filters": {
     "server": "prod-01",
     "search": "error",
-    "regex": false,
     "keywords": { "terms": ["timeout"], "mode": "or" },
     "timeRange": "15m"
   }
@@ -238,5 +237,5 @@ All values are baked at build time via Vite's `import.meta.env`. Changing them r
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL |
-| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs kept in memory per topic |
+| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs kept in memory per viewed topic (non-viewed topics: 100) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate log messages longer than this (chars) to prevent DOM bloat |

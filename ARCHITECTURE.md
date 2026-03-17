@@ -18,19 +18,20 @@ App.jsx (global)
 ├── viewedTopics                       ← useMemo([selectedTopic, selectedTopic2]) for tiered log caps
 │
 ├── useWebSocket(url, viewedTopics) → shared across all components
-│   ├── logsByTopic    — Record<topic, LogEntry[]> (newest-first after flush, 500 cap viewed / 50 non-viewed)
+│   ├── logsByTopic    — Record<topic, LogEntry[]> (newest-first after flush, 500 cap viewed / 100 non-viewed)
 │   ├── topics         — string[]
 │   ├── isConnected / isReconnecting
 │   ├── logRates       — Record<topic, number> (logs/sec, 5s window)
 │   ├── clearLogs(topic), subscribe(topics), sendFilter(filters)
 │
 LogPanel.jsx (per-panel local)
-├── frozenLogs          ← snapshot of logs when paused
-├── logSearchTerm / debouncedSearch     ← text search (300ms debounce)
+├── frozenLogs / frozenTopic ← snapshot of logs + topic when paused
+├── logSearchTerm / debouncedSearch     ← text search (300ms debounce for server-side)
 ├── pathForTopic        ← { topic, path } — auto-clears on topic change
 ├── keywords / keywordInput / keywordMode / debouncedKeywordInput
-├── isRegex / timeRange
-├── autoScroll          ← button-toggled only
+│   └── filteredLogs uses debouncedKeywordInput (300ms) — keeps filter and keyword chip in sync
+├── timeRange / customRangeMs
+├── autoScroll          ← disabled only by user-initiated upward scroll (800ms intent window)
 ├── showServerDropdown / showPathDropdown / showMobileServerDropdown / showMobilePathDropdown
 ├── serverSearchTerm / pathSearchTerm
 ├── showExportMenu / isMobileMenuOpen / mobileMenuReady
@@ -44,7 +45,7 @@ LogPanel.jsx (per-panel local)
 ### What's memoized
 | Component | `React.memo` | Internal `useMemo` | Notes |
 |---|---|---|---|
-| `LogPanel` | Yes | `filteredLogs`, `serversForSelectedTopic`, `pathsForSelectedServer`, `filteredServers`, `filteredPaths`, `regexError` | Main orchestrator |
+| `LogPanel` | Yes | `filteredLogs`, `serversForSelectedTopic`, `pathsForSelectedServer`, `filteredServers`, `filteredPaths`, `displayKeywords`, `emptyState` | Main orchestrator |
 | `VirtualLogList` | Yes | — | Extracted to avoid re-rendering when LogPanel state changes that don't affect the list |
 | `LogEntry` | Yes | `relativeTime` (via timestampGen) | Only re-renders when its specific log object or keywords change |
 | `TopicItem` (Sidebar) | Yes | — | Only re-renders when its topic's log array ref changes |
@@ -66,14 +67,15 @@ WebSocket frame arrives (single or batch JSON)
   → Normalize to array (single event or batch)
   → Assign _id (monotonic counter) to each log
   → Truncate oversized messages (>50KB)
-  → Push to pendingRef (per-topic capped at 500 viewed / 50 non-viewed)
+  → Push to pendingRef (per-topic capped at 500 viewed / 100 non-viewed)
   ...150ms later (setInterval flush)...
   → Group pending by topic
   → setLogsByTopic(prev => { ...prev, [topic]: newLogs.reverse().concat(existing).slice(0, cap) })
   → App re-renders → topicLogs1/2 derived → LogPanel re-renders
-  → filteredLogs = useMemo(reverse + all filters: server/path/search/keywords/regex/timeRange)
-  → VirtualLogList renders only visible rows (~20-30)
-  → useEffect + rAF scrolls to bottom (non-blocking)
+  → filteredLogs = useMemo(reverse + all filters: server/path/search/keywords/timeRange)
+  → VirtualLogList renders only visible rows (~20-30, overscan 20)
+  → Effect 1 useEffect [displayedLogs] + rAF → scrollToIndex(last) — non-blocking, blocked by isPaused
+  → Effect 2 useEffect [totalSize] + rAF → re-anchors after remeasurement — not blocked by isPaused
 ```
 
 ### Keys
@@ -82,13 +84,17 @@ WebSocket frame arrives (single or batch JSON)
 
 ## Virtualization Details
 
-`VirtualLogList` (inside `LogPanel.jsx`) uses `@tanstack/react-virtual`:
-- `estimateSize`: 96px per row
-- `overscan`: 10 rows (renders 10 extra above/below viewport)
-- `getScrollElement`: the `.overflow-auto` container (scrollRef)
-- Each row uses `measureElement` for dynamic height measurement
-- Rows are absolutely positioned with `transform: translateY()`
-- Total height set on container to maintain scrollbar accuracy
+`VirtualLogList` (inside `LogPanel.jsx`) uses `@tanstack/react-virtual` in **flow mode** (not positioned mode):
+- `estimateSize`: 114px per row
+- `overscan`: 20 rows (renders 20 extra above/below viewport for smooth scrolling)
+- `getScrollElement`: the `absolute inset-0 overflow-auto` div (scrollRef)
+- Each row uses `measureElement` for live height measurement via the virtualizer's internal ResizeObserver
+- Items are in **normal document flow** — NOT absolutely positioned. Spacing managed by CSS `paddingTop` / `paddingBottom` on the items wrapper div (virtualizer spacers). Cards cannot collide or overlap.
+- A separate `ResizeObserver` on the scroll container handles two concerns:
+  - **Width change**: captures topmost visible item index (`anchorIndexRef`) before `measure()`, restores it in Effect 2 after `totalSize` updates; or scrolls to last if at bottom
+  - **Height shrink** (pause banner, mobile menu open): scrolls to last if at bottom (`atBottomRef`)
+- **Paused banner** sits outside the scroll container as `flex-shrink-0` in the flex column — always visible regardless of scroll position
+- **`scrollToBottom()`** in LogPanel uses `virtualizerScrollToBottomRef` (virtualizer's `scrollToIndex`) — not raw `scrollTop` assignment — to avoid mid-item landing on spacer boundaries
 
 ## WebSocket Hook Internals (`useWebSocket.js`)
 
@@ -101,8 +107,10 @@ WebSocket frame arrives (single or batch JSON)
 ### Message discrimination
 ```
 JSON.parse(event.data)
-  → Array of strings?  → Topic list (first connect)
-  → { type: "filter-ack" }?  → Filter acknowledgment
+  → { type: "topics", topics: string[] }?  → Topic list (primary format, on connect)
+  → { type: "stats", topics: {...}, intervalMs }?  → Per-topic rate stats (~every 2s)
+  → { type: "filter-ack" }?  → Filter acknowledgment (ignored, client filters locally)
+  → Array of strings? (legacy)  → Topic list (backwards-compat fallback)
   → Array of objects?  → Batched log events (iterate, assign _id each)
   → Single object?  → Single log event (wrap in array, same path)
 ```
@@ -124,13 +132,13 @@ User types in search box / changes any filter
 
 Server-side bandwidth optimization (parallel, does not block display):
   → 300ms debounce → setDebouncedSearch
-  → useEffect fires → sendFilter({ server, path, search, regex, keywords, timeRange })
+  → useEffect fires → sendFilter({ server, path, search, keywords, timeRange, timeRangeMs? })
   → Server applies filter, sends only matching logs going forward (reduces WS traffic)
-  → Server sends { type: "filter-ack", filters, regexError? }
+  → Server sends { type: "filter-ack", filters }
 ```
 
 ### Client-side `filteredLogs` (single source of truth)
-`filteredLogs` in LogPanel applies ALL filters locally: server/path exact match, text search (plain or regex), keywords (AND/OR), and time range (using `nowMs` state for render purity). The server-side filter reduces bandwidth but the UI never waits for it.
+`filteredLogs` in LogPanel applies ALL filters locally: server/path exact match, plain text search, keywords with `debouncedKeywordInput` (AND/OR mode), and time range (using `nowMs` state for render purity). The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses the debounced value so the filter result and the pending keyword chip in the UI appear in sync.
 
 ## Theme System
 
