@@ -19,7 +19,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Server filter** — searchable dropdown to filter logs by server name
 - **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
 - **Text search** — instant client-side search across message, server name, and path
-- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h / Custom (client-side)
+- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h / Custom; sent to the server as a bandwidth optimization and applied client-side for instant feedback
 - **Keyword filter** — add multiple keywords as colored chips; matches are highlighted in log messages
 - **AND / OR mode** toggle for keyword filter logic
 - **Custom keyword colors** — color wheel picker with hex/RGB input for each keyword
