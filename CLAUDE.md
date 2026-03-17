@@ -21,7 +21,7 @@ React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 
 
 **State ownership:**
 - `App.jsx` — selectedTopic/Server (per panel), darkMode, sidebarOpen/collapsed, splitView, activePanel, isPaused1/2, viewedTopics
-- `LogPanel.jsx` — path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, frozenTopic, timestampGen, nowMs
+- `LogPanel.jsx` — path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, frozenTopic, timestampGen, nowMs, isMobileMenuOpen
 - `useWebSocket` — logsByTopic, topics, isConnected, logRates
 
 **Component tree:**
@@ -74,7 +74,7 @@ App
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL |
+| `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL. Also used to derive `httpBaseUrl` for REST API calls (`ws://` → `http://`, `wss://` → `https://`) |
 | `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs in memory per viewed topic (non-viewed: 100) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate messages longer than this (chars) |
 

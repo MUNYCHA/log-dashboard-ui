@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import ThemeToggle from '../common/ThemeToggle';
 import HeartbeatLine from '../common/HeartbeatLine';
 import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../filters';
@@ -10,7 +10,7 @@ const MobileHeader = ({
   isMobileMenuOpen, onToggleMobileMenu, mobileMenuReady,
   isPaused, onTogglePause,
   autoScroll, onToggleAutoScroll,
-  onExport, onClearLogs,
+  onDownload, onClearLogs,
   logSearchTerm, onSearchChange,
   showMobileServerDropdown, onToggleMobileServerDropdown,
   showMobilePathDropdown, onToggleMobilePathDropdown,
@@ -20,20 +20,6 @@ const MobileHeader = ({
   pathSearchTerm, onPathSearchChange,
   timeRange, customRangeMs, onTimeRangeChange,
 }) => {
-  const [showExportMenu, setShowExportMenu] = useState(false);
-  const exportRef = useRef(null);
-
-  useEffect(() => {
-    if (!showExportMenu) return;
-    const handler = (e) => {
-      if (exportRef.current && !exportRef.current.contains(e.target)) {
-        setShowExportMenu(false);
-      }
-    };
-    document.addEventListener('pointerdown', handler);
-    return () => document.removeEventListener('pointerdown', handler);
-  }, [showExportMenu]);
-
   const btnIdle = darkMode
     ? 'rounded-xl border border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
     : 'rounded-xl border border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]';
@@ -161,37 +147,12 @@ const MobileHeader = ({
                 Auto-scroll
               </button>
 
-              {/* Export — single button with dropdown */}
-              <div className="relative" ref={exportRef}>
-                <button
-                  onClick={() => setShowExportMenu((v) => !v)}
-                  className={`w-full py-2.5 rounded-xl border text-[13px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${showExportMenu ? btnActive : btnIdle}`}
-                >
-                  Export
-                </button>
-                {showExportMenu && (
-                  <div className={`absolute left-0 bottom-12 z-50 w-36 rounded-xl shadow-xl border overflow-hidden ${
-                    darkMode ? 'border-[#3F3A34] bg-[#252320]' : 'border-[#E4DDD6] bg-[#FFFDF9]'
-                  }`}>
-                    <button
-                      onClick={() => { onExport('json'); setShowExportMenu(false); }}
-                      className={`w-full text-left px-4 py-3 text-[13px] font-semibold transition-all duration-150 ease-in-out ${
-                        darkMode ? 'text-[#D0CAC3] hover:bg-[#2E2B28] hover:text-[#ECE6DF]' : 'text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A]'
-                      }`}
-                    >
-                      JSON
-                    </button>
-                    <button
-                      onClick={() => { onExport('csv'); setShowExportMenu(false); }}
-                      className={`w-full text-left px-4 py-3 text-[13px] font-semibold transition-all duration-150 ease-in-out ${
-                        darkMode ? 'text-[#D0CAC3] hover:bg-[#2E2B28] hover:text-[#ECE6DF]' : 'text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A]'
-                      }`}
-                    >
-                      CSV
-                    </button>
-                  </div>
-                )}
-              </div>
+              <button
+                onClick={onDownload}
+                className={`py-2.5 rounded-xl border text-[13px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${btnIdle}`}
+              >
+                Download
+              </button>
 
               <button
                 onClick={() => onClearLogs(selectedTopic)}

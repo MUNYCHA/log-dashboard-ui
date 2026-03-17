@@ -34,7 +34,7 @@ LogPanel.jsx (per-panel local)
 ├── autoScroll          ← disabled only by user-initiated upward scroll (800ms intent window)
 ├── showServerDropdown / showPathDropdown / showMobileServerDropdown / showMobilePathDropdown
 ├── serverSearchTerm / pathSearchTerm
-├── showExportMenu / isMobileMenuOpen / mobileMenuReady
+├── isMobileMenuOpen / mobileMenuReady
 ├── atTop / atBottom    ← scroll position indicators
 ├── timestampGen        ← counter bumped every 5s for relative time refresh
 └── nowMs               ← Date.now() updated every 5s + on timeRange change (pure render)
@@ -150,8 +150,8 @@ Key tokens: `background`, `sidebar`, `header`, `text`, `textSecondary`, `textMut
 
 | Component | Key props | State? |
 |---|---|---|
-| `DesktopHeader` | selectedTopic, displayedLogs, logRate, all toolbar callbacks | None |
-| `MobileHeader` | Same as Desktop + mobile-specific dropdowns, server/path filters | None |
+| `DesktopHeader` | selectedTopic, displayedLogs, logRate, onDownload, all toolbar callbacks | None |
+| `MobileHeader` | Same as Desktop + mobile-specific dropdowns, server/path filters, onDownload | None |
 | `FilterBar` | server/path dropdowns, timeRange, refs for positioning | None |
 | `ActiveFilters` | selectedServer/Path, logSearchTerm, keywords, clear callbacks | None (returns null if no filters) |
 | `StatusBar` | isConnected, isReconnecting, isPaused, logRate | None |
@@ -166,7 +166,7 @@ Key tokens: `background`, `sidebar`, `header`, `text`, `textSecondary`, `textMut
 src/
 ├── main.jsx                    # Entry point
 ├── App.jsx                     # Global state, split view, theme resolution
-├── config.js                   # VITE_WS_URL, VITE_MAX_LOGS_PER_TOPIC, VITE_MAX_MESSAGE_LENGTH
+├── config.js                   # VITE_WS_URL, VITE_MAX_LOGS_PER_TOPIC, VITE_MAX_MESSAGE_LENGTH + derives httpBaseUrl for REST API
 ├── constants/
 │   ├── theme.js                # styles.dark / styles.light token objects
 │   └── keywordColors.js        # KEYWORD_COLORS array, DEFAULT_KEYWORD_COLOR, getColorDef()
@@ -179,6 +179,6 @@ src/
     ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, index.js
     ├── log/LogPanel.jsx, VirtualLogList (inside LogPanel), LogEntry.jsx, DesktopHeader.jsx,
     │   MobileHeader.jsx, FilterBar.jsx, ActiveFilters.jsx, StatusBar.jsx, EmptyState.jsx,
-    │   ScrollButtons.jsx, constants.js, index.js
+    │   ScrollButtons.jsx, constants.js (TIME_RANGES, button styles, getShortPath), index.js
     └── sidebar/Sidebar.jsx (contains TopicItem), index.js
 ```

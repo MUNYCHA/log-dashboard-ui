@@ -37,7 +37,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Log rate indicator** — logs/sec shown per topic in the sidebar
 
 ### Actions
-- **Export logs** — download currently filtered logs as JSON or CSV (timestamped filename)
+- **Download logs** — download the full log file for the selected topic directly from the server
 - **Clear logs** per topic
 - **Auto-scroll** to latest logs — disabled only by user-initiated upward scrolling; re-enables automatically when scrolled back to the bottom
 - **Scroll to top / bottom** floating buttons appear when needed
@@ -188,7 +188,8 @@ log-dashboard-ui/
     ├── main.jsx               # React entry point
     ├── App.jsx                # Root layout, split view, global state
     ├── config.js              # Reads VITE_WS_URL, VITE_MAX_LOGS_PER_TOPIC,
-    │                          # VITE_MAX_MESSAGE_LENGTH from env with fallbacks
+    │                          # VITE_MAX_MESSAGE_LENGTH from env with fallbacks.
+    │                          # Derives httpBaseUrl (http/https) from VITE_WS_URL for REST API calls
     ├── constants/
     │   ├── theme.js           # Dark / light theme token objects
     │   └── keywordColors.js   # Preset keyword highlight colors
@@ -221,7 +222,7 @@ log-dashboard-ui/
         │   ├── ScrollButtons.jsx   # Floating scroll-to-top/bottom buttons
         │   ├── LogEntry.jsx        # Single log row with keyword highlighting
         │   │                       # and relative timestamp
-        │   └── constants.js        # TIME_RANGES, downloadFile, button styles
+        │   └── constants.js        # TIME_RANGES, button styles, getShortPath
         └── sidebar/
             ├── index.js            # Re-exports Sidebar
             └── Sidebar.jsx         # Topic list with search, log rate badges,

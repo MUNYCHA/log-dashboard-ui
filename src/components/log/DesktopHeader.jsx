@@ -6,7 +6,7 @@ const DesktopHeader = ({
   selectedTopic, displayedLogs, logRate, darkMode, theme,
   splitView, isActivePanel, onSetActive, onClosePanel, onOpenSplit,
   isPaused, onTogglePause, btn,
-  showExportMenu, onToggleExportMenu, exportMenuRef, onExport,
+  onDownload,
   onThemeToggle,
   autoScroll, onToggleAutoScroll,
   onClearLogs,
@@ -65,19 +65,9 @@ const DesktopHeader = ({
             <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
           </button>
 
-          <div className="relative" ref={exportMenuRef}>
-            <button onClick={onToggleExportMenu} className={btn.export} title="Export">
-              <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            </button>
-            {showExportMenu && (
-              <div className={`absolute right-0 top-10 z-50 w-28 rounded-2xl shadow-xl border overflow-hidden ${
-                darkMode ? 'border-[#3F3A34] bg-[#252320]' : 'border-[#E4DDD6] bg-[#FFFDF9]'
-              }`}>
-                <button onClick={() => onExport('json')} className={`w-full text-left px-4 py-2.5 text-[13px] font-medium ${theme.hover} ${theme.textSecondary}`}>JSON</button>
-                <button onClick={() => onExport('csv')} className={`w-full text-left px-4 py-2.5 text-[13px] font-medium ${theme.hover} ${theme.textSecondary}`}>CSV</button>
-              </div>
-            )}
-          </div>
+          <button onClick={onDownload} className={btn.export} title="Download log file">
+            <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          </button>
 
           <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
           {!onClosePanel && (

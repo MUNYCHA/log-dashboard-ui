@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { KeywordFilter } from "../filters";
-import { downloadFile, getButtonStyles } from "./constants";
+import { getButtonStyles } from "./constants";
 import config from "../../config";
 import DesktopHeader from "./DesktopHeader";
 import MobileHeader from "./MobileHeader";
@@ -314,7 +314,6 @@ const LogPanel = ({
   const [customRangeMs, setCustomRangeMs] = useState(0);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
-  const [showExportMenu, setShowExportMenu] = useState(false);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
   const [timestampGen, setTimestampGen] = useState(0);
@@ -323,7 +322,6 @@ const LogPanel = ({
   const virtualizerScrollToBottomRef = useRef(null);
   const serverButtonRef = useRef(null);
   const pathButtonRef = useRef(null);
-  const exportMenuRef = useRef(null);
   const previousScrollTopRef = useRef(0);
   const userScrollIntentUntilRef = useRef(0);
 
@@ -353,16 +351,6 @@ const LogPanel = ({
     setTimeRange(value);
     setCustomRangeMs(ms);
     if (value !== 'all') setNowMs(Date.now());
-  }, []);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
-        setShowExportMenu(false);
-      }
-    };
-    document.addEventListener('pointerdown', handler);
-    return () => document.removeEventListener('pointerdown', handler);
   }, []);
 
   const handleScroll = useCallback(() => {
@@ -598,21 +586,12 @@ const LogPanel = ({
     setTimeRange('all');
   };
 
-  const exportLogs = (format) => {
-    const safeTopic = selectedTopic.replace(/[^a-z0-9]/gi, '_');
-    const exportNow = new Date();
-    const ts = `${exportNow.getFullYear()}-${String(exportNow.getMonth() + 1).padStart(2, '0')}-${String(exportNow.getDate()).padStart(2, '0')}_${String(exportNow.getHours()).padStart(2, '0')}-${String(exportNow.getMinutes()).padStart(2, '0')}-${String(exportNow.getSeconds()).padStart(2, '0')}`;
-    const base = `${safeTopic}_${ts}`;
-    if (format === 'json') {
-      downloadFile(JSON.stringify(displayedLogs, null, 2), `${base}.json`, 'application/json');
-    } else {
-      const cols = ['timestamp', 'serverName', 'path', 'message'];
-      const rows = displayedLogs.map((log) =>
-        cols.map((c) => `"${String(log[c] || '').replace(/"/g, '""')}"`).join(',')
-      );
-      downloadFile([cols.join(','), ...rows].join('\n'), `${base}.csv`, 'text/csv');
-    }
-    setShowExportMenu(false);
+  const downloadLogs = () => {
+    const a = document.createElement('a');
+    a.href = `${config.httpBaseUrl}/api/logs/download?topic=${encodeURIComponent(selectedTopic)}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const scrollToTop = () => {
@@ -684,10 +663,7 @@ const LogPanel = ({
           isPaused={isPaused}
           onTogglePause={handleTogglePause}
           btn={btn}
-          showExportMenu={showExportMenu}
-          onToggleExportMenu={() => setShowExportMenu((v) => !v)}
-          exportMenuRef={exportMenuRef}
-          onExport={exportLogs}
+          onDownload={downloadLogs}
           onThemeToggle={onThemeToggle}
           autoScroll={autoScroll}
           onToggleAutoScroll={toggleAutoScroll}
@@ -709,7 +685,7 @@ const LogPanel = ({
           onTogglePause={handleTogglePause}
           autoScroll={autoScroll}
           onToggleAutoScroll={toggleAutoScroll}
-          onExport={exportLogs}
+          onDownload={downloadLogs}
           onClearLogs={onClearLogs}
           logSearchTerm={logSearchTerm}
           onSearchChange={setLogSearchTerm}
