@@ -423,6 +423,12 @@ const LogPanel = ({
   }, [selectedServer, serversForSelectedTopic, onServerSelect]);
 
   useEffect(() => {
+    if (selectedPathForTopic && !pathsForSelectedServer.includes(selectedPathForTopic)) {
+      setPathForTopic({ topic: selectedTopic, path: null });
+    }
+  }, [selectedPathForTopic, pathsForSelectedServer, selectedTopic]);
+
+  useEffect(() => {
     if (!sendFilter) return;
 
     const pendingInput = debouncedKeywordInput.trim().toLowerCase();
