@@ -825,8 +825,6 @@ const LogPanel = ({
         isConnected={isConnected}
         isReconnecting={isReconnecting}
         isPaused={isPaused}
-        selectedServer={selectedServer}
-        selectedPath={selectedPath}
         logRate={logRate}
         darkMode={darkMode}
         theme={theme}
@@ -834,8 +832,6 @@ const LogPanel = ({
         visibleCount={displayedLogs.length}
         bufferedCount={bufferedCount}
         hasActiveFilters={hasActiveFilters}
-        onClearServer={handleClearServer}
-        onClearPath={handleClearPath}
       />
     </div>
   );

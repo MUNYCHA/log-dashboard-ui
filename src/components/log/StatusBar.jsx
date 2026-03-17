@@ -1,12 +1,9 @@
 import React from 'react';
-import { getShortPath } from './constants';
 
 const StatusBar = ({
   isConnected, isReconnecting,
-  selectedServer, selectedPath,
   logRate, darkMode, theme,
   streamMode, visibleCount, bufferedCount, hasActiveFilters,
-  onClearServer, onClearPath,
 }) => {
   const dotColor = isConnected
     ? 'bg-emerald-500'
@@ -64,39 +61,6 @@ const StatusBar = ({
         </>
       )}
 
-      {selectedServer && (
-        <>
-          {dot}
-          <button
-            onClick={onClearServer}
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium max-w-[140px] transition-colors flex-shrink-0 ${
-              darkMode ? 'bg-[#252320] text-[#A8C7FA] hover:bg-[#2E2B28]' : 'bg-[#EEE8E2] text-[#0B57D0] hover:bg-[#DDD7D0]'
-            }`}
-          >
-            <span className="truncate">{selectedServer}</span>
-            <svg className="w-3 h-3 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </>
-      )}
-
-      {selectedPath && (
-        <>
-          {dot}
-          <button
-            onClick={onClearPath}
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium max-w-[140px] transition-colors flex-shrink-0 ${
-              darkMode ? 'bg-[#252320] text-[#A8C7FA] hover:bg-[#2E2B28]' : 'bg-[#EEE8E2] text-[#0B57D0] hover:bg-[#DDD7D0]'
-            }`}
-          >
-            <span className="truncate">{getShortPath(selectedPath)}</span>
-            <svg className="w-3 h-3 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </>
-      )}
     </div>
   );
 };
