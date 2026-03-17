@@ -39,7 +39,6 @@ const normalizeLogEvent = (value, nextId) => {
  * The server sends typed messages:
  *   - { type: "topics", topics: string[] }                    — available topics (on connect)
  *   - { type: "stats", topics: { [t]: { rate, servers } } }  — periodic stats (every ~2s)
- *   - { type: "filter-ack", filters, regexError? }           — filter acknowledgment
  *   - LogEntry or LogEntry[]                                  — log events (after subscribe)
  *
  * Returns:
@@ -222,10 +221,6 @@ export const useWebSocket = (url, viewedTopics) => {
             lastRateAtRef.current[topic] = now;
           }
           setLogRates((prev) => ({ ...prev, ...rates }));
-          return;
-        }
-
-        if (data.type === 'filter-ack') {
           return;
         }
 
