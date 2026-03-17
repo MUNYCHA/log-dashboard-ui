@@ -462,9 +462,7 @@ const LogPanel = ({
     if (logSearchTerm) {
       const lower = logSearchTerm.toLowerCase();
       logs = logs.filter((l) =>
-        String(l.message ?? '').toLowerCase().includes(lower) ||
-        String(l.serverName ?? '').toLowerCase().includes(lower) ||
-        String(l.path ?? '').toLowerCase().includes(lower)
+        String(l.message ?? '').toLowerCase().includes(lower)
       );
     }
 
@@ -475,7 +473,7 @@ const LogPanel = ({
     ];
     if (allTerms.length > 0) {
       logs = logs.filter((l) => {
-        const haystack = `${String(l.message ?? '')}\0${String(l.serverName ?? '')}\0${String(l.path ?? '')}`.toLowerCase();
+        const haystack = String(l.message ?? '').toLowerCase();
         return keywordMode === 'and'
           ? allTerms.every((t) => haystack.includes(t))
           : allTerms.some((t) => haystack.includes(t));
