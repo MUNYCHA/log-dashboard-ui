@@ -424,6 +424,7 @@ const LogPanel = ({
 
   useEffect(() => {
     if (selectedPathForTopic && !pathsForSelectedServer.includes(selectedPathForTopic)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPathForTopic({ topic: selectedTopic, path: null });
     }
   }, [selectedPathForTopic, pathsForSelectedServer, selectedTopic]);
