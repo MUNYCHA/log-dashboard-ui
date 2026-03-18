@@ -15,10 +15,10 @@ A real-time log monitoring dashboard built with React + Vite. Connects to a WebS
 ### Topic & Filtering (Client-Side, Real-Time)
 All filtering runs client-side for instant feedback on every keystroke. A debounced server-side filter (300ms) runs in parallel as a bandwidth optimization to reduce WebSocket traffic.
 
-- **Topic sidebar** — all topics auto-subscribed; live log count, rate (logs/sec), server badges, and last message per topic
+- **Topic sidebar** — all topics auto-subscribed; live log count and rate (logs/sec) per topic
 - **Server filter** — searchable dropdown to filter logs by server name
 - **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
-- **Text search** — instant client-side search across message, server name, and path
+- **Text search** — instant client-side search across log messages
 - **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h / Custom; sent to the server as a bandwidth optimization and applied client-side for instant feedback
 - **Keyword filter** — add multiple keywords as colored chips; matches are highlighted in log messages
 - **AND / OR mode** toggle for keyword filter logic
@@ -126,7 +126,6 @@ npm run lint
 | Topic list | `{ type: "topics", topics: string[] }` (primary), legacy `string[]` fallback | Once on connect — list of all topic names |
 | Stats | `{ type: "stats", topics: { [topic]: { rate, servers } }, intervalMs }` | Periodic (~every 2s) — per-topic log rate and server info |
 | Log event | `{ topic, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events (already filtered server-side); single object or batched array |
-| Filter ack | `{ type: "filter-ack", filters: {...} }` | Confirms filter applied server-side |
 
 ### Client → Server
 
@@ -149,7 +148,7 @@ npm run lint
 ### Example messages
 
 ```json
-["api-service", "worker", "auth"]
+{ "type": "topics", "topics": ["api-service", "worker", "auth"] }
 ```
 
 ```json
