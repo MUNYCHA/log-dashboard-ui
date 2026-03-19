@@ -601,7 +601,9 @@ const LogPanel = ({
       const blob = await res.blob();
       const disposition = res.headers.get('Content-Disposition') || '';
       const match = disposition.match(/filename="?([^"]+)"?/);
-      const filename = match ? match[1] : `${selectedTopic}.log`;
+      const baseName = match ? match[1].replace(/\.log$/i, '') : selectedTopic;
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, 19);
+      const filename = `${baseName}_${ts}.log`;
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = objectUrl;
