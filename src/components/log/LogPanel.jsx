@@ -602,7 +602,8 @@ const LogPanel = ({
       const disposition = res.headers.get('Content-Disposition') || '';
       const match = disposition.match(/filename="?([^"]+)"?/);
       const baseName = match ? match[1].replace(/\.log$/i, '') : selectedTopic;
-      const ts = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, 19);
+      const now = new Date();
+      const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}-${String(now.getSeconds()).padStart(2,'0')}`;
       const filename = `${baseName}_${ts}.log`;
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
