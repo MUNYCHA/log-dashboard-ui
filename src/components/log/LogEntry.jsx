@@ -108,7 +108,7 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
           ? 'bg-[#1E1E1E] border border-[#303134] hover:bg-[#252525]'
           : 'bg-white border border-[#E8EAED] shadow-sm hover:shadow-md'
       }`}>
-        <div className="flex items-center gap-2 mb-2.5">
+        <div className="flex items-center gap-2 mb-2.5 overflow-hidden">
           <span className={`text-[11.5px] font-mono tabular-nums flex-shrink-0 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`}>
             {relativeTime || 'now'}
           </span>
@@ -117,26 +117,24 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
           }`}>
             {serverName}
           </span>
+          <span className={`w-px h-3 flex-shrink-0 opacity-0 group-hover/entry:opacity-100 transition-opacity duration-150 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
+          <span className={`text-[11px] font-mono tabular-nums flex-shrink-0 truncate opacity-0 group-hover/entry:opacity-100 transition-opacity duration-150 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+            {log.timestamp}
+          </span>
+          {log.path && (
+            <>
+              <span className={`w-px h-3 flex-shrink-0 opacity-0 group-hover/entry:opacity-100 transition-opacity duration-150 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
+              <span className={`text-[11px] font-mono truncate opacity-0 group-hover/entry:opacity-100 transition-opacity duration-150 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                {log.path}
+              </span>
+            </>
+          )}
         </div>
 
         <div className={`whitespace-pre-wrap break-words text-[13.5px] leading-[1.65] font-mono ${
           darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'
         }`}>
           {highlightMessage(message, keywords, darkMode, logSearchTerm)}
-        </div>
-
-        {/* Hover metadata footer */}
-        <div className={`mt-2.5 pt-2 border-t flex items-center gap-3 opacity-0 group-hover/entry:opacity-100 transition-opacity duration-150 ${
-          darkMode ? 'border-[#303134]' : 'border-[#F1F3F4]'
-        }`}>
-          <span className={`text-[11px] font-mono truncate flex-1 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-            {log.timestamp}
-          </span>
-          {log.path && (
-            <span className={`text-[11px] font-mono truncate max-w-[45%] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-              {log.path}
-            </span>
-          )}
         </div>
 
         {/* Copy button */}
