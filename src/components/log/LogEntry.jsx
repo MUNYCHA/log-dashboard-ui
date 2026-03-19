@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { getRelativeTime } from '../../utils/logUtils';
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -90,9 +90,20 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
   const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
   const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
   const message = typeof log.message === 'string' ? log.message : String(log.message ?? '');
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback((e) => {
+    e.stopPropagation();
+    const text = JSON.stringify({ timestamp: log.timestamp, serverName: log.serverName, path: log.path, message: log.message }, null, 2);
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [log]);
+
   return (
     <article className="px-3 pt-1.5 pb-1.5">
-      <div className={`min-h-[80px] rounded-2xl px-4 py-3.5 transition-colors duration-100 ${
+      <div className={`group/entry relative min-h-[80px] rounded-2xl px-4 py-3.5 transition-all duration-100 ${
         darkMode
           ? 'bg-[#1E1E1E] border border-[#303134] hover:bg-[#252525]'
           : 'bg-white border border-[#E8EAED] shadow-sm hover:shadow-md'
@@ -113,6 +124,48 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
         }`}>
           {highlightMessage(message, keywords, darkMode, logSearchTerm)}
         </div>
+
+        {/* Hover metadata footer */}
+        <div className={`mt-2.5 pt-2 border-t flex items-center gap-3 opacity-0 group-hover/entry:opacity-100 transition-opacity duration-150 ${
+          darkMode ? 'border-[#303134]' : 'border-[#F1F3F4]'
+        }`}>
+          <span className={`text-[11px] font-mono truncate flex-1 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+            {log.timestamp}
+          </span>
+          {log.path && (
+            <span className={`text-[11px] font-mono truncate max-w-[45%] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+              {log.path}
+            </span>
+          )}
+        </div>
+
+        {/* Copy button */}
+        <button
+          onClick={handleCopy}
+          title="Copy log"
+          className={`absolute top-2.5 right-2.5 opacity-0 group-hover/entry:opacity-100 transition-all duration-150
+            inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium active:scale-95 ${
+            copied
+              ? (darkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
+              : (darkMode ? 'bg-[#303134] text-[#80868B] hover:text-[#E8EAED]' : 'bg-[#F1F3F4] text-[#5F6368] hover:text-[#202124]')
+          }`}
+        >
+          {copied ? (
+            <>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+              Copied
+            </>
+          ) : (
+            <>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy
+            </>
+          )}
+        </button>
       </div>
     </article>
   );
