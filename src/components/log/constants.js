@@ -34,8 +34,8 @@ export const getButtonStyles = (darkMode) => {
     : `text-[#5F6368] hover:text-[#202124] hover:bg-[#F1F3F4]`;
 
   const ghostActive = darkMode
-    ? `text-[#8AB4F8] hover:bg-[#1A73E8]/20`
-    : `text-[#1A73E8] hover:bg-[#E8F0FE]`;
+    ? `text-[#8AB4F8] bg-[#1A73E8]/15 hover:bg-[#1A73E8]/25`
+    : `text-[#1A73E8] bg-[#E8F0FE] hover:bg-[#D2E3FC]`;
 
   const ghostDanger = darkMode
     ? `text-[#BDC1C6] hover:text-[#F28B82] hover:bg-[#3C1F1F]`
