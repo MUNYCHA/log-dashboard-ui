@@ -6,7 +6,9 @@ const chip = (active, darkMode) =>
   `h-8 inline-flex items-center gap-1.5 rounded-full border px-4 text-[13px] font-medium
   transition-all duration-150 ease-in-out active:scale-95 cursor-pointer select-none
   ${active
-    ? 'border-[#1A73E8] bg-[#E8F0FE] text-[#1A73E8]'
+    ? darkMode
+      ? 'border-[#8AB4F8]/60 bg-[#1A3A6B]/50 text-[#8AB4F8]'
+      : 'border-[#1A73E8] bg-[#E8F0FE] text-[#1A73E8]'
     : darkMode
       ? 'border-[#5F6368] bg-transparent text-[#BDC1C6] hover:bg-[#303134] hover:text-[#E8EAED]'
       : 'border-[#DADCE0] bg-transparent text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124]'

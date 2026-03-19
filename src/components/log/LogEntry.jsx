@@ -110,7 +110,7 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
     <article className="px-3 pt-1.5 pb-1.5">
       <div className={`group/entry relative min-h-[80px] rounded-2xl px-4 py-3.5 transition-all duration-100 ${
         darkMode
-          ? 'bg-[#1E1E1E] border border-[#303134] hover:bg-[#252525]'
+          ? 'bg-[#1E1E1E] border border-[#303134] hover:bg-[#252525] shadow-[0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]'
           : 'bg-white border border-[#E8EAED] shadow-sm hover:shadow-md'
       }`}>
         <div className="flex items-center gap-2 mb-2.5 overflow-hidden">

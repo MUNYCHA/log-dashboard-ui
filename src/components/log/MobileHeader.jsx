@@ -79,10 +79,14 @@ const MobileHeader = ({
             <div className="relative w-full">
               <button
                 onClick={() => onToggleMobileServerDropdown()}
-                className={`w-full px-2.5 py-1.5 rounded-lg border text-xs font-medium flex items-center justify-between transition-all duration-150 ease-in-out active:scale-95 ${
-                  darkMode
-                    ? 'border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED] hover:border-[#80868B]'
-                    : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
+                className={`w-full px-3 py-1.5 rounded-full border text-xs font-medium flex items-center justify-between transition-all duration-150 ease-in-out active:scale-95 ${
+                  selectedServer
+                    ? darkMode
+                      ? 'border-[#8AB4F8]/60 bg-[#1A3A6B]/50 text-[#8AB4F8]'
+                      : 'border-[#1A73E8] bg-[#E8F0FE] text-[#1A73E8]'
+                    : darkMode
+                      ? 'border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED] hover:border-[#80868B]'
+                      : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
                 }`}
                 type="button"
               >
@@ -104,11 +108,15 @@ const MobileHeader = ({
             <div className="relative w-full">
               <button
                 onClick={() => selectedServer && onToggleMobilePathDropdown()}
-                className={`w-full px-2.5 py-1.5 rounded-lg border text-xs font-medium flex items-center justify-between transition-all duration-150 ease-in-out active:scale-95
+                className={`w-full px-3 py-1.5 rounded-full border text-xs font-medium flex items-center justify-between transition-all duration-150 ease-in-out active:scale-95
                           ${!selectedServer ? "opacity-40 cursor-not-allowed" : ""} ${
-                  darkMode
-                    ? 'border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED] hover:border-[#80868B]'
-                    : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
+                  selectedPath
+                    ? darkMode
+                      ? 'border-[#8AB4F8]/60 bg-[#1A3A6B]/50 text-[#8AB4F8]'
+                      : 'border-[#1A73E8] bg-[#E8F0FE] text-[#1A73E8]'
+                    : darkMode
+                      ? 'border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED] hover:border-[#80868B]'
+                      : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
                 }`}
                 type="button" disabled={!selectedServer}
               >

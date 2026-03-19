@@ -40,7 +40,7 @@ export const styles = {
     hover: "hover:bg-[#303134] transition-all duration-150 ease-in-out",
     selected: "bg-[#1A3A6B]/50 border-l-2 border-l-[#8AB4F8]",
     topicItem: "border-transparent",
-    logEntry: "bg-[#1E1E1E] border border-[#303134] hover:bg-[#252525]",
+    logEntry: "bg-[#1E1E1E] border border-[#303134] hover:bg-[#252525] shadow-[0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]",
     statusBar: "bg-[#1E1E1E] shadow-[0_1px_3px_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.3)]",
     scrollbar: "scrollbar-thumb-[#5F6368] scrollbar-track-[#121212]",
     serverBadge: "bg-[#1A3A6B]/60 text-[#8AB4F8] border border-[#1E439E]/50",
