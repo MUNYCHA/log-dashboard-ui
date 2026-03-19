@@ -117,14 +117,14 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
           }`}>
             {serverName}
           </span>
-          <span className={`hidden md:block w-px h-3 flex-shrink-0 opacity-0 group-hover/entry:opacity-100 transition-opacity duration-150 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
-          <span className={`hidden md:block text-[11px] font-mono tabular-nums flex-shrink-0 truncate opacity-0 group-hover/entry:opacity-100 transition-opacity duration-150 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+          <span className={`w-px h-3 flex-shrink-0 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
+          <span className={`text-[11px] font-mono tabular-nums flex-shrink-0 truncate ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
             {log.timestamp}
           </span>
           {log.path && (
             <>
-              <span className={`hidden md:block w-px h-3 flex-shrink-0 opacity-0 group-hover/entry:opacity-100 transition-opacity duration-150 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
-              <span className={`hidden md:block text-[11px] font-mono truncate opacity-0 group-hover/entry:opacity-100 transition-opacity duration-150 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+              <span className={`w-px h-3 flex-shrink-0 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
+              <span className={`text-[11px] font-mono truncate ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
                 {log.path}
               </span>
             </>
@@ -141,7 +141,7 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
         <button
           onClick={handleCopy}
           title="Copy log"
-          className={`absolute top-2.5 right-2.5 hidden md:inline-flex opacity-0 group-hover/entry:opacity-100 transition-all duration-150
+          className={`absolute top-2.5 right-2.5 inline-flex opacity-0 group-hover/entry:opacity-100 transition-all duration-150
             items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium active:scale-95 ${
             copied
               ? (darkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
