@@ -104,7 +104,7 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });
-  }, [log]);
+  }, [log, localTimestamp]);
 
   return (
     <article className="px-3 pt-1.5 pb-1.5">
