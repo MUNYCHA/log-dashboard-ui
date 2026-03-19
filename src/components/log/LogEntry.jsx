@@ -90,6 +90,11 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
   const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
   const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
   const message = typeof log.message === 'string' ? log.message : String(log.message ?? '');
+  const localTimestamp = useMemo(() => {
+    try {
+      return new Date(log.timestamp).toLocaleString();
+    } catch { return log.timestamp; }
+  }, [log.timestamp]);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback((e) => {
@@ -119,7 +124,7 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
           </span>
           <span className={`w-px h-3 flex-shrink-0 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
           <span className={`text-[11px] font-mono tabular-nums flex-shrink-0 truncate ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-            {log.timestamp}
+            {localTimestamp}
           </span>
           {log.path && (
             <>
