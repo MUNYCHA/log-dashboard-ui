@@ -317,6 +317,7 @@ const LogPanel = ({
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
   const [timestampGen, setTimestampGen] = useState(0);
+  const [downloadError, setDownloadError] = useState(null);
 
   const scrollRef = useRef(null);
   const virtualizerScrollToBottomRef = useRef(null);
@@ -586,12 +587,31 @@ const LogPanel = ({
     setTimeRange('all');
   };
 
-  const downloadLogs = () => {
-    const a = document.createElement('a');
-    a.href = `${config.httpBaseUrl}/api/logs/download?topic=${encodeURIComponent(selectedTopic)}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const downloadLogs = async () => {
+    const url = `${config.httpBaseUrl}/api/logs/download?topic=${encodeURIComponent(selectedTopic)}`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        const msg = text.trim() || `Server returned ${res.status}`;
+        setDownloadError(msg);
+        setTimeout(() => setDownloadError(null), 5000);
+        return;
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      const filename = match ? match[1] : `${selectedTopic}.log`;
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      setDownloadError('Download failed — server unreachable');
+      setTimeout(() => setDownloadError(null), 5000);
+    }
   };
 
   const scrollToTop = () => {
@@ -769,6 +789,22 @@ const LogPanel = ({
           onRemoveKeyword={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
         />
       </div>
+
+      {downloadError && (
+        <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium flex-shrink-0 ${
+          darkMode ? 'bg-[#2D1B1B] text-[#F28B82] border border-[#5C2D2D]' : 'bg-[#FCE8E6] text-[#C5221F] border border-[#F5C6C2]'
+        }`}>
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          <span className="flex-1 min-w-0 truncate">Download failed: {downloadError}</span>
+          <button onClick={() => setDownloadError(null)} className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <VirtualLogList
         displayedLogs={displayedLogs}
