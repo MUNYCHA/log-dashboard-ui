@@ -126,7 +126,6 @@ npm run lint
 | Topic list | `{ type: "topics", topics: string[] }` (primary), legacy `string[]` fallback | Once on connect — list of all topic names |
 | Stats | `{ type: "stats", topics: { [topic]: { rate, servers } }, intervalMs }` | Periodic (~every 2s) — per-topic log rate and server info |
 | Log event | `{ topic, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events (already filtered server-side); single object or batched array |
-| Filter ack | `{ type: "filter-ack", filters: {...} }` | Confirms filter applied server-side |
 
 ### Client → Server
 
@@ -149,7 +148,7 @@ npm run lint
 ### Example messages
 
 ```json
-["api-service", "worker", "auth"]
+{ "type": "topics", "topics": ["api-service", "worker", "auth"] }
 ```
 
 ```json
@@ -173,6 +172,16 @@ npm run lint
   }
 }
 ```
+
+---
+
+## REST API
+
+The base URL is derived automatically from `VITE_WS_URL` (`ws://` → `http://`, `wss://` → `https://`).
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/logs/download?topic=<topic>` | Download the raw log file for the given topic |
 
 ---
 
