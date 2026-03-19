@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { KeywordFilter } from "../filters";
 import { getButtonStyles } from "./constants";
@@ -793,21 +794,29 @@ const LogPanel = ({
         />
       </div>
 
-      {downloadError && (
-        <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium flex-shrink-0 ${
-          darkMode ? 'bg-[#2D1B1B] text-[#F28B82] border border-[#5C2D2D]' : 'bg-[#FCE8E6] text-[#C5221F] border border-[#F5C6C2]'
-        }`}>
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-          </svg>
-          <span className="flex-1 min-w-0 truncate">Download failed: {downloadError}</span>
-          <button onClick={() => setDownloadError(null)} className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      <AnimatePresence>
+        {downloadError && (
+          <Motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium flex-shrink-0 ${
+              darkMode ? 'bg-[#2D1B1B] text-[#F28B82] border border-[#5C2D2D]' : 'bg-[#FCE8E6] text-[#C5221F] border border-[#F5C6C2]'
+            }`}
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
-          </button>
-        </div>
-      )}
+            <span className="flex-1 min-w-0 truncate">Download failed: {downloadError}</span>
+            <button onClick={() => setDownloadError(null)} className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </Motion.div>
+        )}
+      </AnimatePresence>
 
       <VirtualLogList
         displayedLogs={displayedLogs}

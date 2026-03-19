@@ -22,7 +22,7 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkM
   return (
     <button
       onClick={() => onTopicSelect(topic)}
-      className={`relative w-full overflow-hidden rounded-xl px-4 py-2.5 text-left transition-all duration-150 ease-in-out active:scale-[0.98] ${itemTone}`}
+      className={`relative w-full overflow-hidden rounded-xl px-4 py-2.5 text-left transition-all duration-150 ease-in-out active:scale-[0.98] hover:translate-x-0.5 ${itemTone}`}
     >
       {isSelected && (
         <MotionSpan
