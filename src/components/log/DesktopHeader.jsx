@@ -24,8 +24,8 @@ const DesktopHeader = ({
               onClick={onSetActive}
               className={`h-2.5 w-2.5 rounded-full flex-shrink-0 transition-colors ${
                 isActivePanel
-                  ? 'bg-[#0B57D0]'
-                  : `${darkMode ? 'bg-[#49443E]' : 'bg-[#C5BEB7]'}`
+                  ? 'bg-[#1A73E8]'
+                  : `${darkMode ? 'bg-[#5F6368]' : 'bg-[#DADCE0]'}`
               }`}
               title={isActivePanel ? 'Active panel' : 'Click to make active'}
             />
@@ -34,14 +34,14 @@ const DesktopHeader = ({
             {selectedTopic}
           </h2>
           <span className={`rounded-full px-2.5 py-0.5 text-[12px] font-mono tabular-nums font-medium flex-shrink-0 ${
-            darkMode ? 'bg-[#252320] text-[#938D87]' : 'bg-[#EEE8E2] text-[#79736D]'
+            darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
           }`}>
             {displayedLogs?.length || 0}
           </span>
           <span className={`inline-flex items-center gap-1.5 text-[12px] font-mono tabular-nums flex-shrink-0 ${
             logRate > 0 ? (darkMode ? 'text-emerald-300' : 'text-emerald-600') : theme.textMuted
           }`}>
-            <span className={`h-2 w-2 rounded-full ${logRate > 0 ? 'bg-emerald-500' : (darkMode ? 'bg-[#49443E]' : 'bg-[#C5BEB7]')}`} />
+            <span className={`h-2 w-2 rounded-full ${logRate > 0 ? 'bg-emerald-500' : (darkMode ? 'bg-[#5F6368]' : 'bg-[#DADCE0]')}`} />
             {logRate}/s
           </span>
           {logRate > 0 && (

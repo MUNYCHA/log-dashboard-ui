@@ -13,10 +13,10 @@ const StatusBar = ({
 
   const connectionLabel = isConnected ? 'Connected' : isReconnecting ? 'Reconnecting…' : 'Disconnected';
 
-  const dot = <span className={`w-px h-3.5 ${darkMode ? 'bg-[#3F3A34]' : 'bg-[#DDD7D0]'}`} />;
+  const dot = <span className={`w-px h-3.5 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />;
 
   return (
-    <div className={`px-4 sm:px-5 py-2 ${theme.statusBar} text-[12px] font-mono flex items-center gap-2.5 flex-shrink-0 overflow-x-auto`}>
+    <div className={`px-4 sm:px-5 py-2 ${theme.statusBar} rounded-2xl text-[12px] font-mono flex items-center gap-2.5 flex-shrink-0 overflow-x-auto`}>
 
       {/* Connection */}
       <span className="inline-flex items-center gap-1.5 flex-shrink-0">
@@ -34,7 +34,7 @@ const StatusBar = ({
       {/* Stream mode */}
       <span className={`flex-shrink-0 font-medium ${
         streamMode === 'Live tail'
-          ? (darkMode ? 'text-[#A8C7FA]' : 'text-[#0B57D0]')
+          ? (darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]')
           : streamMode === 'Paused'
             ? (darkMode ? 'text-amber-300' : 'text-amber-700')
             : theme.textMuted
@@ -56,7 +56,7 @@ const StatusBar = ({
         <>
           {dot}
           <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-            darkMode ? 'bg-[#0842A0]/30 text-[#A8C7FA]' : 'bg-[#D3E3FD] text-[#0B57D0]'
+            darkMode ? 'bg-[#1A3A6B]/50 text-[#8AB4F8]' : 'bg-[#E8F0FE] text-[#1A73E8]'
           }`}>Filtered</span>
         </>
       )}

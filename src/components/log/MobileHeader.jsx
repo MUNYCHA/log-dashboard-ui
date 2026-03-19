@@ -21,18 +21,18 @@ const MobileHeader = ({
   timeRange, customRangeMs, onTimeRangeChange,
 }) => {
   const btnIdle = darkMode
-    ? 'rounded-xl border border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
-    : 'rounded-xl border border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]';
+    ? 'rounded-xl border border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED] hover:border-[#80868B]'
+    : 'rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]';
   const btnActive = darkMode
-    ? 'rounded-xl border border-[#A8C7FA]/40 bg-[#0842A0]/30 text-[#A8C7FA] hover:bg-[#0842A0]/45 hover:border-[#A8C7FA]/55'
-    : 'rounded-xl border border-[#A8C7FA] bg-[#D3E3FD] text-[#0B57D0] hover:bg-[#BDD7FB] hover:border-[#7BAEF8]';
+    ? 'rounded-xl border border-[#8AB4F8]/40 bg-[#1A3A6B]/50 text-[#8AB4F8] hover:bg-[#1A3A6B]/65 hover:border-[#8AB4F8]/55'
+    : 'rounded-xl border border-[#D2E3FC] bg-[#E8F0FE] text-[#1A73E8] hover:bg-[#D2E3FC] hover:border-[#A8C7FA]';
   const btnDanger = darkMode
-    ? 'rounded-xl border border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#4A2A2A] hover:text-[#F28B82] hover:border-[#8B3C36]'
-    : 'rounded-xl border border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#FCE8E6] hover:text-[#C5221F] hover:border-[#F5C6C2]';
+    ? 'rounded-xl border border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C1F1F] hover:text-[#F28B82] hover:border-[#8B3C36]'
+    : 'rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#FCE8E6] hover:text-[#C5221F] hover:border-[#F5C6C2]';
   const btnBase = 'inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95';
   const btnGhost = darkMode
-    ? 'text-[#CAC4BC] hover:text-[#E8E2DC] hover:bg-[#2E2B28]'
-    : 'text-[#4A4540] hover:text-[#1C1B1A] hover:bg-[#EEE8E2]';
+    ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
+    : 'text-[#3C4043] hover:text-[#202124] hover:bg-[#F1F3F4]';
 
   return (
     <>
@@ -53,7 +53,7 @@ const MobileHeader = ({
             <span className={`inline-flex items-center gap-1 text-[11px] font-mono tabular-nums ${
               logRate > 0 ? (darkMode ? 'text-emerald-300' : 'text-emerald-600') : theme.textMuted
             }`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${logRate > 0 ? 'bg-emerald-500' : (darkMode ? 'bg-[#49443E]' : 'bg-[#C5BEB7]')}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${logRate > 0 ? 'bg-emerald-500' : (darkMode ? 'bg-[#5F6368]' : 'bg-[#DADCE0]')}`} />
               {logRate}/s
             </span>
             {logRate > 0 && <HeartbeatLine rate={logRate} darkMode={darkMode} />}
@@ -72,7 +72,7 @@ const MobileHeader = ({
         {isMobileMenuOpen && (
           <div
             className={`mt-2 space-y-2 rounded-xl border p-2.5 ${
-              darkMode ? 'border-[#3A3530] bg-[#1E1C1A]' : 'border-[#E4DDD6] bg-[#F7F4F1]'
+              darkMode ? 'border-[#303134] bg-[#1E1E1E]' : 'border-[#E8EAED] bg-[#F1F3F4]'
             } ${mobileMenuReady ? '' : 'pointer-events-none'}`}
           >
             {/* Server / Path dropdowns */}
@@ -81,8 +81,8 @@ const MobileHeader = ({
                 onClick={() => onToggleMobileServerDropdown()}
                 className={`w-full px-2.5 py-1.5 rounded-lg border text-xs font-medium flex items-center justify-between transition-all duration-150 ease-in-out active:scale-95 ${
                   darkMode
-                    ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
-                    : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
+                    ? 'border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED] hover:border-[#80868B]'
+                    : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
                 }`}
                 type="button"
               >
@@ -107,8 +107,8 @@ const MobileHeader = ({
                 className={`w-full px-2.5 py-1.5 rounded-lg border text-xs font-medium flex items-center justify-between transition-all duration-150 ease-in-out active:scale-95
                           ${!selectedServer ? "opacity-40 cursor-not-allowed" : ""} ${
                   darkMode
-                    ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
-                    : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
+                    ? 'border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED] hover:border-[#80868B]'
+                    : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
                 }`}
                 type="button" disabled={!selectedServer}
               >
@@ -178,8 +178,8 @@ const MobileHeader = ({
             className={`w-full rounded-full border pl-9 pr-3 py-1.5 text-[13px] focus:outline-none
                      focus:ring-2 transition-all duration-150 ease-in-out
                      ${darkMode
-                       ? 'bg-[#252219] border-[#4A4540] text-[#ECE6DF] placeholder:text-[#8E8882] focus:ring-[#A8C7FA]/20 focus:border-[#A8C7FA]'
-                       : 'bg-white border-[#C5BEB7] text-[#1C1B1A] placeholder:text-[#79736D] focus:ring-[#0B57D0]/20 focus:border-[#0B57D0]'
+                       ? 'bg-[#303134] border-[#5F6368] text-[#E8EAED] placeholder:text-[#80868B] focus:ring-[#8AB4F8]/20 focus:border-[#8AB4F8]'
+                       : 'bg-[#F1F3F4] border-[#DADCE0] text-[#202124] placeholder:text-[#5F6368] focus:ring-[#1A73E8]/20 focus:border-[#1A73E8]'
                      }`}
             value={logSearchTerm}
             onChange={(e) => onSearchChange(e.target.value)}

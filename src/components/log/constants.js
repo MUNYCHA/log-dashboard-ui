@@ -30,16 +30,16 @@ export const getButtonStyles = (darkMode) => {
       transition-all duration-150 ease-in-out active:scale-95`;
 
   const ghost = darkMode
-    ? `text-[#CAC4BC] hover:text-[#E8E2DC] hover:bg-[#2E2B28]`
-    : `text-[#4A4540] hover:text-[#1C1B1A] hover:bg-[#EEE8E2]`;
+    ? `text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]`
+    : `text-[#5F6368] hover:text-[#202124] hover:bg-[#F1F3F4]`;
 
   const ghostActive = darkMode
-    ? `text-[#A8C7FA] hover:bg-[#0842A0]/20`
-    : `text-[#0B57D0] hover:bg-[#D3E3FD]/70`;
+    ? `text-[#8AB4F8] hover:bg-[#1A73E8]/20`
+    : `text-[#1A73E8] hover:bg-[#E8F0FE]`;
 
   const ghostDanger = darkMode
-    ? `text-[#CAC4BC] hover:text-[#F28B82] hover:bg-[#4A2A2A]`
-    : `text-[#4A4540] hover:text-[#C5221F] hover:bg-[#FCE8E6]`;
+    ? `text-[#BDC1C6] hover:text-[#F28B82] hover:bg-[#3C1F1F]`
+    : `text-[#5F6368] hover:text-[#C5221F] hover:bg-[#FCE8E6]`;
 
   return {
     pause:    `${base} ${ghost}`,
@@ -55,6 +55,6 @@ export const getButtonStyles = (darkMode) => {
 };
 
 export const getAccentStyles = (darkMode) => ({
-  active: darkMode ? "border border-[#A8C7FA]/40 bg-[#0842A0]/30 text-[#A8C7FA]" : "border border-[#A8C7FA] bg-[#D3E3FD] text-[#0B57D0]",
-  paused: darkMode ? "border border-[#A8C7FA]/40 bg-[#0842A0]/30 text-[#A8C7FA]" : "border border-[#A8C7FA] bg-[#D3E3FD] text-[#0B57D0]",
+  active: darkMode ? "border border-[#8AB4F8]/40 bg-[#1A3A6B]/50 text-[#8AB4F8]" : "border border-[#D2E3FC] bg-[#E8F0FE] text-[#1A73E8]",
+  paused: darkMode ? "border border-[#8AB4F8]/40 bg-[#1A3A6B]/50 text-[#8AB4F8]" : "border border-[#D2E3FC] bg-[#E8F0FE] text-[#1A73E8]",
 });

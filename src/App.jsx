@@ -117,7 +117,7 @@ export default function App() {
   const setActive2 = useCallback(() => setActivePanel(2), []);
 
   return (
-    <div className={`flex h-screen overflow-hidden ${theme.background} ${theme.text} transition-colors duration-200`}>
+    <div className={`flex h-screen overflow-hidden ${theme.background} ${theme.text} transition-colors duration-200 p-2 gap-2`}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -143,7 +143,7 @@ export default function App() {
         onCollapse={toggleSidebarCollapsed}
       />
 
-      <div className="flex flex-1 min-w-0 overflow-hidden">
+      <div className="flex flex-1 min-w-0 overflow-hidden gap-2">
         {/* Panel 1 */}
         <LogPanel
           key={`panel-1-${selectedTopic ?? 'none'}`}
@@ -173,7 +173,6 @@ export default function App() {
         {/* Panel 2 — split view only */}
         {splitView && (
           <>
-            <div className={`w-px flex-shrink-0 ${darkMode ? 'bg-[#222]' : 'bg-gray-200'}`} />
             <LogPanel
               key={`panel-2-${selectedTopic2 ?? 'none'}`}
               topicLogs={topicLogs2}

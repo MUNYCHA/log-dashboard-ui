@@ -7,8 +7,8 @@ const ScrollButtons = ({ atTop, atBottom, scrollToTop, scrollToBottom, darkMode 
         onClick={scrollToTop}
         className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 ease-in-out active:scale-95
     ${darkMode
-      ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
-      : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
+      ? 'border-[#5F6368] bg-[#1E1E1E] text-[#BDC1C6] hover:bg-[#303134] hover:text-[#E8EAED] hover:border-[#80868B]'
+      : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
     }`}
         title="Scroll to top"
       >
@@ -22,8 +22,8 @@ const ScrollButtons = ({ atTop, atBottom, scrollToTop, scrollToBottom, darkMode 
         onClick={scrollToBottom}
         className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 ease-in-out active:scale-95
     ${darkMode
-      ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
-      : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
+      ? 'border-[#5F6368] bg-[#1E1E1E] text-[#BDC1C6] hover:bg-[#303134] hover:text-[#E8EAED] hover:border-[#80868B]'
+      : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
     }`}
         title="Scroll to bottom"
       >

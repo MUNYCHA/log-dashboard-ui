@@ -7,8 +7,8 @@ const ThemeToggle = ({ darkMode, onToggle }) => {
       className={`inline-flex h-10 w-10 items-center justify-center rounded-xl
     transition-all duration-150 ease-in-out active:scale-95
     ${darkMode
-      ? 'text-[#CAC4BC] hover:text-[#E8E2DC] hover:bg-[#2E2B28]'
-      : 'text-[#4A4540] hover:text-[#1C1B1A] hover:bg-[#EEE8E2]'
+      ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
+      : 'text-[#5F6368] hover:text-[#202124] hover:bg-[#F1F3F4]'
     }`}
       title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
     >

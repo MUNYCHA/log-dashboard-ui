@@ -53,23 +53,23 @@ const TimeRangeSelector = ({ timeRange, customRangeMs, onTimeRangeChange, darkMo
   const chipCls = `h-8 inline-flex items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium
     transition-all duration-150 ease-in-out active:scale-95 cursor-pointer select-none
     ${isActive
-      ? 'border-[#0B57D0] bg-[#D3E3FD] text-[#0B57D0]'
+      ? 'border-[#1A73E8] bg-[#E8F0FE] text-[#1A73E8]'
       : darkMode
-        ? 'border-[#3F3A34] bg-transparent text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC]'
-        : 'border-[#C5BEB7] bg-transparent text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A]'
+        ? 'border-[#5F6368] bg-transparent text-[#BDC1C6] hover:bg-[#303134] hover:text-[#E8EAED]'
+        : 'border-[#DADCE0] bg-transparent text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124]'
     }`;
 
   const presetCls = (active) =>
     `px-3 py-1 rounded-full text-[12.5px] font-medium border transition-all duration-150 ease-in-out active:scale-95
     ${active
-      ? 'border-[#0B57D0] bg-[#D3E3FD] text-[#0B57D0]'
+      ? 'border-[#1A73E8] bg-[#E8F0FE] text-[#1A73E8]'
       : darkMode
-        ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
-        : 'border-[#C5BEB7] bg-white text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
+        ? 'border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED] hover:border-[#80868B]'
+        : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
     }`;
 
   const sectionLabel = `text-[10.5px] font-semibold uppercase tracking-wider mb-2 px-0.5 ${
-    darkMode ? 'text-[#6E6862]' : 'text-[#A39E97]'
+    darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'
   }`;
 
   return (
@@ -98,7 +98,7 @@ const TimeRangeSelector = ({ timeRange, customRangeMs, onTimeRangeChange, darkMo
 
       {isOpen && (
         <div className={`absolute left-0 top-10 z-50 w-72 rounded-2xl shadow-xl border ${
-          darkMode ? 'border-[#3F3A34] bg-[#1E1C1A]' : 'border-[#E4DDD6] bg-[#FFFDF9]'
+          darkMode ? 'border-[#303134] bg-[#1E1E1E]' : 'border-[#E8EAED] bg-white'
         }`}>
           {/* Quick presets */}
           <div className="p-3.5 pb-3">
@@ -117,7 +117,7 @@ const TimeRangeSelector = ({ timeRange, customRangeMs, onTimeRangeChange, darkMo
             </div>
           </div>
 
-          <div className={`mx-3.5 border-t ${darkMode ? 'border-[#2E2B28]' : 'border-[#EEE8E2]'}`} />
+          <div className={`mx-3.5 border-t ${darkMode ? 'border-[#303134]' : 'border-[#E8EAED]'}`} />
 
           {/* Custom duration */}
           <div className="p-3.5 pt-3">
@@ -133,14 +133,14 @@ const TimeRangeSelector = ({ timeRange, customRangeMs, onTimeRangeChange, darkMo
                   customError
                     ? 'border-red-400 focus:ring-red-400/20 focus:border-red-400'
                     : darkMode
-                      ? 'bg-[#252219] border-[#4A4540] text-[#ECE6DF] placeholder:text-[#6E6862] focus:ring-[#A8C7FA]/20 focus:border-[#A8C7FA]'
-                      : 'bg-white border-[#C5BEB7] text-[#1C1B1A] placeholder:text-[#A39E97] focus:ring-[#0B57D0]/20 focus:border-[#0B57D0]'
+                      ? 'bg-[#303134] border-[#5F6368] text-[#E8EAED] placeholder:text-[#80868B] focus:ring-[#8AB4F8]/20 focus:border-[#8AB4F8]'
+                      : 'bg-white border-[#DADCE0] text-[#202124] placeholder:text-[#5F6368] focus:ring-[#1A73E8]/20 focus:border-[#1A73E8]'
                 }`}
               />
               <button
                 type="button"
                 onClick={handleApply}
-                className="px-3.5 py-1.5 rounded-xl bg-[#0B57D0] text-white text-[12.5px] font-semibold hover:bg-[#0842A0] transition-all duration-150 active:scale-95 flex-shrink-0"
+                className="px-3.5 py-1.5 rounded-xl bg-[#1A73E8] text-white text-[12.5px] font-semibold hover:bg-[#1557B0] transition-all duration-150 active:scale-95 flex-shrink-0"
               >
                 Apply
               </button>

@@ -94,22 +94,22 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
     <article className="px-3 pt-1.5 pb-1.5">
       <div className={`min-h-[80px] rounded-2xl px-4 py-3.5 transition-colors duration-100 ${
         darkMode
-          ? 'bg-[#1E1C1A] border border-[#2A2724] hover:bg-[#252320]'
-          : 'bg-white border border-[#E8E2DC] shadow-sm hover:shadow-md hover:bg-[#FDFCFA]'
+          ? 'bg-[#1E1E1E] border border-[#303134] hover:bg-[#252525]'
+          : 'bg-white border border-[#E8EAED] shadow-sm hover:shadow-md'
       }`}>
         <div className="flex items-center gap-2 mb-2.5">
-          <span className={`text-[11.5px] font-mono tabular-nums flex-shrink-0 ${darkMode ? 'text-[#938D87]' : 'text-[#79736D]'}`}>
+          <span className={`text-[11.5px] font-mono tabular-nums flex-shrink-0 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`}>
             {relativeTime || 'now'}
           </span>
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-wide flex-shrink-0 ${
-            darkMode ? 'bg-[#0842A0]/30 text-[#A8C7FA]' : 'bg-[#D3E3FD] text-[#0B57D0]'
+            darkMode ? 'bg-[#1A3A6B]/60 text-[#8AB4F8]' : 'bg-[#E8F0FE] text-[#1A73E8]'
           }`}>
             {serverName}
           </span>
         </div>
 
         <div className={`whitespace-pre-wrap break-words text-[13.5px] leading-[1.65] font-mono ${
-          darkMode ? 'text-[#E8E2DC]' : 'text-[#1C1B1A]'
+          darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'
         }`}>
           {highlightMessage(message, keywords, darkMode, logSearchTerm)}
         </div>

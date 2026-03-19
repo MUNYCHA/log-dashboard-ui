@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 
-const DEFAULT_COLOR = '#0B57D0';
+const DEFAULT_COLOR = '#1A73E8';
 
 const KeywordFilter = ({
   keywords,
@@ -43,8 +43,8 @@ const KeywordFilter = ({
       onClick={() => inputRef.current?.focus()}
       className={`flex min-h-[36px] w-full items-center gap-2 rounded-full border px-3 py-1 cursor-text transition-all duration-150 ease-in-out focus-within:ring-2 ${
         darkMode
-          ? 'bg-[#252219] border-[#4A4540] focus-within:ring-[#A8C7FA]/20 focus-within:border-[#A8C7FA]'
-          : 'bg-white border-[#C5BEB7] focus-within:ring-[#0B57D0]/20 focus-within:border-[#0B57D0]'
+          ? 'bg-[#303134] border-[#5F6368] focus-within:ring-[#8AB4F8]/20 focus-within:border-[#8AB4F8]'
+          : 'bg-[#F1F3F4] border-[#DADCE0] focus-within:ring-[#1A73E8]/20 focus-within:border-[#1A73E8]'
       }`}
     >
       {/* Tag icon */}
@@ -83,7 +83,7 @@ const KeywordFilter = ({
           onKeyDown={handleKeyDown}
           placeholder={keywords.length === 0 ? 'Add keyword…' : '…'}
           className={`min-w-[80px] flex-1 bg-transparent text-[13px] outline-none ${
-            darkMode ? 'text-[#ECE6DF] placeholder:text-[#6E6862]' : 'text-[#1C1B1A] placeholder:text-[#A39E97]'
+            darkMode ? 'text-[#E8EAED] placeholder:text-[#80868B]' : 'text-[#202124] placeholder:text-[#5F6368]'
           }`}
         />
       </div>
@@ -114,7 +114,7 @@ const KeywordFilter = ({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); commit(inputValue); }}
-            className="h-6 w-6 rounded-full bg-[#0B57D0] text-white flex items-center justify-center flex-shrink-0 transition-all duration-150 active:scale-95 hover:bg-[#0842A0]"
+            className="h-6 w-6 rounded-full bg-[#1A73E8] text-white flex items-center justify-center flex-shrink-0 transition-all duration-150 active:scale-95 hover:bg-[#1557B0]"
             title="Add keyword (Enter)"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,11 +124,11 @@ const KeywordFilter = ({
         )}
 
         {/* Divider */}
-        <div className={`w-px h-4 mx-0.5 ${darkMode ? 'bg-[#4A4540]' : 'bg-[#DDD7D0]'}`} />
+        <div className={`w-px h-4 mx-0.5 ${darkMode ? 'bg-[#5F6368]' : 'bg-[#E8EAED]'}`} />
 
         {/* or / and mode toggle */}
         <div className={`inline-flex items-center rounded-full p-0.5 ${
-          darkMode ? 'bg-[#2A2724]' : 'bg-[#EEE8E2]'
+          darkMode ? 'bg-[#303134]' : 'bg-[#F1F3F4]'
         }`}>
           {['or', 'and'].map((m) => (
             <button
@@ -138,10 +138,10 @@ const KeywordFilter = ({
               title={m === 'or' ? 'Match any keyword' : 'Match all keywords'}
               className={`rounded-full px-2 py-0.5 text-[11px] font-medium transition-all duration-150 ease-in-out ${
                 mode === m
-                  ? 'bg-[#0B57D0] text-white shadow-sm'
+                  ? 'bg-[#1A73E8] text-white shadow-sm'
                   : darkMode
-                    ? 'text-[#938D87] hover:text-[#CAC4BC]'
-                    : 'text-[#79736D] hover:text-[#4A4540]'
+                    ? 'text-[#80868B] hover:text-[#BDC1C6]'
+                    : 'text-[#5F6368] hover:text-[#3C4043]'
               }`}
             >
               {m.toUpperCase()}
@@ -156,8 +156,8 @@ const KeywordFilter = ({
             onClick={(e) => { e.stopPropagation(); onClearAll(); }}
             className={`h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150 ease-in-out active:scale-95 ${
               darkMode
-                ? 'text-[#6E6862] hover:text-[#F28B82] hover:bg-[#2E2B28]'
-                : 'text-[#A39E97] hover:text-[#C5221F] hover:bg-[#EEE8E2]'
+                ? 'text-[#80868B] hover:text-[#F28B82] hover:bg-[#303134]'
+                : 'text-[#5F6368] hover:text-[#C5221F] hover:bg-[#FCE8E6]'
             }`}
             title="Clear all keywords"
           >

@@ -45,7 +45,7 @@ const FilterDropdown = ({
         <input
           type="text"
           placeholder={placeholder}
-          className={`w-full rounded-xl border px-3 py-2 text-[13px] mb-2 focus:outline-none focus:ring-2 transition-all duration-150 ${theme.input} focus:ring-[#0B57D0]/20 focus:border-[#0B57D0]`}
+          className={`w-full rounded-xl border px-3 py-2 text-[13px] mb-2 focus:outline-none focus:ring-2 transition-all duration-150 ${theme.input} focus:ring-[#1A73E8]/20 focus:border-[#1A73E8]`}
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           autoFocus

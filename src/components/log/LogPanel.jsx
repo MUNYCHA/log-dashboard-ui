@@ -157,10 +157,10 @@ const VirtualLogList = React.memo(({
     : 0;
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden group/logpanel">
+    <div className={`flex-1 flex flex-col overflow-hidden rounded-2xl group/logpanel ${theme.card}`}>
       {isPaused && (
         <div className={`animate-paused-banner flex items-center justify-between gap-3 px-4 py-2 text-xs border-b flex-shrink-0 ${
-          darkMode ? 'border-[#302C29] bg-[#1E1C1A] text-[#938D87]' : 'border-[#E4DDD6] bg-[#FFFDF9] text-[#79736D]'
+          darkMode ? 'border-[#303134] bg-[#1E1E1E] text-[#80868B]' : 'border-[#E8EAED] bg-white text-[#5F6368]'
         }`}>
           <span className="min-w-0 font-mono">
             Paused — logs continue buffering.
@@ -170,15 +170,15 @@ const VirtualLogList = React.memo(({
             className={`rounded-lg border px-3 py-1 text-xs font-medium
     transition-all duration-150 ease-in-out active:scale-95
     ${darkMode
-      ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
-      : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
+      ? 'border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED]'
+      : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124]'
     }`}
           >
             Resume
           </button>
         </div>
       )}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0%,black_20px,black_100%)]">
         <div
           className="absolute inset-0 overflow-auto font-mono text-sm"
         ref={scrollRef}
@@ -219,8 +219,8 @@ const VirtualLogList = React.memo(({
                       onClick={handleClearPath}
                       className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-150 ease-in-out active:scale-95 ${
                         darkMode
-                          ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
-                          : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
+                          ? 'border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED]'
+                          : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124]'
                       }`}
                     >
                       Clear path
@@ -231,8 +231,8 @@ const VirtualLogList = React.memo(({
                       onClick={handleClearServer}
                       className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-150 ease-in-out active:scale-95 ${
                         darkMode
-                          ? 'border-[#3F3A34] bg-[#252320] text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC] hover:border-[#4F4A44]'
-                          : 'border-[#C5BEB7] bg-[#FFFDF9] text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A] hover:border-[#A39E97]'
+                          ? 'border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED]'
+                          : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124]'
                       }`}
                     >
                       Clear server
@@ -645,10 +645,10 @@ const LogPanel = ({
 
   return (
     <div
-      className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-[#0B57D0]/35' : ''}`}
+      className={`flex-1 flex flex-col min-w-0 gap-2 ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''}`}
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
-      <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.header} flex-shrink-0 relative z-10`}>
+      <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.card} rounded-2xl flex-shrink-0 relative z-10`}>
         <DesktopHeader
           selectedTopic={selectedTopic}
           displayedLogs={displayedLogs}

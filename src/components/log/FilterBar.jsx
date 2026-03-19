@@ -6,10 +6,10 @@ const chip = (active, darkMode) =>
   `h-8 inline-flex items-center gap-1.5 rounded-full border px-4 text-[13px] font-medium
   transition-all duration-150 ease-in-out active:scale-95 cursor-pointer select-none
   ${active
-    ? 'border-[#0B57D0] bg-[#D3E3FD] text-[#0B57D0]'
+    ? 'border-[#1A73E8] bg-[#E8F0FE] text-[#1A73E8]'
     : darkMode
-      ? 'border-[#3F3A34] bg-transparent text-[#CAC4BC] hover:bg-[#2E2B28] hover:text-[#E8E2DC]'
-      : 'border-[#C5BEB7] bg-transparent text-[#4A4540] hover:bg-[#EEE8E2] hover:text-[#1C1B1A]'
+      ? 'border-[#5F6368] bg-transparent text-[#BDC1C6] hover:bg-[#303134] hover:text-[#E8EAED]'
+      : 'border-[#DADCE0] bg-transparent text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124]'
   }`;
 
 const FilterBar = ({
@@ -108,13 +108,13 @@ const FilterBar = ({
     </div>
 
     {/* Thin divider */}
-    <div className={`w-px h-5 ${darkMode ? 'bg-[#4A4540]' : 'bg-[#DDD7D0]'}`} />
+    <div className={`w-px h-5 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
 
     {/* Time range */}
     <TimeRangeSelector timeRange={timeRange} customRangeMs={customRangeMs} onTimeRangeChange={onTimeRangeChange} darkMode={darkMode} />
 
     {/* Thin divider */}
-    <div className={`w-px h-5 ${darkMode ? 'bg-[#4A4540]' : 'bg-[#DDD7D0]'}`} />
+    <div className={`w-px h-5 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
 
     {/* Search */}
     <div className="relative min-w-[240px] flex-1">
@@ -128,8 +128,8 @@ const FilterBar = ({
         className={`w-full h-9 rounded-full border pl-10 pr-4 text-[13px] focus:outline-none
           focus:ring-2 transition-all duration-150 ease-in-out
           ${darkMode
-            ? 'bg-[#252219] border-[#4A4540] text-[#ECE6DF] placeholder:text-[#8E8882] focus:ring-[#A8C7FA]/20 focus:border-[#A8C7FA]'
-            : 'bg-white border-[#C5BEB7] text-[#1C1B1A] placeholder:text-[#79736D] focus:ring-[#0B57D0]/20 focus:border-[#0B57D0]'
+            ? 'bg-[#303134] border-[#5F6368] text-[#E8EAED] placeholder:text-[#80868B] focus:ring-[#8AB4F8]/20 focus:border-[#8AB4F8]'
+            : 'bg-[#F1F3F4] border-[#DADCE0] text-[#202124] placeholder:text-[#5F6368] focus:ring-[#1A73E8]/20 focus:border-[#1A73E8]'
           }`}
         value={logSearchTerm}
         onChange={(e) => onSearchChange(e.target.value)}

@@ -5,7 +5,7 @@ const EmptyState = ({
   onSetActive, onClosePanel, onOpenSidebar,
 }) => (
   <div
-    className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-[#0B57D0]/35' : ''}`}
+    className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-[#1A73E8]/40' : ''}`}
     onClick={splitView && !isActivePanel ? onSetActive : undefined}
   >
     {onClosePanel && (
@@ -13,7 +13,7 @@ const EmptyState = ({
         <span className={`text-xs ${theme.textMuted}`}>Select a topic</span>
         <button
           onClick={(e) => { e.stopPropagation(); onClosePanel(); }}
-          className={`p-1 rounded-lg transition-colors ${darkMode ? 'text-[#938D87] hover:text-[#F28B82]' : 'text-[#79736D] hover:text-[#C5221F]'}`}
+          className={`p-1 rounded-lg transition-colors ${darkMode ? 'text-[#80868B] hover:text-[#F28B82]' : 'text-[#5F6368] hover:text-[#C5221F]'}`}
           title="Close this panel"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@ const EmptyState = ({
         <p className="text-sm font-medium">Select a topic to start monitoring</p>
         <p className="text-xs mt-1 opacity-60">Topics update live in the sidebar.</p>
         <button onClick={onOpenSidebar} className={`md:hidden mt-3 px-3 py-1.5 rounded-lg text-xs border transition-all duration-150 ease-in-out ${
-          darkMode ? 'bg-[#252320] text-[#CAC4BC] border-[#3F3A34]' : 'bg-[#EEE8E2] text-[#4A4540] border-[#DDD7D0]'
+          darkMode ? 'bg-[#303134] text-[#BDC1C6] border-[#5F6368]' : 'bg-[#F1F3F4] text-[#3C4043] border-[#DADCE0]'
         }`}>
           Open Topics
         </button>
