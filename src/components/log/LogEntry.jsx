@@ -99,7 +99,7 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
 
   const handleCopy = useCallback((e) => {
     e.stopPropagation();
-    const text = JSON.stringify({ timestamp: log.timestamp, serverName: log.serverName, path: log.path, message: log.message }, null, 2);
+    const text = JSON.stringify({ timestamp: log.timestamp, localTime: localTimestamp, serverName: log.serverName, path: log.path, message: log.message }, null, 2);
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
