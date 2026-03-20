@@ -183,6 +183,7 @@ export default function App() {
           error={storageError}
           lastUpdated={storageLastUpdated}
           refresh={storageRefresh}
+          onOpenSidebar={openSidebar}
         />
       )}
 

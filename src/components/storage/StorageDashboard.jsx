@@ -135,7 +135,7 @@ const ServerCard = ({ server, darkMode }) => {
   );
 };
 
-const StorageDashboard = ({ darkMode, theme, selectedSystem, loading, error, lastUpdated, refresh }) => {
+const StorageDashboard = ({ darkMode, theme, selectedSystem, loading, error, lastUpdated, refresh, onOpenSidebar }) => {
   const ghostBtn = darkMode
     ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
     : 'text-[#5F6368] hover:text-[#202124] hover:bg-[#F1F3F4]';
@@ -152,6 +152,15 @@ const StorageDashboard = ({ darkMode, theme, selectedSystem, loading, error, las
         darkMode ? 'bg-[#1E1E1E] border-[#303134]' : 'bg-white border-[#E8EAED]'
       }`}>
         <div className="flex items-center gap-2.5 min-w-0">
+          <button
+            onClick={onOpenSidebar}
+            className={`md:hidden inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
+            aria-label="Open systems list"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           <svg className={`w-4 h-4 flex-shrink-0 ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
           </svg>
