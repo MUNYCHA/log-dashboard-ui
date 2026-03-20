@@ -1,5 +1,5 @@
 import React from 'react';
-import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../filters';
+import { ServerDropdown, PathDropdown, TimeRangeSelector } from './filters';
 import { getShortPath } from './constants';
 
 const chip = (active, darkMode) =>

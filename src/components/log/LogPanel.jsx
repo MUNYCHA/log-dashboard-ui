@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { KeywordFilter } from "../filters";
+import { KeywordFilter } from "./filters";
 import { getButtonStyles } from "./constants";
 import config from "../../config";
 import DesktopHeader from "./DesktopHeader";
