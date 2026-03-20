@@ -81,6 +81,7 @@ const SystemItem = React.memo(({ system, isSelected, onSelect, darkMode }) => {
   return (
     <button
       onClick={() => onSelect(system.systemId)}
+      title={system.systemName}
       className={`relative w-full overflow-hidden rounded-xl px-4 py-2.5 text-left transition-all duration-150 ease-in-out active:scale-[0.98] hover:translate-x-0.5 ${itemTone}`}
     >
       {isSelected && (
