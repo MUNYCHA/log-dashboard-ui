@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { formatDurationMs } from '../log/constants';
+import { formatDurationMs } from '../constants';
 
 const PRESETS = [
   { label: 'All time', value: 'all' },
