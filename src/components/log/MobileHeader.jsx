@@ -1,5 +1,5 @@
 import React from 'react';
-import HeartbeatLine from '../common/HeartbeatLine';
+import HeartbeatLine from './HeartbeatLine';
 import { ServerDropdown, PathDropdown, TimeRangeSelector } from './filters';
 import { getShortPath } from './constants';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import ThemeToggle from '../common/ThemeToggle';
+import ThemeToggle from './ThemeToggle';
 import config from '../../config';
 import { STORAGE_REFRESH_INTERVAL_MS } from '../../hooks/useServerStorage';
 
