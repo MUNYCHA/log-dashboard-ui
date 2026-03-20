@@ -1,10 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useServerStorage } from './hooks/useServerStorage';
 import Sidebar from './components/sidebar';
 import LogPanel from './components/log';
 import StorageDashboard from './components/storage';
 import config from './config';
+
+const groupBySystem = (data) => {
+  const map = {};
+  for (const server of data) {
+    const key = server.systemId || 'unknown';
+    if (!map[key]) map[key] = { systemId: server.systemId, systemName: server.systemName || server.systemId || 'Unknown', servers: [] };
+    map[key].servers.push(server);
+  }
+  return Object.values(map).sort((a, b) => a.systemName.localeCompare(b.systemName));
+};
 
 export default function App() {
   const [topicSortMode, setTopicSortMode] = useState('asc');
@@ -21,6 +32,15 @@ export default function App() {
   const [isPaused2, setIsPaused2] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentView, setCurrentView] = useState('logs');
+  const [selectedSystemId, setSelectedSystemId] = useState(null);
+
+  const { data: storageData, loading: storageLoading, error: storageError, lastUpdated: storageLastUpdated, refresh: storageRefresh } = useServerStorage();
+  const groupedSystems = useMemo(() => groupBySystem(storageData), [storageData]);
+
+  // Auto-select first system when data arrives
+  const firstSystemId = groupedSystems[0]?.systemId ?? null;
+  const resolvedSystemId = selectedSystemId ?? firstSystemId;
+  const selectedSystem = groupedSystems.find((s) => s.systemId === resolvedSystemId) ?? null;
 
   // Which topics are currently displayed in log panels — these get full 500-log cap.
   // Non-viewed topics get a smaller cap (50) for sidebar info only.
@@ -145,12 +165,23 @@ export default function App() {
         onCollapse={toggleSidebarCollapsed}
         currentView={currentView}
         onViewChange={setCurrentView}
+        systems={groupedSystems}
+        selectedSystemId={resolvedSystemId}
+        onSystemSelect={setSelectedSystemId}
       />
 
       <div className="flex flex-1 min-w-0 overflow-hidden gap-2">
         {/* Storage view */}
         {currentView === 'storage' && (
-          <StorageDashboard darkMode={darkMode} theme={theme} />
+          <StorageDashboard
+            darkMode={darkMode}
+            theme={theme}
+            selectedSystem={selectedSystem}
+            loading={storageLoading}
+            error={storageError}
+            lastUpdated={storageLastUpdated}
+            refresh={storageRefresh}
+          />
         )}
 
         {/* Log panels — hidden when storage view is active */}

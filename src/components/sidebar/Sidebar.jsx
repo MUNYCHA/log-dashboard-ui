@@ -73,6 +73,38 @@ const NAV_VIEWS = [
   },
 ];
 
+const SystemItem = React.memo(({ system, isSelected, onSelect, darkMode }) => {
+  const itemTone = isSelected
+    ? (darkMode ? 'bg-[#1A3A6B]/50 text-[#8AB4F8]' : 'bg-[#E8F0FE] text-[#1A73E8]')
+    : (darkMode ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]' : 'text-[#3C4043] hover:text-[#202124] hover:bg-[#F1F3F4]');
+
+  return (
+    <button
+      onClick={() => onSelect(system.systemId)}
+      className={`relative w-full overflow-hidden rounded-xl px-4 py-2.5 text-left transition-all duration-150 ease-in-out active:scale-[0.98] hover:translate-x-0.5 ${itemTone}`}
+    >
+      {isSelected && (
+        <MotionSpan
+          layoutId="system-selection-indicator"
+          className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-full ${darkMode ? 'bg-[#8AB4F8]' : 'bg-[#1A73E8]'}`}
+          transition={{ type: 'spring', stiffness: 500, damping: 36 }}
+        />
+      )}
+      <div className="flex items-center gap-2.5">
+        <svg className="w-3.5 h-3.5 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <span className="truncate text-[13.5px] font-medium">{system.systemName}</span>
+        <span className={`ml-auto text-[11px] font-mono tabular-nums flex-shrink-0 ${
+          darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'
+        }`}>
+          {system.servers.length}
+        </span>
+      </div>
+    </button>
+  );
+});
+
 const Sidebar = ({
   topics,
   selectedTopic,
@@ -90,6 +122,9 @@ const Sidebar = ({
   onCollapse,
   currentView,
   onViewChange,
+  systems,
+  selectedSystemId,
+  onSystemSelect,
 }) => {
   const sortedTopics = useMemo(() => {
     const filtered = topics.filter((t) => t.toLowerCase().includes(topicSearchTerm.toLowerCase()));
@@ -183,14 +218,21 @@ const Sidebar = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <h1 className={`text-[13px] font-semibold ${theme.text}`}>
-                {currentView === 'logs' ? 'Topics' : 'Servers'}
+                {currentView === 'logs' ? 'Topics' : 'Systems'}
               </h1>
               {currentView === 'logs' && (
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium tabular-nums ${
-                darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
-              }`}>
-                {activeCount}/{topics.length}
-              </span>
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium tabular-nums ${
+                  darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
+                }`}>
+                  {activeCount}/{topics.length}
+                </span>
+              )}
+              {currentView === 'storage' && (
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium tabular-nums ${
+                  darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
+                }`}>
+                  {systems?.length ?? 0}
+                </span>
               )}
             </div>
             <div className="flex items-center gap-1">
@@ -283,6 +325,26 @@ const Sidebar = ({
                 darkMode={darkMode}
               />
             ))}
+          </div>
+        </div>
+
+        {/* Systems list (storage view) */}
+        <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-3 pb-3 ${currentView !== 'storage' ? 'hidden' : ''}`}>
+          <div className="flex flex-col gap-0.5">
+            {(systems ?? []).map((system) => (
+              <SystemItem
+                key={system.systemId}
+                system={system}
+                isSelected={selectedSystemId === system.systemId}
+                onSelect={onSystemSelect}
+                darkMode={darkMode}
+              />
+            ))}
+            {(systems ?? []).length === 0 && (
+              <p className={`px-4 py-3 text-[12px] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                No systems available
+              </p>
+            )}
           </div>
         </div>
       </div>

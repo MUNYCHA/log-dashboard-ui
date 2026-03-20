@@ -1,5 +1,4 @@
-import React, { useMemo } from 'react';
-import { useServerStorage } from '../../hooks/useServerStorage';
+import React from 'react';
 
 const formatBytes = (bytes) => {
   if (bytes >= 1e12) return `${(bytes / 1e12).toFixed(2)} TB`;
@@ -9,54 +8,169 @@ const formatBytes = (bytes) => {
 };
 
 const getUsageColors = (pct) => {
-  if (pct >= 90) return { bar: 'bg-red-500',     text: 'text-red-500',   badge: 'bg-red-900/20 text-red-400 border border-red-800/40',   badgeLight: 'bg-red-50 text-red-600 border border-red-200' };
-  if (pct >= 70) return { bar: 'bg-amber-500',   text: 'text-amber-500', badge: 'bg-amber-900/20 text-amber-400 border border-amber-700/40', badgeLight: 'bg-amber-50 text-amber-700 border border-amber-200' };
-  return          { bar: 'bg-emerald-500', text: 'text-emerald-500', badge: 'bg-emerald-900/20 text-emerald-400 border border-emerald-800/40', badgeLight: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
+  if (pct >= 90) return {
+    bar: 'bg-red-500', text: 'text-red-500',
+    badge: 'bg-red-900/20 text-red-400 border border-red-800/40',
+    badgeLight: 'bg-red-50 text-red-600 border border-red-200',
+    rowHover: 'hover:bg-red-500/5',
+  };
+  if (pct >= 70) return {
+    bar: 'bg-amber-500', text: 'text-amber-500',
+    badge: 'bg-amber-900/20 text-amber-400 border border-amber-700/40',
+    badgeLight: 'bg-amber-50 text-amber-700 border border-amber-200',
+    rowHover: 'hover:bg-amber-500/5',
+  };
+  return {
+    bar: 'bg-emerald-500', text: 'text-emerald-500',
+    badge: 'bg-emerald-900/20 text-emerald-400 border border-emerald-800/40',
+    badgeLight: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+    rowHover: 'hover:bg-emerald-500/5',
+  };
 };
 
-// Group flat list → [ { systemName, systemId, servers: [...] }, ... ]
-const groupBySystem = (data) => {
-  const map = {};
-  for (const server of data) {
-    const key = server.systemId || 'unknown';
-    if (!map[key]) map[key] = { systemId: server.systemId, systemName: server.systemName || server.systemId || 'Unknown', servers: [] };
-    map[key].servers.push(server);
-  }
-  return Object.values(map).sort((a, b) => a.systemName.localeCompare(b.systemName));
+const ServerCard = ({ server, darkMode }) => {
+  const mounts = server.mountPathStorageUsages ?? [];
+  const worstPct = mounts.length > 0 ? Math.max(...mounts.map((m) => m.usedPercent ?? 0)) : 0;
+  const worstColors = getUsageColors(worstPct);
+  const collectedAt = (() => { try { return new Date(server.collectedAt).toLocaleString(); } catch { return server.collectedAt; } })();
+  const divider = darkMode ? 'border-[#303134]' : 'border-[#E8EAED]';
+
+  return (
+    <div className={`rounded-2xl overflow-hidden border transition-shadow duration-150 ${
+      darkMode
+        ? 'bg-[#1E1E1E] border-[#303134] shadow-[0_4px_16px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]'
+        : 'bg-white border-[#E8EAED] shadow-[0_2px_8px_rgba(60,64,67,0.10),0_1px_3px_rgba(60,64,67,0.08)] hover:shadow-[0_4px_16px_rgba(60,64,67,0.15),0_2px_6px_rgba(60,64,67,0.10)]'
+    }`}>
+
+      {/* Card header */}
+      <div className={`px-5 py-4 flex items-center justify-between gap-3 border-b ${divider} ${
+        darkMode ? 'bg-[#252525]' : 'bg-[#FAFAFA]'
+      }`}>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl ${
+            darkMode ? 'bg-[#303134]' : 'bg-[#F1F3F4]'
+          }`}>
+            <svg className={`w-4 h-4 ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className={`text-[14px] font-semibold truncate ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
+              {server.serverName}
+            </p>
+            <p className={`text-[11.5px] font-mono ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+              {collectedAt}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-mono ${
+            darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
+          }`}>
+            {server.serverIp}
+          </span>
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-bold ${
+            darkMode ? worstColors.badge : worstColors.badgeLight
+          }`}>
+            {worstPct.toFixed(0)}%
+          </span>
+        </div>
+      </div>
+
+      {/* Paths table */}
+      {mounts.length > 0 ? (
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className={`border-b ${divider}`}>
+              <th className={`px-5 py-2 text-left text-[11px] font-semibold tracking-wider uppercase ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>Path</th>
+              <th className={`px-5 py-2 text-right text-[11px] font-semibold tracking-wider uppercase whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>Used</th>
+              <th className={`px-5 py-2 text-right text-[11px] font-semibold tracking-wider uppercase whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>Total</th>
+              <th className={`px-5 py-2 text-right text-[11px] font-semibold tracking-wider uppercase ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`} style={{ minWidth: 200 }}>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mounts.map((mount, i) => {
+              const pct = mount.usedPercent ?? 0;
+              const colors = getUsageColors(pct);
+              const isLast = i === mounts.length - 1;
+              return (
+                <tr
+                  key={mount.path}
+                  className={`transition-colors duration-100 ${colors.rowHover} ${!isLast ? `border-b ${divider}` : ''}`}
+                >
+                  <td className={`px-5 py-3 font-mono text-[12.5px] ${darkMode ? 'text-[#BDC1C6]' : 'text-[#3C4043]'}`}>
+                    {mount.path}
+                  </td>
+                  <td className={`px-5 py-3 text-right font-mono tabular-nums text-[12.5px] whitespace-nowrap font-medium ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
+                    {formatBytes(mount.usedBytes)}
+                  </td>
+                  <td className={`px-5 py-3 text-right font-mono tabular-nums text-[12.5px] whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                    {formatBytes(mount.totalBytes)}
+                  </td>
+                  <td className="px-5 py-3" style={{ minWidth: 200 }}>
+                    <div className="flex items-center gap-3">
+                      <div className={`flex-1 h-2 rounded-full overflow-hidden ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`}>
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${colors.bar}`}
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
+                      </div>
+                      <span className={`text-[12px] font-mono tabular-nums font-semibold w-12 text-right flex-shrink-0 ${colors.text}`}>
+                        {pct.toFixed(1)}%
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      ) : (
+        <p className={`px-5 py-4 text-[12.5px] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+          No mount paths reported
+        </p>
+      )}
+    </div>
+  );
 };
 
-const StorageDashboard = ({ darkMode, theme }) => {
-  const { data, loading, error, lastUpdated, refresh } = useServerStorage();
-
-  const grouped = useMemo(() => groupBySystem(data), [data]);
-
+const StorageDashboard = ({ darkMode, theme, selectedSystem, loading, error, lastUpdated, refresh }) => {
   const ghostBtn = darkMode
     ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
     : 'text-[#5F6368] hover:text-[#202124] hover:bg-[#F1F3F4]';
 
-  const divider = darkMode ? 'border-[#303134]' : 'border-[#E8EAED]';
-
   return (
     <div className={`flex flex-col flex-1 min-w-0 min-h-0 rounded-2xl overflow-hidden ${
       darkMode
-        ? 'bg-[#1E1E1E] shadow-[0_1px_3px_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.3)]'
-        : 'bg-white shadow-[0_1px_2px_rgba(60,64,67,0.08),0_2px_6px_rgba(60,64,67,0.06)]'
+        ? 'bg-[#121212] shadow-[0_1px_3px_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.3)]'
+        : 'bg-[#F1F3F4] shadow-[0_1px_2px_rgba(60,64,67,0.08),0_2px_6px_rgba(60,64,67,0.06)]'
     }`}>
 
       {/* ── Panel header ── */}
-      <div className={`px-5 py-3.5 flex items-center justify-between gap-3 flex-shrink-0 border-b ${divider}`}>
-        <div className="flex items-center gap-2.5">
+      <div className={`px-5 py-3.5 flex items-center justify-between gap-3 flex-shrink-0 border-b ${
+        darkMode ? 'bg-[#1E1E1E] border-[#303134]' : 'bg-white border-[#E8EAED]'
+      }`}>
+        <div className="flex items-center gap-2.5 min-w-0">
           <svg className={`w-4 h-4 flex-shrink-0 ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
           </svg>
-          <span className={`text-[14px] font-semibold ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
-            Server Storage
-          </span>
-          {data.length > 0 && (
-            <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium tabular-nums ${
-              darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
-            }`}>
-              {data.length} server{data.length !== 1 ? 's' : ''}
+          {selectedSystem ? (
+            <>
+              <span className={`text-[14px] font-semibold truncate ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
+                {selectedSystem.systemName}
+              </span>
+              <span className={`text-[11.5px] font-mono flex-shrink-0 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                {selectedSystem.systemId !== selectedSystem.systemName ? `· ${selectedSystem.systemId}` : ''}
+              </span>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium tabular-nums flex-shrink-0 ${
+                darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
+              }`}>
+                {selectedSystem.servers.length} server{selectedSystem.servers.length !== 1 ? 's' : ''}
+              </span>
+            </>
+          ) : (
+            <span className={`text-[14px] font-semibold ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
+              Server Storage
             </span>
           )}
         </div>
@@ -79,9 +193,8 @@ const StorageDashboard = ({ darkMode, theme }) => {
       </div>
 
       {/* ── Content ── */}
-      <div className={`flex-1 overflow-auto ${theme.scrollbar}`}>
+      <div className={`flex-1 overflow-y-auto p-4 ${theme.scrollbar}`}>
 
-        {/* Loading */}
         {loading && (
           <div className={`flex items-center justify-center h-48 gap-2 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`}>
             <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -92,9 +205,8 @@ const StorageDashboard = ({ darkMode, theme }) => {
           </div>
         )}
 
-        {/* Error */}
         {error && !loading && (
-          <div className={`m-4 flex items-center gap-2.5 rounded-2xl px-4 py-3 text-[13px] border ${
+          <div className={`flex items-center gap-2.5 rounded-2xl px-4 py-3 text-[13px] border ${
             darkMode ? 'bg-red-900/20 text-red-400 border-red-800/40' : 'bg-red-50 text-red-600 border-red-200'
           }`}>
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,151 +216,22 @@ const StorageDashboard = ({ darkMode, theme }) => {
           </div>
         )}
 
-        {/* Empty */}
-        {!loading && !error && data.length === 0 && (
+        {!loading && !error && !selectedSystem && (
           <div className={`flex items-center justify-center h-48 text-[13px] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-            No storage data available
+            Select a system from the sidebar
           </div>
         )}
 
-        {/* ── Table ── */}
-        {!loading && data.length > 0 && (
-          <table className="w-full border-collapse">
-
-            {/* Column headers */}
-            <thead className={`sticky top-0 z-10 border-b ${divider} ${darkMode ? 'bg-[#1E1E1E]' : 'bg-white'}`}>
-              <tr>
-                <th className={`px-4 py-2.5 text-left text-[11px] font-semibold tracking-wider uppercase ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                  Path
-                </th>
-                <th className={`px-4 py-2.5 text-right text-[11px] font-semibold tracking-wider uppercase whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                  Used
-                </th>
-                <th className={`px-4 py-2.5 text-right text-[11px] font-semibold tracking-wider uppercase whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                  Total
-                </th>
-                <th className={`px-4 py-2.5 text-right text-[11px] font-semibold tracking-wider uppercase ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`} style={{ minWidth: 180 }}>
-                  Usage
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {grouped.map((system) => (
-                <React.Fragment key={system.systemName}>
-
-                  {/* ── System group header ── */}
-                  <tr className={darkMode ? 'bg-[#1A3A6B]/20' : 'bg-[#E8F0FE]'}>
-                    <td colSpan={4} className="px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <svg className={`w-3.5 h-3.5 flex-shrink-0 ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                        <span className={`text-[12.5px] font-semibold ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`}>
-                          {system.systemName}
-                        </span>
-                        <span className={`text-[11px] font-mono ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                          {system.systemId !== system.systemName ? `· ${system.systemId}` : ''}
-                        </span>
-                        <span className={`ml-auto rounded-full px-2 py-0.5 text-[10.5px] font-medium tabular-nums ${
-                          darkMode ? 'bg-[#1A3A6B]/60 text-[#8AB4F8]' : 'bg-[#D2E3FC] text-[#1A73E8]'
-                        }`}>
-                          {system.servers.length} server{system.servers.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-
-                  {system.servers.map((server) => {
-                    const mounts = server.mountPathStorageUsages ?? [];
-                    const collectedAt = (() => { try { return new Date(server.collectedAt).toLocaleString(); } catch { return server.collectedAt; } })();
-
-                    return (
-                      <React.Fragment key={`${server.serverIp}-${server.systemId}`}>
-
-                        {/* ── Server sub-header ── */}
-                        <tr className={`border-t ${divider} ${darkMode ? 'bg-[#252525]' : 'bg-[#F8F9FA]'}`}>
-                          <td colSpan={4} className="px-4 py-2.5">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <svg className={`w-3.5 h-3.5 flex-shrink-0 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
-                              </svg>
-                              <span className={`text-[13px] font-semibold ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
-                                {server.serverName}
-                              </span>
-                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-mono ${
-                                darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
-                              }`}>
-                                {server.serverIp}
-                              </span>
-                              <span className={`ml-auto text-[11px] font-mono ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                                Collected {collectedAt}
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-
-                        {/* ── Mount path rows ── */}
-                        {mounts.map((mount, i) => {
-                          const pct = mount.usedPercent ?? 0;
-                          const colors = getUsageColors(pct);
-                          const isLast = i === mounts.length - 1;
-
-                          return (
-                            <tr
-                              key={mount.path}
-                              className={`border-t transition-colors duration-100 ${
-                                isLast ? `border-b ${divider}` : divider
-                              } ${darkMode ? 'hover:bg-[#252525]' : 'hover:bg-[#F8F9FA]'}`}
-                            >
-                              {/* Path */}
-                              <td className={`px-4 py-2.5 pl-10 font-mono text-[12px] ${darkMode ? 'text-[#BDC1C6]' : 'text-[#3C4043]'}`}>
-                                {mount.path}
-                              </td>
-
-                              {/* Used */}
-                              <td className={`px-4 py-2.5 text-right font-mono tabular-nums text-[12px] whitespace-nowrap ${darkMode ? 'text-[#BDC1C6]' : 'text-[#3C4043]'}`}>
-                                {formatBytes(mount.usedBytes)}
-                              </td>
-
-                              {/* Total */}
-                              <td className={`px-4 py-2.5 text-right font-mono tabular-nums text-[12px] whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                                {formatBytes(mount.totalBytes)}
-                              </td>
-
-                              {/* Usage bar + % */}
-                              <td className="px-4 py-2.5" style={{ minWidth: 180 }}>
-                                <div className="flex items-center gap-2.5">
-                                  <div className={`flex-1 h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`}>
-                                    <div
-                                      className={`h-full rounded-full transition-all duration-500 ${colors.bar}`}
-                                      style={{ width: `${Math.min(pct, 100)}%` }}
-                                    />
-                                  </div>
-                                  <span className={`text-[11.5px] font-mono tabular-nums font-semibold w-10 text-right flex-shrink-0 ${colors.text}`}>
-                                    {pct.toFixed(1)}%
-                                  </span>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-
-                        {mounts.length === 0 && (
-                          <tr className={`border-t border-b ${divider}`}>
-                            <td colSpan={4} className={`px-4 py-2.5 pl-10 text-[12px] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                              No mount paths reported
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
+        {!loading && selectedSystem && (
+          <div className="flex flex-col gap-4">
+            {selectedSystem.servers.map((server) => (
+              <ServerCard
+                key={`${server.serverIp}-${server.systemId}`}
+                server={server}
+                darkMode={darkMode}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
