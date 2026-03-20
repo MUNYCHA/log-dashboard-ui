@@ -11,11 +11,11 @@ const formatBytes = (bytes) => {
 const StatCard = ({ title, children, darkMode }) => (
   <div className={`rounded-2xl overflow-hidden border ${
     darkMode
-      ? 'bg-[#1E1E1E] border-[#303134] shadow-[0_4px_16px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]'
-      : 'bg-white border-[#E8EAED] shadow-[0_2px_8px_rgba(60,64,67,0.10),0_1px_3px_rgba(60,64,67,0.08)]'
+      ? 'bg-[#1E1E1E] border-[#3C4043] shadow-[0_8px_24px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]'
+      : 'bg-white border-[#DADCE0] shadow-[0_4px_12px_rgba(60,64,67,0.18),0_1px_4px_rgba(60,64,67,0.12)]'
   }`}>
     <div className={`px-5 py-2.5 border-b text-[11px] font-semibold tracking-wider uppercase ${
-      darkMode ? 'bg-[#252525] border-[#303134] text-[#5F6368]' : 'bg-[#FAFAFA] border-[#E8EAED] text-[#9AA0A6]'
+      darkMode ? 'bg-[#252525] border-[#3C4043] text-[#5F6368]' : 'bg-[#F8F9FA] border-[#E8EAED] text-[#9AA0A6]'
     }`}>
       {title}
     </div>
@@ -269,9 +269,7 @@ const HomePage = ({
   onNavChange,
 }) => (
   <div className={`flex flex-col flex-1 min-w-0 min-h-0 rounded-2xl overflow-hidden ${
-    darkMode
-      ? 'bg-[#121212] shadow-[0_1px_3px_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.3)]'
-      : 'bg-[#F1F3F4] shadow-[0_1px_2px_rgba(60,64,67,0.08),0_2px_6px_rgba(60,64,67,0.06)]'
+    darkMode ? 'bg-[#0A0A0A]' : 'bg-[#F1F3F4]'
   }`}>
     {/* Header */}
     <div className={`px-5 py-3.5 flex-shrink-0 border-b ${darkMode ? 'bg-[#1E1E1E] border-[#303134]' : 'bg-white border-[#E8EAED]'}`}>
@@ -280,7 +278,7 @@ const HomePage = ({
     </div>
 
     {/* Content */}
-    <div className={`flex-1 overflow-y-auto p-4 ${theme.scrollbar}`}>
+    <div className={`flex-1 overflow-y-auto p-4 ${theme.scrollbar} ${darkMode ? 'bg-[#0A0A0A]' : 'bg-[#F1F3F4]'}`}>
       <div className="flex flex-col gap-6">
         {/* Stats row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
