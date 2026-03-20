@@ -18,8 +18,8 @@ const getUsageColors = (pct) => {
 const groupBySystem = (data) => {
   const map = {};
   for (const server of data) {
-    const key = server.systemName || server.systemId || 'Unknown';
-    if (!map[key]) map[key] = { systemName: key, systemId: server.systemId, servers: [] };
+    const key = server.systemId || 'unknown';
+    if (!map[key]) map[key] = { systemId: server.systemId, systemName: server.systemName || server.systemId || 'Unknown', servers: [] };
     map[key].servers.push(server);
   }
   return Object.values(map).sort((a, b) => a.systemName.localeCompare(b.systemName));
