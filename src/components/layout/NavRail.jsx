@@ -55,7 +55,7 @@ const NavItem = ({ label, icon, isActive, onClick, badge, darkMode }) => (
       <span className={`absolute top-1.5 right-2.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ${darkMode ? 'ring-[#1E1E1E]' : 'ring-white'}`} />
     )}
     {icon}
-    <span className="text-[10px] font-medium leading-none">{label}</span>
+    <span className="text-[10px] font-medium leading-none whitespace-nowrap">{label}</span>
   </button>
 );
 
@@ -70,17 +70,8 @@ const NavRail = ({ activeNav, onNavChange, darkMode, isConnected }) => {
     <>
       {/* Desktop nav rail */}
       <div className={`hidden md:flex flex-col flex-shrink-0 w-[72px] rounded-2xl overflow-hidden ${bgClass}`}>
-        {/* Logo */}
-        <div className={`flex items-center justify-center py-3.5 border-b ${dividerClass}`}>
-          <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${darkMode ? 'bg-[#1A3A6B]/50' : 'bg-[#E8F0FE]'}`}>
-            <svg className={`w-5 h-5 ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-        </div>
-
         {/* Main nav items */}
-        <div className="flex flex-col gap-1 p-2 flex-1">
+        <div className="flex flex-col gap-1 p-2 pt-3 flex-1">
           {NAV_ITEMS.map((item) => (
             <NavItem
               key={item.id}
