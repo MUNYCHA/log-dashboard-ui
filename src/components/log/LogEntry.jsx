@@ -3,6 +3,26 @@ import { getRelativeTime } from '../../utils/logUtils';
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const detectLogLevel = (message) => {
+  const sample = message.slice(0, 120);
+  if (/\b(FATAL)\b/i.test(sample)) return 'FATAL';
+  if (/\b(ERROR|ERR)\b/i.test(sample)) return 'ERROR';
+  if (/\b(WARN(?:ING)?)\b/i.test(sample)) return 'WARN';
+  if (/\b(INFO)\b/i.test(sample)) return 'INFO';
+  if (/\b(DEBUG|DBG)\b/i.test(sample)) return 'DEBUG';
+  if (/\b(TRACE)\b/i.test(sample)) return 'TRACE';
+  return null;
+};
+
+const LOG_LEVEL_STYLES = {
+  FATAL: { light: 'bg-red-100 text-red-700 border border-red-200',          dark: 'bg-red-900/30 text-red-400 border border-red-800/50' },
+  ERROR: { light: 'bg-red-50 text-red-600 border border-red-200/80',         dark: 'bg-red-900/20 text-red-400 border border-red-800/40' },
+  WARN:  { light: 'bg-amber-50 text-amber-700 border border-amber-200/80',   dark: 'bg-amber-900/20 text-amber-400 border border-amber-700/40' },
+  INFO:  { light: 'bg-[#E8F0FE] text-[#1A73E8] border border-[#D2E3FC]/80', dark: 'bg-[#1A3A6B]/60 text-[#8AB4F8] border border-[#1E439E]/50' },
+  DEBUG: { light: 'bg-[#F1F3F4] text-[#5F6368] border border-[#DADCE0]',    dark: 'bg-[#303134] text-[#80868B] border border-[#5F6368]/50' },
+  TRACE: { light: 'bg-[#F1F3F4] text-[#9AA0A6] border border-[#E8EAED]',   dark: 'bg-[#252525] text-[#5F6368] border border-[#303134]' },
+};
+
 const highlightSearchInText = (text, searchRegex, darkMode, keyBase) => {
   if (!searchRegex || !text) return [text];
 
@@ -95,6 +115,7 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
       return new Date(log.timestamp).toLocaleString();
     } catch { return log.timestamp; }
   }, [log.timestamp]);
+  const logLevel = useMemo(() => detectLogLevel(message), [message]);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback((e) => {
@@ -122,6 +143,13 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
           }`}>
             {serverName}
           </span>
+          {logLevel && LOG_LEVEL_STYLES[logLevel] && (
+            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-bold tracking-wider flex-shrink-0 ${
+              darkMode ? LOG_LEVEL_STYLES[logLevel].dark : LOG_LEVEL_STYLES[logLevel].light
+            }`}>
+              {logLevel}
+            </span>
+          )}
           <span className={`w-px h-3 flex-shrink-0 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
           <span className={`text-[11px] font-mono tabular-nums flex-shrink-0 truncate ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
             {localTimestamp}

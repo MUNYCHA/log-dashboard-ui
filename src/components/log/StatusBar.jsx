@@ -6,7 +6,7 @@ const StatusBar = ({
   streamMode, visibleCount, bufferedCount, hasActiveFilters,
 }) => {
   const dotColor = isConnected
-    ? 'bg-emerald-500'
+    ? (logRate > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-emerald-500')
     : isReconnecting
       ? 'bg-amber-500 animate-pulse'
       : 'bg-rose-500';
