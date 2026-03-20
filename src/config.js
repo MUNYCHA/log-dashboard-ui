@@ -5,6 +5,7 @@ const httpBaseUrl = wsUrl.replace(/^ws:\/\//, 'http://').replace(/^wss:\/\//, 'h
 
 const config = {
   httpBaseUrl,
+  storageApiUrl: import.meta.env.VITE_STORAGE_API_URL || 'http://localhost:8081',
   ws: {
     url: wsUrl,
     maxLogsPerTopic: displayCap,

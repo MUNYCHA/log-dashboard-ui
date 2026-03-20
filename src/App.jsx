@@ -3,6 +3,7 @@ import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import Sidebar from './components/sidebar';
 import LogPanel from './components/log';
+import StorageDashboard from './components/storage';
 import config from './config';
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
   const [isPaused1, setIsPaused1] = useState(false);
   const [isPaused2, setIsPaused2] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentView, setCurrentView] = useState('logs');
 
   // Which topics are currently displayed in log panels — these get full 500-log cap.
   // Non-viewed topics get a smaller cap (50) for sidebar info only.
@@ -141,9 +143,18 @@ export default function App() {
         logRates={logRates}
         collapsed={sidebarCollapsed}
         onCollapse={toggleSidebarCollapsed}
+        currentView={currentView}
+        onViewChange={setCurrentView}
       />
 
       <div className="flex flex-1 min-w-0 overflow-hidden gap-2">
+        {/* Storage view */}
+        {currentView === 'storage' && (
+          <StorageDashboard darkMode={darkMode} theme={theme} />
+        )}
+
+        {/* Log panels — hidden when storage view is active */}
+        {currentView === 'logs' && (<>
         {/* Panel 1 */}
         <LogPanel
           key={`panel-1-${selectedTopic ?? 'none'}`}
@@ -200,6 +211,7 @@ export default function App() {
             />
           </>
         )}
+        </>)}
       </div>
     </div>
   );

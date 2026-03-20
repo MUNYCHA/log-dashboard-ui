@@ -52,6 +52,27 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkM
   );
 });
 
+const NAV_VIEWS = [
+  {
+    value: 'logs',
+    label: 'Logs',
+    icon: (
+      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h10" />
+      </svg>
+    ),
+  },
+  {
+    value: 'storage',
+    label: 'Storage',
+    icon: (
+      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
+      </svg>
+    ),
+  },
+];
+
 const Sidebar = ({
   topics,
   selectedTopic,
@@ -67,6 +88,8 @@ const Sidebar = ({
   logRates,
   collapsed,
   onCollapse,
+  currentView,
+  onViewChange,
 }) => {
   const sortedTopics = useMemo(() => {
     const filtered = topics.filter((t) => t.toLowerCase().includes(topicSearchTerm.toLowerCase()));
@@ -128,14 +151,47 @@ const Sidebar = ({
 
         {/* Header */}
         <div className="px-4 pt-4 pb-3 flex-shrink-0">
+
+          {/* View switcher */}
+          <div className={`grid grid-cols-2 gap-0.5 rounded-2xl border p-1 mb-3 ${
+            darkMode ? 'border-[#303134] bg-[#303134]' : 'border-[#E8EAED] bg-[#F1F3F4]'
+          }`}>
+            {NAV_VIEWS.map((view) => {
+              const isActive = currentView === view.value;
+              return (
+                <button
+                  key={view.value}
+                  type="button"
+                  onClick={() => onViewChange(view.value)}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-[12px] font-medium transition-all duration-150 ease-in-out active:scale-95
+                    ${isActive
+                      ? darkMode
+                        ? 'bg-[#1A3A6B]/50 text-[#8AB4F8]'
+                        : 'bg-white text-[#1A73E8] shadow-sm'
+                      : darkMode
+                        ? 'text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED]'
+                        : 'text-[#5F6368] hover:bg-white hover:text-[#202124]'
+                    }`}
+                >
+                  {view.icon}
+                  {view.label}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <h1 className={`text-[13px] font-semibold ${theme.text}`}>Topics</h1>
+              <h1 className={`text-[13px] font-semibold ${theme.text}`}>
+                {currentView === 'logs' ? 'Topics' : 'Servers'}
+              </h1>
+              {currentView === 'logs' && (
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium tabular-nums ${
                 darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
               }`}>
                 {activeCount}/{topics.length}
               </span>
+              )}
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -162,7 +218,7 @@ const Sidebar = ({
         </div>
 
         {/* Search — rounded-full */}
-        <div className="px-4 pb-3 flex-shrink-0">
+        <div className={`px-4 pb-3 flex-shrink-0 ${currentView !== 'logs' ? 'hidden' : ''}`}>
           <div className="relative">
             <svg
               className={`absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 ${theme.textMuted}`}
@@ -186,7 +242,7 @@ const Sidebar = ({
         </div>
 
         {/* Sort tabs */}
-        <div className="px-4 pb-3 flex-shrink-0">
+        <div className={`px-4 pb-3 flex-shrink-0 ${currentView !== 'logs' ? 'hidden' : ''}`}>
           <div className={`grid grid-cols-3 gap-0.5 rounded-2xl border p-1 ${
             darkMode ? 'border-[#303134] bg-[#303134]' : 'border-[#E8EAED] bg-[#F1F3F4]'
           }`}>
@@ -215,7 +271,7 @@ const Sidebar = ({
         </div>
 
         {/* Topic list */}
-        <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-3 pb-3`}>
+        <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-3 pb-3 ${currentView !== 'logs' ? 'hidden' : ''}`}>
           <div className="flex flex-col gap-0.5">
             {sortedTopics.map((topic) => (
               <TopicItem
