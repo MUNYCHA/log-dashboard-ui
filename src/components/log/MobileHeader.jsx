@@ -1,12 +1,11 @@
 import React from 'react';
-import ThemeToggle from '../common/ThemeToggle';
 import HeartbeatLine from '../common/HeartbeatLine';
 import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../filters';
 import { getShortPath } from './constants';
 
 const MobileHeader = ({
   selectedTopic, displayedLogs, logRate, darkMode, theme,
-  onOpenSidebar, onThemeToggle,
+  onOpenSidebar,
   isMobileMenuOpen, onToggleMobileMenu, mobileMenuReady,
   isPaused, onTogglePause,
   autoScroll, onToggleAutoScroll,
@@ -60,7 +59,6 @@ const MobileHeader = ({
           </div>
 
           <div className="flex items-center gap-0.5 flex-shrink-0">
-            <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
             <button onClick={onToggleMobileMenu} className={`${btnBase} ${isMobileMenuOpen ? btnActive : btnGhost}`}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />

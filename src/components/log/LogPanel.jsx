@@ -284,7 +284,6 @@ const LogPanel = ({
   logRate,
   theme,
   darkMode,
-  onThemeToggle,
   onOpenSidebar,
   splitView,
   onOpenSplit,
@@ -688,7 +687,6 @@ const LogPanel = ({
           onTogglePause={handleTogglePause}
           btn={btn}
           onDownload={downloadLogs}
-          onThemeToggle={onThemeToggle}
           autoScroll={autoScroll}
           onToggleAutoScroll={toggleAutoScroll}
           onClearLogs={onClearLogs}
@@ -701,7 +699,6 @@ const LogPanel = ({
           darkMode={darkMode}
           theme={theme}
           onOpenSidebar={onOpenSidebar}
-          onThemeToggle={onThemeToggle}
           isMobileMenuOpen={isMobileMenuOpen}
           onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           mobileMenuReady={mobileMenuReady}

@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useServerStorage } from './hooks/useServerStorage';
-import Sidebar from './components/sidebar';
+import AppShell from './components/layout/AppShell';
 import LogPanel from './components/log';
 import StorageDashboard from './components/storage';
+import HomePage from './components/home/HomePage';
+import SettingsPage from './components/settings/SettingsPage';
 import config from './config';
 
 const groupBySystem = (data) => {
@@ -31,7 +33,7 @@ export default function App() {
   const [isPaused1, setIsPaused1] = useState(false);
   const [isPaused2, setIsPaused2] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [currentView, setCurrentView] = useState('logs');
+  const [activeNav, setActiveNav] = useState('home');
   const [selectedSystemId, setSelectedSystemId] = useState(null);
 
   const { data: storageData, loading: storageLoading, error: storageError, lastUpdated: storageLastUpdated, refresh: storageRefresh } = useServerStorage();
@@ -69,19 +71,13 @@ export default function App() {
   useEffect(() => { selectedTopic2Ref.current = selectedTopic2; }, [selectedTopic2]);
   useEffect(() => { topicsRef.current = topics; }, [topics]);
 
-  // Auto-select the most active topic on first load (only if it has traffic).
-  // If no topic has logs, leave unselected — user picks manually.
-  // Uses a ref to avoid re-running once a pick has been made, and
-  // queueMicrotask to fire immediately without being cancelled by effect cleanup.
-  // Keep a light buffer for every topic so the sidebar's live activity matches
-  // what the user can open in the panel. Viewed topics already get a larger cap.
   useEffect(() => {
     if (topics.length > 0) {
       subscribe(topics);
     }
   }, [topics, subscribe]);
 
-  // ── Stable callbacks (useCallback prevents new refs every render) ──────
+  // ── Stable callbacks ──────────────────────────────────────────────────────
   const handleTopicSelect = useCallback((topic) => {
     setIsPaused1(false);
     setIsPaused2(false);
@@ -101,7 +97,6 @@ export default function App() {
       setSelectedTopic(topic);
       setSelectedServer(null);
     }
-    // Clear server-side filters for the active panel (start fresh)
     const pid = splitViewRef.current && activePanelRef.current === 2 ? 2 : 1;
     sendFilter(null, pid);
     setTopicSearchTerm('');
@@ -121,7 +116,7 @@ export default function App() {
     setSelectedServer2(null);
     setActivePanel(1);
     setIsPaused2(false);
-    sendFilter(null, 2); // clear panel 2's server-side filter
+    sendFilter(null, 2);
   }, [sendFilter]);
 
   const toggleDarkMode = useCallback(() => setDarkMode((d) => !d), []);
@@ -139,82 +134,95 @@ export default function App() {
   const setActive2 = useCallback(() => setActivePanel(2), []);
 
   return (
-    <div className={`flex h-screen overflow-hidden ${theme.background} ${theme.text} transition-colors duration-200 p-2 gap-2`}>
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={closeSidebar}
+    <AppShell
+      activeNav={activeNav}
+      onNavChange={setActiveNav}
+      darkMode={darkMode}
+      theme={theme}
+      isConnected={isConnected}
+      sidebarOpen={sidebarOpen}
+      onCloseSidebar={closeSidebar}
+      sidebarCollapsed={sidebarCollapsed}
+      onToggleSidebarCollapsed={toggleSidebarCollapsed}
+      topics={topics}
+      selectedTopic={activePanel === 2 && splitView ? selectedTopic2 : selectedTopic}
+      onTopicSelect={handleTopicSelect}
+      topicSearchTerm={topicSearchTerm}
+      onTopicSearchChange={setTopicSearchTerm}
+      topicSortMode={topicSortMode}
+      onTopicSortModeChange={setTopicSortMode}
+      logRates={logRates}
+      systems={groupedSystems}
+      selectedSystemId={resolvedSystemId}
+      onSystemSelect={setSelectedSystemId}
+    >
+      {/* Home */}
+      {activeNav === 'home' && (
+        <HomePage
+          isConnected={isConnected}
+          isReconnecting={isReconnecting}
+          topics={topics}
+          logRates={logRates}
+          groupedSystems={groupedSystems}
+          storageLoading={storageLoading}
+          storageError={storageError}
+          storageLastUpdated={storageLastUpdated}
+          darkMode={darkMode}
+          theme={theme}
+          onNavChange={setActiveNav}
         />
       )}
 
-      <Sidebar
-        topics={topics}
-        selectedTopic={activePanel === 2 && splitView ? selectedTopic2 : selectedTopic}
-        onTopicSelect={handleTopicSelect}
-        topicSearchTerm={topicSearchTerm}
-        onTopicSearchChange={setTopicSearchTerm}
-        topicSortMode={topicSortMode}
-        onTopicSortModeChange={setTopicSortMode}
-        theme={theme}
-        darkMode={darkMode}
-        isOpen={sidebarOpen}
-        onClose={closeSidebar}
-        logRates={logRates}
-        collapsed={sidebarCollapsed}
-        onCollapse={toggleSidebarCollapsed}
-        currentView={currentView}
-        onViewChange={setCurrentView}
-        systems={groupedSystems}
-        selectedSystemId={resolvedSystemId}
-        onSystemSelect={setSelectedSystemId}
-      />
-
-      <div className="flex flex-1 min-w-0 overflow-hidden gap-2">
-        {/* Storage view */}
-        {currentView === 'storage' && (
-          <StorageDashboard
-            darkMode={darkMode}
-            theme={theme}
-            selectedSystem={selectedSystem}
-            loading={storageLoading}
-            error={storageError}
-            lastUpdated={storageLastUpdated}
-            refresh={storageRefresh}
-          />
-        )}
-
-        {/* Log panels — hidden when storage view is active */}
-        {currentView === 'logs' && (<>
-        {/* Panel 1 */}
-        <LogPanel
-          key={`panel-1-${selectedTopic ?? 'none'}`}
-          topicLogs={topicLogs1}
-          selectedTopic={selectedTopic}
-          selectedServer={selectedServer}
-          onServerSelect={setSelectedServer}
-          onClearServer={clearServer1}
-          onClearLogs={clearLogs}
-          isConnected={isConnected}
-          isReconnecting={isReconnecting}
-          logRate={logRates[selectedTopic] || 0}
+      {/* Storage / Servers */}
+      {activeNav === 'servers' && (
+        <StorageDashboard
+          darkMode={darkMode}
           theme={theme}
+          selectedSystem={selectedSystem}
+          loading={storageLoading}
+          error={storageError}
+          lastUpdated={storageLastUpdated}
+          refresh={storageRefresh}
+        />
+      )}
+
+      {/* Settings */}
+      {activeNav === 'settings' && (
+        <SettingsPage
           darkMode={darkMode}
           onThemeToggle={toggleDarkMode}
-          onOpenSidebar={openSidebar}
-          splitView={splitView}
-          onOpenSplit={handleOpenSplit}
-          sendFilter={sendFilter}
-          panelId={1}
-          isPaused={isPaused1}
-          togglePause={togglePause1}
-          isActivePanel={!splitView || activePanel === 1}
-          onSetActive={setActive1}
+          theme={theme}
         />
+      )}
 
-        {/* Panel 2 — split view only */}
-        {splitView && (
-          <>
+      {/* Logs */}
+      {activeNav === 'logs' && (
+        <>
+          <LogPanel
+            key={`panel-1-${selectedTopic ?? 'none'}`}
+            topicLogs={topicLogs1}
+            selectedTopic={selectedTopic}
+            selectedServer={selectedServer}
+            onServerSelect={setSelectedServer}
+            onClearServer={clearServer1}
+            onClearLogs={clearLogs}
+            isConnected={isConnected}
+            isReconnecting={isReconnecting}
+            logRate={logRates[selectedTopic] || 0}
+            theme={theme}
+            darkMode={darkMode}
+            onOpenSidebar={openSidebar}
+            splitView={splitView}
+            onOpenSplit={handleOpenSplit}
+            sendFilter={sendFilter}
+            panelId={1}
+            isPaused={isPaused1}
+            togglePause={togglePause1}
+            isActivePanel={!splitView || activePanel === 1}
+            onSetActive={setActive1}
+          />
+
+          {splitView && (
             <LogPanel
               key={`panel-2-${selectedTopic2 ?? 'none'}`}
               topicLogs={topicLogs2}
@@ -228,7 +236,6 @@ export default function App() {
               logRate={logRates[selectedTopic2] || 0}
               theme={theme}
               darkMode={darkMode}
-              onThemeToggle={toggleDarkMode}
               onOpenSidebar={openSidebar}
               splitView={splitView}
               onOpenSplit={handleOpenSplit}
@@ -240,11 +247,9 @@ export default function App() {
               onClosePanel={handleClosePanel2}
               panelId={2}
             />
-          </>
-        )}
-        </>)}
-      </div>
-    </div>
+          )}
+        </>
+      )}
+    </AppShell>
   );
 }
-

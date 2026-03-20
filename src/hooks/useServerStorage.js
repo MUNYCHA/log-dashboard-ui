@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import config from '../config';
 
-const REFRESH_INTERVAL = 30_000;
+export const STORAGE_REFRESH_INTERVAL_MS = 30_000;
 
 export const useServerStorage = () => {
   const [data, setData] = useState([]);
@@ -26,7 +26,7 @@ export const useServerStorage = () => {
 
   useEffect(() => {
     fetchData();
-    const id = setInterval(fetchData, REFRESH_INTERVAL);
+    const id = setInterval(fetchData, STORAGE_REFRESH_INTERVAL_MS);
     return () => clearInterval(id);
   }, [fetchData]);
 
