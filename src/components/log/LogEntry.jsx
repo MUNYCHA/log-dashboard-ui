@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { getRelativeTime } from '../../utils/logUtils';
+import { getRelativeTime } from '../../utils/timeUtils';
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 

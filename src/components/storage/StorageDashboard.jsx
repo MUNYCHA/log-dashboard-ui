@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatBytes } from '../../utils/logUtils';
+import { formatBytes } from '../../utils/storageUtils';
 
 const getUsageColors = (pct) => {
   if (pct >= 90) return {

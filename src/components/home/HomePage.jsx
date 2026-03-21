@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { formatBytes } from '../../utils/logUtils';
+import { formatBytes } from '../../utils/storageUtils';
 
 const StatCard = ({ title, children, darkMode }) => (
   <div className={`rounded-xl overflow-hidden border ${
