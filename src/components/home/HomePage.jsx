@@ -9,13 +9,11 @@ const formatBytes = (bytes) => {
 };
 
 const StatCard = ({ title, children, darkMode }) => (
-  <div className={`rounded-2xl overflow-hidden border ${
-    darkMode
-      ? 'bg-[#1E1E1E] border-[#3C4043] shadow-[0_8px_24px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]'
-      : 'bg-white border-[#DADCE0] shadow-[0_4px_12px_rgba(60,64,67,0.18),0_1px_4px_rgba(60,64,67,0.12)]'
+  <div className={`rounded-xl overflow-hidden border ${
+    darkMode ? 'bg-[#252525] border-[#3C4043]' : 'bg-[#F8F9FA] border-[#E8EAED]'
   }`}>
     <div className={`px-5 py-2.5 border-b text-[11px] font-semibold tracking-wider uppercase ${
-      darkMode ? 'bg-[#252525] border-[#3C4043] text-[#5F6368]' : 'bg-[#F8F9FA] border-[#E8EAED] text-[#9AA0A6]'
+      darkMode ? 'bg-[#2C2C2C] border-[#3C4043] text-[#5F6368]' : 'bg-[#F1F3F4] border-[#E8EAED] text-[#9AA0A6]'
     }`}>
       {title}
     </div>
@@ -177,7 +175,7 @@ const StorageHealthCard = ({ groupedSystems, storageLoading, storageError, stora
             onClick={() => onNavChange('servers')}
             className={`text-[12px] font-medium transition-colors ${darkMode ? 'text-[#8AB4F8] hover:text-[#669DF6]' : 'text-[#1A73E8] hover:text-[#1557B0]'}`}
           >
-            View Servers →
+            View Storage →
           </button>
         </>
       )}
@@ -217,10 +215,10 @@ const AlertsSection = ({ groupedSystems, darkMode, onNavChange }) => {
           <button
             key={i}
             onClick={() => onNavChange('servers')}
-            className={`text-left rounded-2xl border p-4 transition-all duration-150 hover:-translate-y-0.5 active:scale-[0.99] ${
+            className={`text-left rounded-xl border p-4 transition-all duration-150 hover:-translate-y-0.5 active:scale-[0.99] ${
               darkMode
-                ? 'bg-red-900/10 border-red-800/40 hover:bg-red-900/15 shadow-[0_2px_8px_rgba(0,0,0,0.3)]'
-                : 'bg-red-50 border-red-200 hover:bg-red-100/70 shadow-[0_2px_8px_rgba(0,0,0,0.05)]'
+                ? 'bg-red-900/10 border-red-800/40 hover:bg-red-900/15'
+                : 'bg-red-50 border-red-200 hover:bg-red-100/70'
             }`}
           >
             <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -268,37 +266,40 @@ const HomePage = ({
   theme,
   onNavChange,
 }) => (
-  <div className={`flex flex-col flex-1 min-w-0 min-h-0 rounded-2xl overflow-hidden ${
-    darkMode ? 'bg-[#0A0A0A]' : 'bg-[#F1F3F4]'
-  }`}>
-    {/* Header */}
-    <div className={`px-5 py-3.5 flex-shrink-0 border-b ${darkMode ? 'bg-[#1E1E1E] border-[#303134]' : 'bg-white border-[#E8EAED]'}`}>
-      <h1 className={`text-[14px] font-semibold ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>Overview</h1>
-      <p className={`text-[12px] mt-0.5 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>System health at a glance</p>
-    </div>
+  <div className="flex flex-col flex-1 min-w-0 min-h-0">
+    <div className={`flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden border ${theme.card} ${
+      darkMode ? 'border-[#3C4043]' : 'border-[#DADCE0]'
+    }`}>
 
-    {/* Content */}
-    <div className={`flex-1 overflow-y-auto p-4 ${theme.scrollbar} ${darkMode ? 'bg-[#0A0A0A]' : 'bg-[#F1F3F4]'}`}>
-      <div className="flex flex-col gap-6">
-        {/* Stats row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <WsStatusCard isConnected={isConnected} isReconnecting={isReconnecting} darkMode={darkMode} />
-          <TopicSummaryCard topics={topics} logRates={logRates} darkMode={darkMode} onNavChange={onNavChange} />
-          <StorageHealthCard
-            groupedSystems={groupedSystems}
-            storageLoading={storageLoading}
-            storageError={storageError}
-            storageLastUpdated={storageLastUpdated}
-            darkMode={darkMode}
-            onNavChange={onNavChange}
-          />
-        </div>
-
-        {/* Critical alerts */}
-        {!storageLoading && !storageError && (
-          <AlertsSection groupedSystems={groupedSystems} darkMode={darkMode} onNavChange={onNavChange} />
-        )}
+      {/* Header */}
+      <div className={`flex-shrink-0 px-5 py-4 border-b ${
+        darkMode ? 'border-[#3C4043] bg-[#252525]' : 'border-[#E8EAED] bg-[#FAFAFA]'
+      }`}>
+        <h1 className={`text-[14px] font-semibold ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>Overview</h1>
+        <p className={`text-[12px] mt-0.5 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>System health at a glance</p>
       </div>
+
+      {/* Content */}
+      <div className={`flex-1 overflow-y-auto p-4 ${theme.scrollbar}`}>
+        <div className="flex flex-col gap-4 pb-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <WsStatusCard isConnected={isConnected} isReconnecting={isReconnecting} darkMode={darkMode} />
+            <TopicSummaryCard topics={topics} logRates={logRates} darkMode={darkMode} onNavChange={onNavChange} />
+            <StorageHealthCard
+              groupedSystems={groupedSystems}
+              storageLoading={storageLoading}
+              storageError={storageError}
+              storageLastUpdated={storageLastUpdated}
+              darkMode={darkMode}
+              onNavChange={onNavChange}
+            />
+          </div>
+          {!storageLoading && !storageError && (
+            <AlertsSection groupedSystems={groupedSystems} darkMode={darkMode} onNavChange={onNavChange} />
+          )}
+        </div>
+      </div>
+
     </div>
   </div>
 );

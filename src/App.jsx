@@ -39,10 +39,7 @@ export default function App() {
   const { data: storageData, loading: storageLoading, error: storageError, lastUpdated: storageLastUpdated, refresh: storageRefresh } = useServerStorage();
   const groupedSystems = useMemo(() => groupBySystem(storageData), [storageData]);
 
-  // Auto-select first system when data arrives
-  const firstSystemId = groupedSystems[0]?.systemId ?? null;
-  const resolvedSystemId = selectedSystemId ?? firstSystemId;
-  const selectedSystem = groupedSystems.find((s) => s.systemId === resolvedSystemId) ?? null;
+  const selectedSystem = groupedSystems.find((s) => s.systemId === selectedSystemId) ?? null;
 
   // Which topics are currently displayed in log panels — these get full 500-log cap.
   // Non-viewed topics get a smaller cap (50) for sidebar info only.
@@ -153,7 +150,7 @@ export default function App() {
       onTopicSortModeChange={setTopicSortMode}
       logRates={logRates}
       systems={groupedSystems}
-      selectedSystemId={resolvedSystemId}
+      selectedSystemId={selectedSystemId}
       onSystemSelect={setSelectedSystemId}
     >
       {/* Home */}

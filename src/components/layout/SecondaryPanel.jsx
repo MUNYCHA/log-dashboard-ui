@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const MotionSpan = motion.span;
@@ -8,6 +8,35 @@ const TOPIC_SORT_OPTIONS = [
   { value: 'asc', label: 'A-Z' },
   { value: 'desc', label: 'Z-A' },
 ];
+
+const SYSTEM_SORT_OPTIONS = [
+  { value: 'asc', label: 'A-Z' },
+  { value: 'desc', label: 'Z-A' },
+];
+
+// Script detection: Unicode range → BCP-47 locale
+const SCRIPT_LOCALES = [
+  [/[\u1780-\u17FF]/, 'km'],    // Khmer
+  [/[\u0E00-\u0E7F]/, 'th'],    // Thai
+  [/[\u3040-\u30FF]/, 'ja'],    // Japanese (Hiragana/Katakana)
+  [/[\u4E00-\u9FFF]/, 'zh'],    // CJK / Chinese
+  [/[\uAC00-\uD7AF]/, 'ko'],    // Korean (Hangul)
+  [/[\u0600-\u06FF]/, 'ar'],    // Arabic
+  [/[\u0400-\u04FF]/, 'ru'],    // Cyrillic
+  [/[\u0900-\u097F]/, 'hi'],    // Devanagari / Hindi
+];
+
+const makeCollator = (samples = []) => {
+  const joined = samples.join('');
+  const matched = SCRIPT_LOCALES.filter(([re]) => re.test(joined));
+  // Single non-Latin script → use its locale for correct linguistic order.
+  // Multiple scripts or Latin-only → use undefined (Unicode DUCET) which
+  // groups all scripts consistently and sorts correctly within each group.
+  const locale = matched.length === 1 ? matched[0][1] : undefined;
+  return new Intl.Collator(locale, { sensitivity: 'base', numeric: true });
+};
+
+const safeName = (s) => s?.systemName ?? '';
 
 const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkMode }) => {
   const isActive = logRate > 0;
@@ -104,10 +133,29 @@ const SecondaryPanel = ({
   const isLogs = activeNav === 'logs';
   const isServers = activeNav === 'servers';
 
+  const [systemSortMode, setSystemSortMode] = useState('asc');
+  const [systemSearchTerm, setSystemSearchTerm] = useState('');
+
+  const sortedSystems = useMemo(() => {
+    const list = systems ?? [];
+    // Normalize both sides to NFC so composed/decomposed Khmer (and other scripts) match correctly
+    const needle = systemSearchTerm.normalize('NFC').toLowerCase();
+    const filtered = needle
+      ? list.filter((s) => safeName(s).normalize('NFC').toLowerCase().includes(needle))
+      : list;
+    const collator = makeCollator(filtered.map((s) => safeName(s)));
+    return [...filtered].sort((a, b) =>
+      systemSortMode === 'asc'
+        ? collator.compare(safeName(a), safeName(b))
+        : collator.compare(safeName(b), safeName(a)),
+    );
+  }, [systems, systemSortMode, systemSearchTerm]);
+
   const sortedTopics = useMemo(() => {
     const filtered = topics.filter((t) => t.toLowerCase().includes(topicSearchTerm.toLowerCase()));
-    if (topicSortMode === 'asc') return filtered.sort((a, b) => a.localeCompare(b));
-    if (topicSortMode === 'desc') return filtered.sort((a, b) => b.localeCompare(a));
+    const collator = makeCollator(topics);
+    if (topicSortMode === 'asc') return filtered.sort((a, b) => collator.compare(a, b));
+    if (topicSortMode === 'desc') return filtered.sort((a, b) => collator.compare(b, a));
     return filtered.sort((a, b) => {
       const rateA = logRates?.[a] || 0;
       const rateB = logRates?.[b] || 0;
@@ -260,26 +308,71 @@ const SecondaryPanel = ({
           </>
         )}
 
-        {/* Servers: system list */}
+        {/* Servers: search + sort + system list */}
         {isServers && (
-          <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-3 pb-3`}>
-            <div className="flex flex-col gap-0.5">
-              {(systems ?? []).map((system) => (
-                <SystemItem
-                  key={system.systemId}
-                  system={system}
-                  isSelected={selectedSystemId === system.systemId}
-                  onSelect={onSystemSelect}
-                  darkMode={darkMode}
+          <>
+            <div className="px-4 pb-3 flex-shrink-0">
+              <div className="relative">
+                <svg
+                  className={`absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 ${theme.textMuted}`}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search systems"
+                  className={`w-full h-9 rounded-full border pl-10 pr-4 text-[13px] focus:outline-none focus:ring-2 transition-all duration-150 ease-in-out ${
+                    darkMode
+                      ? 'bg-[#303134] border-[#5F6368] text-[#E8EAED] placeholder:text-[#80868B] focus:ring-[#8AB4F8]/20 focus:border-[#8AB4F8]'
+                      : 'bg-[#F1F3F4] border-[#DADCE0] text-[#202124] placeholder:text-[#5F6368] focus:ring-[#1A73E8]/20 focus:border-[#1A73E8]'
+                  }`}
+                  value={systemSearchTerm}
+                  onChange={(e) => setSystemSearchTerm(e.target.value)}
                 />
-              ))}
-              {(systems ?? []).length === 0 && (
-                <p className={`px-4 py-3 text-[12px] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                  No systems available
-                </p>
-              )}
+              </div>
             </div>
-          </div>
+
+            <div className="px-4 pb-3 flex-shrink-0">
+              <div className={`grid grid-cols-2 gap-0.5 rounded-2xl border p-1 ${
+                darkMode ? 'border-[#303134] bg-[#303134]' : 'border-[#E8EAED] bg-[#F1F3F4]'
+              }`}>
+                {SYSTEM_SORT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setSystemSortMode(option.value)}
+                    className={`w-full rounded-xl py-1.5 text-center text-[12px] font-medium transition-all duration-150 ease-in-out active:scale-95 ${
+                      option.value === systemSortMode
+                        ? darkMode ? 'bg-[#1A3A6B]/50 text-[#8AB4F8]' : 'bg-white text-[#1A73E8] shadow-sm'
+                        : darkMode ? 'text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED]' : 'text-[#5F6368] hover:bg-white hover:text-[#202124]'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-3 pb-3`}>
+              <div className="flex flex-col gap-0.5">
+                {sortedSystems.map((system) => (
+                  <SystemItem
+                    key={system.systemId}
+                    system={system}
+                    isSelected={selectedSystemId === system.systemId}
+                    onSelect={onSystemSelect}
+                    darkMode={darkMode}
+                  />
+                ))}
+                {sortedSystems.length === 0 && (
+                  <p className={`px-4 py-3 text-[12px] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                    {systemSearchTerm ? 'No systems match' : 'No systems available'}
+                  </p>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -34,22 +34,20 @@ const ServerCard = ({ server, darkMode }) => {
   const worstPct = mounts.length > 0 ? Math.max(...mounts.map((m) => m.usedPercent ?? 0)) : 0;
   const worstColors = getUsageColors(worstPct);
   const collectedAt = (() => { try { return new Date(server.collectedAt).toLocaleString(); } catch { return server.collectedAt; } })();
-  const divider = darkMode ? 'border-[#303134]' : 'border-[#E8EAED]';
+  const divider = darkMode ? 'border-[#3C4043]' : 'border-[#E8EAED]';
 
   return (
-    <div className={`rounded-2xl overflow-hidden border transition-shadow duration-150 ${
-      darkMode
-        ? 'bg-[#1E1E1E] border-[#3C4043] shadow-[0_8px_24px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.10)]'
-        : 'bg-white border-[#DADCE0] shadow-[0_4px_12px_rgba(60,64,67,0.18),0_1px_4px_rgba(60,64,67,0.12)] hover:shadow-[0_8px_20px_rgba(60,64,67,0.22),0_2px_6px_rgba(60,64,67,0.14)]'
+    <div className={`rounded-xl overflow-hidden border ${
+      darkMode ? 'bg-[#252525] border-[#3C4043]' : 'bg-[#F8F9FA] border-[#E8EAED]'
     }`}>
 
       {/* Card header */}
-      <div className={`px-5 py-4 flex items-center justify-between gap-3 border-b ${divider} ${
-        darkMode ? 'bg-[#252525]' : 'bg-[#FAFAFA]'
+      <div className={`px-5 py-3.5 flex items-center justify-between gap-3 border-b ${divider} ${
+        darkMode ? 'bg-[#2C2C2C]' : 'bg-[#F1F3F4]'
       }`}>
         <div className="flex items-center gap-3 min-w-0">
           <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl ${
-            darkMode ? 'bg-[#303134]' : 'bg-[#F1F3F4]'
+            darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'
           }`}>
             <svg className={`w-4 h-4 ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
@@ -66,7 +64,7 @@ const ServerCard = ({ server, darkMode }) => {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-mono ${
-            darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
+            darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#E8EAED] text-[#5F6368]'
           }`}>
             {server.serverIp}
           </span>
@@ -138,109 +136,115 @@ const ServerCard = ({ server, darkMode }) => {
 const StorageDashboard = ({ darkMode, theme, selectedSystem, loading, error, lastUpdated, refresh, onOpenSidebar }) => {
   const ghostBtn = darkMode
     ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
-    : 'text-[#5F6368] hover:text-[#202124] hover:bg-[#F1F3F4]';
+    : 'text-[#5F6368] hover:text-[#202124] hover:bg-[#E8EAED]';
 
   return (
-    <div className={`flex flex-col flex-1 min-w-0 min-h-0 rounded-2xl overflow-hidden ${
-      darkMode ? 'bg-[#0A0A0A]' : 'bg-[#F1F3F4]'
-    }`}>
-
-      {/* ── Panel header ── */}
-      <div className={`px-5 py-3.5 flex items-center justify-between gap-3 flex-shrink-0 border-b ${
-        darkMode ? 'bg-[#1E1E1E] border-[#303134]' : 'bg-white border-[#E8EAED]'
+    <div className="flex flex-col flex-1 min-w-0 min-h-0">
+      <div className={`flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden border ${theme.card} ${
+        darkMode ? 'border-[#3C4043]' : 'border-[#DADCE0]'
       }`}>
-        <div className="flex items-center gap-2.5 min-w-0">
-          <button
-            onClick={onOpenSidebar}
-            className={`md:hidden inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
-            aria-label="Open systems list"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 6h16M4 12h16M4 18h16" />
+
+        {/* Header */}
+        <div className={`flex-shrink-0 px-5 py-3.5 flex items-center justify-between gap-3 border-b ${
+          darkMode ? 'border-[#3C4043] bg-[#252525]' : 'border-[#E8EAED] bg-[#FAFAFA]'
+        }`}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              onClick={onOpenSidebar}
+              className={`md:hidden inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
+              aria-label="Open systems list"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <svg className={`w-4 h-4 flex-shrink-0 ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
             </svg>
-          </button>
-          <svg className={`w-4 h-4 flex-shrink-0 ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-          </svg>
-          {selectedSystem ? (
-            <>
-              <span className={`text-[14px] font-semibold truncate ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
-                {selectedSystem.systemName}
+            {selectedSystem ? (
+              <>
+                <span className={`text-[14px] font-semibold truncate ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
+                  {selectedSystem.systemName}
+                </span>
+                <span className={`text-[11.5px] font-mono flex-shrink-0 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                  {selectedSystem.systemId !== selectedSystem.systemName ? `· ${selectedSystem.systemId}` : ''}
+                </span>
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium tabular-nums flex-shrink-0 ${
+                  darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#E8EAED] text-[#5F6368]'
+                }`}>
+                  {selectedSystem.servers.length} server{selectedSystem.servers.length !== 1 ? 's' : ''}
+                </span>
+              </>
+            ) : (
+              <span className={`text-[14px] font-semibold ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
+                Server Storage
               </span>
-              <span className={`text-[11.5px] font-mono flex-shrink-0 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                {selectedSystem.systemId !== selectedSystem.systemName ? `· ${selectedSystem.systemId}` : ''}
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {lastUpdated && (
+              <span className={`hidden sm:block text-[11.5px] font-mono tabular-nums ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                Updated {lastUpdated.toLocaleTimeString()}
               </span>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium tabular-nums flex-shrink-0 ${
-                darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
+            )}
+            <button
+              onClick={refresh}
+              title="Refresh now"
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className={`flex-1 overflow-y-auto p-4 ${theme.scrollbar}`}>
+          <div className="flex flex-col gap-4 pb-2">
+
+            {loading && (
+              <div className={`flex items-center justify-center h-48 gap-2 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`}>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <span className="text-[13px]">Loading storage data…</span>
+              </div>
+            )}
+
+            {error && !loading && (
+              <div className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-[13px] border ${
+                darkMode ? 'bg-red-900/20 text-red-400 border-red-800/40' : 'bg-red-50 text-red-600 border-red-200'
               }`}>
-                {selectedSystem.servers.length} server{selectedSystem.servers.length !== 1 ? 's' : ''}
-              </span>
-            </>
-          ) : (
-            <span className={`text-[14px] font-semibold ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
-              Server Storage
-            </span>
-          )}
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Failed to fetch: {error}
+              </div>
+            )}
+
+            {!loading && !error && !selectedSystem && (
+              <div className={`flex items-center justify-center h-48 text-[13px] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                Select a system from the sidebar
+              </div>
+            )}
+
+            {!loading && selectedSystem && (
+              <div className="flex flex-col gap-4">
+                {selectedSystem.servers.map((server) => (
+                  <ServerCard
+                    key={`${server.serverIp}-${server.systemId}`}
+                    server={server}
+                    darkMode={darkMode}
+                  />
+                ))}
+              </div>
+            )}
+
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {lastUpdated && (
-            <span className={`hidden sm:block text-[11.5px] font-mono tabular-nums ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-              Updated {lastUpdated.toLocaleTimeString()}
-            </span>
-          )}
-          <button
-            onClick={refresh}
-            title="Refresh now"
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-        </div>
-      </div>
 
-      {/* ── Content ── */}
-      <div className={`flex-1 overflow-y-auto p-4 ${theme.scrollbar} ${darkMode ? 'bg-[#0A0A0A]' : 'bg-[#F1F3F4]'}`}>
-
-        {loading && (
-          <div className={`flex items-center justify-center h-48 gap-2 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`}>
-            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            <span className="text-[13px]">Loading storage data…</span>
-          </div>
-        )}
-
-        {error && !loading && (
-          <div className={`flex items-center gap-2.5 rounded-2xl px-4 py-3 text-[13px] border ${
-            darkMode ? 'bg-red-900/20 text-red-400 border-red-800/40' : 'bg-red-50 text-red-600 border-red-200'
-          }`}>
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Failed to fetch: {error}
-          </div>
-        )}
-
-        {!loading && !error && !selectedSystem && (
-          <div className={`flex items-center justify-center h-48 text-[13px] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-            Select a system from the sidebar
-          </div>
-        )}
-
-        {!loading && selectedSystem && (
-          <div className="flex flex-col gap-4">
-            {selectedSystem.servers.map((server) => (
-              <ServerCard
-                key={`${server.serverIp}-${server.systemId}`}
-                server={server}
-                darkMode={darkMode}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
