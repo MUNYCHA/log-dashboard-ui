@@ -1,46 +1,6 @@
 # LogStream
 
-A real-time log monitoring dashboard built with React + Vite. Connects to a WebSocket server and streams live logs grouped by topic, server, and file path. Fully responsive from desktop monitor to smartphone.
-
----
-
-## Features
-
-### Real-time Streaming
-- WebSocket connection with **auto-reconnect** (exponential backoff, up to 30s between attempts)
-- **Reconnecting** status indicator in the status bar
-- **Pause / resume** stream — incoming logs are buffered while paused and flushed on resume
-- **Batched rendering** — log updates are flushed every 150ms to minimize re-renders under high volume
-
-### Topic & Filtering (Client-Side, Real-Time)
-All filtering runs client-side for instant feedback on every keystroke. A debounced server-side filter (300ms) runs in parallel as a bandwidth optimization to reduce WebSocket traffic.
-
-- **Topic sidebar** — all topics auto-subscribed; live log count, rate (logs/sec), server badges, and last message per topic
-- **Server filter** — searchable dropdown to filter logs by server name
-- **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
-- **Text search** — instant client-side search across message, server name, and path
-- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h / Custom; sent to the server as a bandwidth optimization and applied client-side for instant feedback
-- **Keyword filter** — add multiple keywords as colored chips; matches are highlighted in log messages
-- **AND / OR mode** toggle for keyword filter logic
-- **Custom keyword colors** — color wheel picker with hex/RGB input for each keyword
-
-### Display
-- **Relative timestamps** — shows `2m ago` style time; hover to see the full timestamp
-- **Keyword highlight** — each keyword gets a custom hex color; matches are highlighted inline
-- **Dark / light theme** toggle
-- **Fully responsive** — sidebar is a slide-in drawer on mobile, fixed panel on tablet/desktop
-- **Collapsible sidebar** — desktop sidebar collapses to a thin strip with an expand button
-- **Split view** — open two independent log panels side by side (desktop only)
-- **Per-panel independent pause** — each split-view panel has its own pause state
-- **Focus ring** — active panel in split view is highlighted with a focus ring
-- **Heartbeat indicator** — SVG line animation in the DesktopHeader topic info row (desktop only, `lg` breakpoint) reflecting log ingestion rate; color shifts from green to yellow to orange to red based on rate
-- **Log rate indicator** — logs/sec shown per topic in the sidebar
-
-### Actions
-- **Download logs** — download the full log file for the selected topic directly from the server
-- **Clear logs** per topic
-- **Auto-scroll** to latest logs — disabled only by user-initiated upward scrolling; re-enables automatically when scrolled back to the bottom
-- **Scroll to top / bottom** floating buttons appear when needed
+Real-time log monitoring dashboard. Streams live logs from multiple topics via WebSocket, with filtering, split-view, and server storage monitoring. Fully responsive from desktop to smartphone.
 
 ---
 
@@ -48,32 +8,21 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 
 | | |
 |---|---|
-| **Framework** | React 19 |
+| **Framework** | React 19 + React Router 7 |
 | **Build tool** | Vite 7 |
-| **Styling** | Tailwind CSS 4 |
+| **Styling** | Tailwind CSS 4 (utility classes only) |
 | **Virtualization** | @tanstack/react-virtual 3 |
 | **Animation** | Framer Motion 12 |
 | **Linting** | ESLint 9 + eslint-plugin-react-hooks |
 | **Language** | JavaScript / JSX (no TypeScript) |
-| **Real-time** | WebSocket (native browser API) |
-
----
-
-## Requirements
-
-- **Node.js** >= 18
-- **npm** >= 9 (or pnpm / yarn)
-- A WebSocket server that follows the message protocol below
 
 ---
 
 ## Getting Started
 
-### 1. Clone and install
+### 1. Install
 
 ```bash
-git clone https://github.com/MUNYCHA/log-dashboard-ui.git
-cd log-dashboard-ui
 npm install
 ```
 
@@ -83,169 +32,185 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env` and set your WebSocket server URL:
+Edit `.env` — at minimum set `VITE_WS_URL` to your WebSocket server. See the [Environment Variables](#environment-variables) section below.
 
-```env
-VITE_WS_URL=ws://localhost:8080/ws/logs
-```
+> **Dev mode:** Leave all `VITE_SSO_*` variables empty and authentication is skipped. The app loads directly without a login page.
 
-### 3. Run the development server
+### 3. Run
 
 ```bash
-npm run dev
-# → http://localhost:5173
-```
-
-### 4. Build for production
-
-```bash
-npm run build
-# Output → dist/
-```
-
-### 5. Preview the production build
-
-```bash
-npm run preview
-```
-
-### 6. Lint
-
-```bash
-npm run lint
+npm run dev       # Dev server → http://localhost:5173
+npm run build     # Production build → dist/
+npm run preview   # Preview production build locally
+npm run lint      # ESLint
 ```
 
 ---
 
-## WebSocket Message Protocol
+## Deploying
+
+This is a static SPA — `npm run build` outputs a `dist/` folder that can be served by any web server.
+
+### 1. Set production environment variables
+
+Create a `.env` file with your production values before building:
+
+```env
+VITE_WS_URL=wss://your-log-server.com/ws/logs
+VITE_STORAGE_API_URL=https://your-storage-api.com
+VITE_MAX_LOGS_PER_TOPIC=500
+VITE_MAX_MESSAGE_LENGTH=50000
+```
+
+Leave all `VITE_SSO_*` empty until DEC SSO is ready — auth will be skipped.
+
+### 2. Build
+
+```bash
+npm run build
+# → dist/
+```
+
+### 3. Serve
+
+**Nginx example:**
+
+```nginx
+server {
+    listen 80;
+    server_name logstream.yourdomain.com;
+    root /var/www/logstream/dist;
+    index index.html;
+
+    # Required for React Router — all routes fall back to index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+> The `try_files /index.html` fallback is required. Without it, refreshing on any route (e.g. `/callback`) returns a 404.
+
+**Other options:** Any static host works — Apache, S3 + CloudFront, Vercel, Netlify, etc. Just make sure client-side routing fallback is enabled.
+
+### Adding SSO later
+
+1. Get the 4 values from DEC SSO team
+2. Add them to `.env`
+3. Finish `src/auth/CallbackPage.jsx` (uncomment the token exchange block)
+4. Rebuild and redeploy
+
+---
+
+## Environment Variables
+
+All values are baked at build time. Changing them requires a rebuild.
+
+| Variable | Default | Description |
+|---|---|---|
+| `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL. Also used to derive the HTTP base URL for REST calls (`ws://` → `http://`, `wss://` → `https://`) |
+| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs kept in memory per viewed topic (non-viewed topics: 100) |
+| `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncates log messages longer than this (characters) to prevent DOM bloat |
+| `VITE_STORAGE_API_URL` | `http://localhost:8081` | Storage monitoring REST API base URL (separate from the log WebSocket server) |
+| `VITE_SSO_LOGIN_URL` | _(empty)_ | DEC SSO authorization endpoint — **leave empty to skip auth in dev** |
+| `VITE_SSO_LOGOUT_URL` | _(empty)_ | DEC SSO logout endpoint |
+| `VITE_SSO_TOKEN_URL` | _(empty)_ | DEC SSO token exchange endpoint |
+| `VITE_SSO_CLIENT_ID` | _(empty)_ | App client ID registered with DEC SSO |
+| `VITE_SSO_REDIRECT_URI` | `{origin}/callback` | SSO callback URL — defaults to current origin + `/callback` |
+
+---
+
+## Features
+
+### Real-time Log Streaming
+- WebSocket connection with **auto-reconnect** (exponential backoff, up to 30s)
+- **Pause / resume** — freezes the stream; incoming logs buffer and flush on resume
+- **Batched rendering** — logs flushed every 150ms to minimize re-renders under high volume
+- **Virtualized list** — renders only visible rows via `@tanstack/react-virtual`; handles thousands of entries without lag
+
+### Filtering
+All filtering is **client-side and instant**. A debounced server-side filter (300ms) runs in parallel to reduce WebSocket bandwidth — the UI never waits for it.
+
+- **Server filter** — searchable dropdown
+- **Path filter** — searchable dropdown (depends on server selection)
+- **Text search** — searches message, server name, and path
+- **Time range** — last 1m / 5m / 15m / 1h / Custom / All
+- **Keyword filter** — multiple keywords as colored chips, with AND / OR mode toggle and custom hex color picker
+- **Active filter chips** — shows active filters with individual clear buttons
+
+### Display
+- **Relative timestamps** — `2m ago` style; hover to see the full ISO timestamp
+- **Keyword highlighting** — each keyword gets its custom color, highlighted inline
+- **Dark / light theme** toggle
+- **Split view** — two independent log panels side by side (desktop)
+- **Heartbeat indicator** — animated SVG line reflecting live log rate; color shifts green → yellow → orange → red by rate
+- **Log rate** — logs/sec shown per topic in the sidebar
+
+### Storage Monitoring
+- Per-system disk usage, polled every 30 seconds
+- Systems list in sidebar with A–Z / Z–A sort and search (supports multilingual names including Khmer)
+
+### Actions
+- **Download logs** — export raw logs for the active topic via REST API
+- **Clear logs** per topic
+- **Auto-scroll** to latest — disabled only by intentional upward scroll; re-enables when scrolled back to the bottom
+
+---
+
+## WebSocket Protocol
 
 ### Server → Client
 
 | Type | Shape | When |
 |---|---|---|
-| Topic list | `{ type: "topics", topics: string[] }` (primary), legacy `string[]` fallback | Once on connect — list of all topic names |
-| Stats | `{ type: "stats", topics: { [topic]: { rate, servers } }, intervalMs }` | Periodic (~every 2s) — per-topic log rate and server info |
-| Log event | `{ topic, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events (already filtered server-side); single object or batched array |
+| Topic list | `{ type: "topics", topics: string[] }` | Once on connect |
+| Stats | `{ type: "stats", topics: { [topic]: { rate, servers } }, intervalMs }` | Periodic (~every 2s) |
+| Log event | `{ topic, serverName, path, message, timestamp }` or `[{…}, {…}]` (batched) | Live log events |
 
 ### Client → Server
 
 | Action | Shape | Description |
 |---|---|---|
-| Subscribe | `{ action: "subscribe", topics: [...] }` | Subscribe to topics (all topics on connect) |
-| Filter | `{ action: "filter", filters: { server, path, search, keywords: { terms, mode }, timeRange, timeRangeMs? } }` | Set server-side filter (bandwidth optimization — client filters locally for display) |
-| Clear filters | `{ action: "clear-filters" }` | Remove all filters for this session |
+| Subscribe | `{ action: "subscribe", topics: [...] }` | Subscribe to topics |
+| Filter | `{ action: "filter", filters: { server, path, search, keywords: { terms, mode }, timeRange, timeRangeMs? } }` | Set server-side filter |
+| Clear filters | `{ action: "clear-filters" }` | Remove all server-side filters |
 
 ### Log entry fields
 
 | Field | Type | Description |
 |---|---|---|
-| `topic` | `string` | Topic/category name (e.g. `"api-service"`) |
-| `serverName` | `string` | Originating server hostname or label |
-| `path` | `string` | File path or log source path |
-| `message` | `string` | The log message body |
-| `timestamp` | `string` | ISO 8601 date string (e.g. `"2025-03-07T12:00:00.000Z"`) |
-
-### Example messages
-
-```json
-{ "type": "topics", "topics": ["api-service", "worker", "auth"] }
-```
-
-```json
-{
-  "topic": "api-service",
-  "serverName": "prod-01",
-  "path": "/var/log/api/app.log",
-  "message": "GET /health 200 OK - 3ms",
-  "timestamp": "2025-03-07T12:00:00.123Z"
-}
-```
-
-```json
-{
-  "action": "filter",
-  "filters": {
-    "server": "prod-01",
-    "search": "error",
-    "keywords": { "terms": ["timeout"], "mode": "or" },
-    "timeRange": "15m"
-  }
-}
-```
+| `topic` | `string` | Topic name (e.g. `"api-service"`) |
+| `serverName` | `string` | Originating server hostname |
+| `path` | `string` | File path or log source |
+| `message` | `string` | Log message body |
+| `timestamp` | `string` | ISO 8601 date string |
 
 ---
 
 ## REST API
 
-The base URL is derived automatically from `VITE_WS_URL` (`ws://` → `http://`, `wss://` → `https://`).
-
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/logs/download?topic=<topic>` | Download the raw log file for the given topic |
+| `GET` | `/api/logs/download?topic=<topic>` | Download raw log file for the topic |
+| `GET` | `/api/server-storage-usage/latest` | Latest disk usage data per server |
+
+All requests include `Authorization: Bearer <token>` when authenticated. Base URL is derived from `VITE_WS_URL` (or `VITE_STORAGE_API_URL` for storage endpoints).
 
 ---
 
-## Project Structure
+## Auth (SSO)
 
-```
-log-dashboard-ui/
-├── .env.example               # Environment variable template
-├── vite.config.js             # Vite + Tailwind CSS plugin config
-├── eslint.config.js           # ESLint flat config
-├── package.json
-└── src/
-    ├── main.jsx               # React entry point
-    ├── App.jsx                # Root layout, split view, global state
-    ├── config.js              # Reads VITE_WS_URL, VITE_MAX_LOGS_PER_TOPIC,
-    │                          # VITE_MAX_MESSAGE_LENGTH from env with fallbacks.
-    │                          # Derives httpBaseUrl (http/https) from VITE_WS_URL for REST API calls
-    ├── constants/
-    │   ├── theme.js           # Dark / light theme token objects
-    │   └── keywordColors.js   # Preset keyword highlight colors
-    ├── hooks/
-    │   └── useWebSocket.js    # WebSocket connection, auto-reconnect,
-    │                          # pause/buffer, log rate tracker,
-    │                          # server-side filter dispatch
-    ├── utils/
-    │   └── logUtils.js        # getLogLevelColor, getRelativeTime
-    └── components/
-        ├── common/
-        │   ├── HeartbeatLine.jsx   # SVG heartbeat animation reflecting log rate
-        │   └── ThemeToggle.jsx     # Dark / light mode button
-        ├── filters/
-        │   ├── index.js            # Re-exports all filter components
-        │   ├── FilterDropdown.jsx  # Shared searchable dropdown base component
-        │   ├── ServerDropdown.jsx  # Server filter (wraps FilterDropdown)
-        │   ├── PathDropdown.jsx    # Path filter (wraps FilterDropdown)
-        │   └── KeywordFilter.jsx   # Keyword chip input, color picker,
-        │                           # AND/OR toggle
-        ├── log/
-        │   ├── index.js            # Re-exports LogPanel
-        │   ├── LogPanel.jsx        # Orchestrator — state, hooks, composition
-        │   ├── DesktopHeader.jsx   # Desktop topic info, toolbar, search bar
-        │   ├── MobileHeader.jsx    # Mobile topic bar, hamburger menu, search
-        │   ├── FilterBar.jsx       # Desktop server/path dropdowns, time range
-        │   ├── ActiveFilters.jsx   # Active filter chip badges
-        │   ├── StatusBar.jsx       # Bottom connection/filter status bar
-        │   ├── EmptyState.jsx      # No-topic-selected placeholder
-        │   ├── ScrollButtons.jsx   # Floating scroll-to-top/bottom buttons
-        │   ├── LogEntry.jsx        # Single log row with keyword highlighting
-        │   │                       # and relative timestamp
-        │   └── constants.js        # TIME_RANGES, button styles, getShortPath
-        └── sidebar/
-            ├── index.js            # Re-exports Sidebar
-            └── Sidebar.jsx         # Topic list with search, log rate badges,
-                                    # collapsible on desktop
-```
+Authentication uses OIDC authorization code flow via DEC SSO. When `VITE_SSO_LOGIN_URL` is set, `AuthGuard` blocks the app and redirects to the SSO login page. On callback, `CallbackPage` handles the code exchange and stores the JWT.
+
+**To complete SSO setup**, the token exchange in `src/auth/CallbackPage.jsx` needs to be filled in once the DEC SSO team provides:
+- Authorization endpoint URL (`VITE_SSO_LOGIN_URL`)
+- Token exchange endpoint URL (`VITE_SSO_TOKEN_URL`)
+- Logout endpoint URL (`VITE_SSO_LOGOUT_URL`)
+- Client ID (`VITE_SSO_CLIENT_ID`)
+- Whether they use PKCE or a client secret
 
 ---
 
-## Configuration
+## Architecture
 
-All values are baked at build time via Vite's `import.meta.env`. Changing them requires a rebuild (`npm run build`).
-
-| Variable | Default | Description |
-|---|---|---|
-| `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL |
-| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs kept in memory per viewed topic (non-viewed topics: 100) |
-| `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate log messages longer than this (chars) to prevent DOM bloat |
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full implementation reference: file map, state ownership, WebSocket internals, filter pipeline, virtualization details, render optimization, and auth flow.

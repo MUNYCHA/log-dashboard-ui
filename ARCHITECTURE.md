@@ -4,32 +4,110 @@ Deep implementation reference. CLAUDE.md links here for details.
 
 ---
 
+## File Map
+
+```
+src/
+├── main.jsx                          # Entry point — BrowserRouter + AuthProvider + routes
+├── App.jsx                           # Global state, nav routing, split view, theme resolution
+├── config.js                         # All env vars: WS, storage API, SSO, log caps
+│
+├── auth/
+│   ├── AuthContext.jsx               # AuthProvider + useAuth hook — token in sessionStorage
+│   ├── AuthGuard.jsx                 # Blocks render until token present, redirects to SSO
+│   └── CallbackPage.jsx              # Handles /callback from SSO — TODO: token exchange
+│
+├── api/
+│   ├── client.js                     # Base fetch wrapper — auth header, 401 logout, errors
+│   ├── storageApi.js                 # Storage endpoints (getLatest)
+│   ├── logsApi.js                    # Log endpoints (download)
+│   └── useApiClient.js               # Hook — builds memoized clients from token
+│
+├── hooks/
+│   ├── useWebSocket.js               # WS connection, reconnect, batching, rate tracking, filter dispatch
+│   └── useServerStorage.js           # Storage data polling (30s interval) via storageApi
+│
+├── constants/
+│   └── theme.js                      # styles.dark / styles.light token objects
+│
+├── utils/
+│   ├── storageUtils.js               # formatBytes
+│   └── timeUtils.js                  # getRelativeTime
+│
+└── components/
+    ├── common/
+    │   └── ErrorBoundary.jsx         # App-level error boundary (used by main.jsx)
+    │
+    ├── layout/
+    │   ├── AppShell.jsx              # Outer layout: NavRail + SecondaryPanel + content slot
+    │   ├── NavRail.jsx               # Desktop vertical rail (72px) + mobile bottom tab bar
+    │   └── SecondaryPanel.jsx        # Topics list (Logs) or Systems list (Storage) — collapsible
+    │
+    ├── home/
+    │   └── HomePage.jsx              # Overview: WS status, topic summary, storage health, alerts
+    │
+    ├── settings/
+    │   ├── SettingsPage.jsx          # Settings: theme, config display
+    │   └── ThemeToggle.jsx           # Dark/light toggle button
+    │
+    ├── storage/
+    │   ├── StorageDashboard.jsx      # Server storage panel — ServerCard per server
+    │   └── index.js                  # Re-exports StorageDashboard
+    │
+    └── log/
+        ├── LogPanel.jsx              # Main log viewer orchestrator
+        ├── DesktopHeader.jsx         # Desktop toolbar (topic, rate, pause, download, split)
+        ├── MobileHeader.jsx          # Mobile header + inline dropdowns
+        ├── FilterBar.jsx             # Desktop filter row
+        ├── ActiveFilters.jsx         # Active filter tags with clear buttons
+        ├── StatusBar.jsx             # Bottom bar: connection, rate, stream mode
+        ├── EmptyState.jsx            # Placeholder when no topic selected
+        ├── ScrollButtons.jsx         # Floating scroll-to-top/bottom buttons
+        ├── LogEntry.jsx              # Individual log row (memo'd, key=log._id)
+        ├── HeartbeatLine.jsx         # Animated SVG log rate visualizer
+        ├── constants.js              # TIME_RANGES, getButtonStyles, getShortPath
+        ├── index.js                  # Re-exports LogPanel
+        └── filters/
+            ├── FilterDropdown.jsx    # Generic dropdown with search
+            ├── ServerDropdown.jsx    # Server filter (wraps FilterDropdown)
+            ├── PathDropdown.jsx      # Path filter (wraps FilterDropdown)
+            ├── TimeRangeSelector.jsx # Time range presets + custom input
+            ├── KeywordFilter.jsx     # Tag-based keyword filter with color picker
+            └── index.js             # Re-exports all filters
+```
+
+---
+
 ## State Ownership Map
 
 ```
 App.jsx (global)
 ├── selectedTopic / selectedTopic2      ← which topic each panel shows
-├── selectedServer / selectedServer2    ← server filter (global because Sidebar badges need it)
+├── selectedServer / selectedServer2    ← server filter (global — SecondaryPanel badges need it)
 ├── darkMode                            ← theme toggle
 ├── sidebarOpen / sidebarCollapsed      ← sidebar visibility
 ├── splitView / activePanel             ← split view mode + which panel is focused
 ├── isPaused1 / isPaused2              ← per-panel pause (frozen snapshot)
 ├── topicSearchTerm                     ← sidebar topic search
-├── viewedTopics                       ← useMemo([selectedTopic, selectedTopic2]) for tiered log caps
+├── activeNav                           ← 'home' | 'logs' | 'servers' | 'settings'
+├── selectedSystemId                    ← selected system in Storage view (null = nothing selected)
+├── viewedTopics                        ← useMemo([selectedTopic, selectedTopic2]) for tiered log caps
 │
-├── useWebSocket(url, viewedTopics) → shared across all components
-│   ├── logsByTopic    — Record<topic, LogEntry[]> (newest-first after flush, 500 cap viewed / 100 non-viewed)
+├── useAuth() → { token, user, login, logout }
+├── useApiClient() → { storageClient, logsClient }  ← memoized, rebuilds on token change
+├── useWebSocket(url, viewedTopics, token) → shared across all components
+│   ├── logsByTopic    — Record<topic, LogEntry[]> (newest-first after flush, 500 viewed / 100 non-viewed)
 │   ├── topics         — string[]
 │   ├── isConnected / isReconnecting
 │   ├── logRates       — Record<topic, number> (logs/sec, 5s window)
-│   ├── clearLogs(topic), subscribe(topics), sendFilter(filters)
-│
+│   └── clearLogs(topic), subscribe(topics), sendFilter(filters), trimTopicBuffer(topic)
+└── useServerStorage(storageClient) → { data, loading, error, lastUpdated, refresh }
+
 LogPanel.jsx (per-panel local)
-├── frozenLogs / frozenTopic ← snapshot of logs + topic when paused
+├── frozenLogs / frozenTopic ← snapshot when paused
 ├── logSearchTerm / debouncedSearch     ← text search (300ms debounce for server-side)
 ├── pathForTopic        ← { topic, path } — auto-clears on topic change
-├── keywords / keywordInput / keywordMode / debouncedKeywordInput
-│   └── filteredLogs uses debouncedKeywordInput (300ms) — keeps filter and keyword chip in sync
+├── keywords / keywordInput / keywordMode / debouncedKeywordInput (300ms)
 ├── timeRange / customRangeMs
 ├── autoScroll          ← disabled only by user-initiated upward scroll (800ms intent window)
 ├── showServerDropdown / showPathDropdown / showMobileServerDropdown / showMobilePathDropdown
@@ -37,8 +115,64 @@ LogPanel.jsx (per-panel local)
 ├── isMobileMenuOpen / mobileMenuReady
 ├── atTop / atBottom    ← scroll position indicators
 ├── timestampGen        ← counter bumped every 5s for relative time refresh
-└── nowMs               ← Date.now() updated every 5s + on timeRange change (pure render)
+└── nowMs               ← Date.now() updated every 5s + on timeRange change
+
+SecondaryPanel.jsx (local, display only)
+├── systemSortMode      ← 'asc' | 'desc'
+└── systemSearchTerm    ← search input for systems list
+
+AuthContext.jsx
+├── token               ← JWT from SSO, stored in sessionStorage
+├── user                ← parsed user info
+└── loading             ← true while restoring from sessionStorage on mount
 ```
+
+---
+
+## API Layer
+
+```
+useApiClient()
+  → createClient({ baseUrl: storageApiUrl, token, onUnauthorized: logout })  → storageClient
+  → createClient({ baseUrl: httpBaseUrl,    token, onUnauthorized: logout })  → logsClient
+
+storageClient → storageApi.getLatest(client)   → GET /api/server-storage-usage/latest
+logsClient    → logsApi.download(client, topic) → GET /api/logs/download?topic=...
+
+client.js handles:
+  - Authorization: Bearer <token> header on every request
+  - 401 response → calls onUnauthorized() → logout()
+  - Non-OK responses → throws ApiError(status, message)
+```
+
+Adding a new endpoint = one line in `storageApi.js` or `logsApi.js`. Nothing else changes.
+
+---
+
+## Auth Flow
+
+```
+App opens
+  → AuthGuard checks sessionStorage for token
+  → No token + VITE_SSO_LOGIN_URL set → redirect to DEC SSO login
+  → No token + VITE_SSO_LOGIN_URL empty → skip auth (dev mode)
+  → Token found → render App normally
+
+SSO login:
+  User → DEC SSO login page
+  → SSO redirects to /callback?code=xxx
+  → CallbackPage exchanges code for token  ← TODO: fill in when DEC SSO details available
+  → handleCallback(token, user) → stored in sessionStorage
+  → navigate('/') → App renders
+
+Token expiry:
+  Any API call returns 401
+  → client.js catches it → calls onUnauthorized()
+  → logout() → clears sessionStorage → redirect to /
+  → AuthGuard → redirect to SSO login
+```
+
+---
 
 ## Render Optimization Strategy
 
@@ -48,19 +182,24 @@ LogPanel.jsx (per-panel local)
 | `LogPanel` | Yes | `filteredLogs`, `serversForSelectedTopic`, `pathsForSelectedServer`, `filteredServers`, `filteredPaths`, `displayKeywords`, `emptyState` | Main orchestrator |
 | `VirtualLogList` | Yes | — | Extracted to avoid re-rendering when LogPanel state changes that don't affect the list |
 | `LogEntry` | Yes | `relativeTime` (via timestampGen) | Only re-renders when its specific log object or keywords change |
-| `TopicItem` (Sidebar) | Yes | — | Only re-renders when its topic's log array ref changes |
-| `Sidebar` | Yes | — | Re-renders when `logsByTopic` ref changes (every flush) but children are protected |
-| All other sub-components | **No** | — | DesktopHeader, MobileHeader, FilterBar, ActiveFilters, StatusBar, ScrollButtons, EmptyState, KeywordFilter, FilterDropdown — all pure presentational, re-render with parent |
+| `TopicItem` (SecondaryPanel) | Yes | — | Only re-renders when its topic's data changes |
+| `SystemItem` (SecondaryPanel) | Yes | — | Only re-renders when its system's data changes |
+| `SecondaryPanel` | Yes | `sortedTopics`, `sortedSystems` | Re-renders on topic/system data change |
+| All other sub-components | **No** | — | DesktopHeader, MobileHeader, FilterBar, ActiveFilters, StatusBar, ScrollButtons, EmptyState, KeywordFilter, FilterDropdown — cheap renders |
 
 ### What triggers re-renders and why it's OK
 | Trigger | Frequency | What re-renders | Why it's OK |
 |---|---|---|---|
 | Log flush (150ms) | ~6.6x/sec | `useWebSocket` → `App` → `LogPanel` → `VirtualLogList` | Only ~20-30 visible `LogEntry` via virtualization |
 | `timestampGen` bump | Every 5s | `VirtualLogList` → visible `LogEntry`s | Only visible rows, `useMemo` recalculates relative time |
+| Storage poll (30s) | Every 30s | `useServerStorage` → `App` → `HomePage` + `StorageDashboard` | Infrequent, small payload |
 | Filter change | On user action | `LogPanel` + children | One-shot, not continuous |
 | Theme toggle | On user action | Everything | One-shot |
 
-### Performance-critical path (log ingestion)
+---
+
+## Performance-Critical Path (log ingestion)
+
 ```
 WebSocket frame arrives (single or batch JSON)
   → JSON.parse
@@ -78,107 +217,74 @@ WebSocket frame arrives (single or batch JSON)
   → Effect 2 useEffect [totalSize] + rAF → re-anchors after remeasurement — not blocked by isPaused
 ```
 
-### Keys
-- `LogEntry` uses `log._id` (monotonic counter assigned in useWebSocket) — NOT array index
-- `TopicItem` uses `topic` string
+---
 
 ## Virtualization Details
 
 `VirtualLogList` (inside `LogPanel.jsx`) uses `@tanstack/react-virtual` in **flow mode** (not positioned mode):
 - `estimateSize`: 114px per row
-- `overscan`: 20 rows (renders 20 extra above/below viewport for smooth scrolling)
-- `getScrollElement`: the `absolute inset-0 overflow-auto` div (scrollRef)
-- Each row uses `measureElement` for live height measurement via the virtualizer's internal ResizeObserver
-- Items are in **normal document flow** — NOT absolutely positioned. Spacing managed by CSS `paddingTop` / `paddingBottom` on the items wrapper div (virtualizer spacers). Cards cannot collide or overlap.
-- A separate `ResizeObserver` on the scroll container handles two concerns:
-  - **Width change**: captures topmost visible item index (`anchorIndexRef`) before `measure()`, restores it in Effect 2 after `totalSize` updates; or scrolls to last if at bottom
-  - **Height shrink** (pause banner, mobile menu open): scrolls to last if at bottom (`atBottomRef`)
-- **Paused banner** sits outside the scroll container as `flex-shrink-0` in the flex column — always visible regardless of scroll position
-- **`scrollToBottom()`** in LogPanel uses `virtualizerScrollToBottomRef` (virtualizer's `scrollToIndex`) — not raw `scrollTop` assignment — to avoid mid-item landing on spacer boundaries
+- `overscan`: 20 rows
+- `getScrollElement`: the `overflow-auto` div (scrollRef)
+- Items in **normal document flow** — NOT absolutely positioned. Spacing via CSS `paddingTop`/`paddingBottom` spacers.
+- ResizeObserver handles width change (captures `anchorIndexRef`, restores after `totalSize` update) and height shrink (scrolls to last if at bottom via `atBottomRef`)
+- **`scrollToBottom()`** uses `virtualizerScrollToBottomRef` (`scrollToIndex`) — never raw `scrollTop`
+
+---
 
 ## WebSocket Hook Internals (`useWebSocket.js`)
 
-### Queues and buffers
-| Ref | Purpose | Cap |
-|---|---|---|
-| `pendingRef` | Logs waiting for next 150ms flush | maxLogsPerTopic per topic (pendingCountRef) |
-| `logCountRef` | Raw count per topic for rate calc | Reset every 5s |
+### Signature
+```js
+useWebSocket(url, viewedTopics, token = null)
+// token appended as ?token=xxx query param (browsers cannot set WS headers)
+```
 
 ### Message discrimination
 ```
 JSON.parse(event.data)
-  → { type: "topics", topics: string[] }?  → Topic list (primary format, on connect)
+  → { type: "topics", topics: string[] }?         → Topic list (on connect)
   → { type: "stats", topics: {...}, intervalMs }?  → Per-topic rate stats (~every 2s)
-  → { type: "filter-ack" }?  → Filter acknowledgment (ignored, client filters locally)
-  → Array of strings? (legacy)  → Topic list (backwards-compat fallback)
-  → Array of objects?  → Batched log events (iterate, assign _id each)
-  → Single object?  → Single log event (wrap in array, same path)
+  → { type: "filter-ack" }?                        → Filter ack (ignored, client filters locally)
+  → Array of strings? (legacy)                     → Topic list (backwards-compat)
+  → Array of objects?                              → Batched log events
+  → Single object?                                 → Single log event
 ```
 
 ### Reconnect
 - Exponential backoff: `min(1000 * 2^attempts, 30000)ms`
 - On reconnect: re-sends subscriptions + active filter
 
+---
+
 ## Filter Pipeline
 
-All filtering runs **client-side** in `filteredLogs` useMemo for instant feedback.
-Server-side filter (debounced) is a bandwidth optimization only.
+All filtering runs **client-side** in `filteredLogs` useMemo for instant feedback. Server-side filter (debounced 300ms) reduces WS bandwidth only — UI never waits for it.
 
 ```
-User types in search box / changes any filter
-  → logSearchTerm / keywords / timeRange / etc. update immediately
-  → filteredLogs useMemo recomputes instantly (client-side, all filters applied)
-  → UI shows matching logs in real time
+User changes any filter
+  → filteredLogs useMemo recomputes instantly (client-side)
+  → UI updates in real time
 
-Server-side bandwidth optimization (parallel, does not block display):
-  → 300ms debounce → setDebouncedSearch
-  → useEffect fires → sendFilter({ server, path, search, keywords, timeRange, timeRangeMs? })
-  → Server applies filter, sends only matching logs going forward (reduces WS traffic)
-  → Server sends { type: "filter-ack", filters }
+Server-side (parallel, does not block display):
+  → 300ms debounce → sendFilter({ server, path, search, keywords, timeRange })
+  → Server applies filter, sends only matching logs going forward
 ```
 
-### Client-side `filteredLogs` (single source of truth)
-`filteredLogs` in LogPanel applies ALL filters locally: server/path exact match, plain text search, keywords with `debouncedKeywordInput` (AND/OR mode), and time range (using `nowMs` state for render purity). The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses the debounced value so the filter result and the pending keyword chip in the UI appear in sync.
+---
 
 ## Theme System
 
-`src/constants/theme.js` exports `styles.dark` and `styles.light` — objects with ~20 keys, each a Tailwind class string. Components receive `theme` prop and use `theme.background`, `theme.text`, `theme.logEntry`, etc.
+`src/constants/theme.js` exports `styles.dark` and `styles.light` — objects with ~20 Tailwind class string tokens. Components receive `theme` and `darkMode` props.
 
-Key tokens: `background`, `sidebar`, `header`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `card`, `hover`, `selected`, `topicItem`, `logEntry`, `statusBar`, `scrollbar`, `serverBadge`, `popupBorder`
+Key tokens: `background`, `sidebar`, `card`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `hover`, `selected`, `logEntry`, `statusBar`, `scrollbar`, `serverBadge`, `popupBorder`
 
-## Sub-component Props Quick Reference
+---
 
-| Component | Key props | State? |
-|---|---|---|
-| `DesktopHeader` | selectedTopic, displayedLogs, logRate, onDownload, all toolbar callbacks | None |
-| `MobileHeader` | Same as Desktop + mobile-specific dropdowns, server/path filters, onDownload | None |
-| `FilterBar` | server/path dropdowns, timeRange, refs for positioning | None |
-| `ActiveFilters` | selectedServer/Path, logSearchTerm, keywords, clear callbacks | None (returns null if no filters) |
-| `StatusBar` | isConnected, isReconnecting, isPaused, logRate | None |
-| `ScrollButtons` | atTop, atBottom, scroll callbacks | None |
-| `EmptyState` | theme, splitView, panel callbacks | None |
-| `KeywordFilter` | keywords, inputValue, callbacks, mode | selectedColor, hexInput, inputRef |
-| `FilterDropdown` | isOpen, items, selectedItem, searchTerm, callbacks | dropdownRef (click-outside) |
+## Multilingual Sort (SecondaryPanel)
 
-## File Map
-
-```
-src/
-├── main.jsx                    # Entry point
-├── App.jsx                     # Global state, split view, theme resolution
-├── config.js                   # VITE_WS_URL, VITE_MAX_LOGS_PER_TOPIC, VITE_MAX_MESSAGE_LENGTH + derives httpBaseUrl for REST API
-├── constants/
-│   ├── theme.js                # styles.dark / styles.light token objects
-│   └── keywordColors.js        # KEYWORD_COLORS array, DEFAULT_KEYWORD_COLOR, getColorDef()
-├── hooks/
-│   └── useWebSocket.js         # WebSocket + reconnect + batching + rate tracking + filter dispatch
-├── utils/
-│   └── logUtils.js             # getLogLevelColor, getRelativeTime
-└── components/
-    ├── common/HeartbeatLine.jsx, ThemeToggle.jsx
-    ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, index.js
-    ├── log/LogPanel.jsx, VirtualLogList (inside LogPanel), LogEntry.jsx, DesktopHeader.jsx,
-    │   MobileHeader.jsx, FilterBar.jsx, ActiveFilters.jsx, StatusBar.jsx, EmptyState.jsx,
-    │   ScrollButtons.jsx, constants.js (TIME_RANGES, button styles, getShortPath), index.js
-    └── sidebar/Sidebar.jsx (contains TopicItem), index.js
-```
+Systems and topics are sorted using `Intl.Collator` with script detection:
+- Scans all names for Unicode script ranges (Khmer, Thai, Japanese, Chinese, Korean, Arabic, Cyrillic, Devanagari)
+- Single script detected → uses that script's BCP-47 locale (e.g. `'km'` for Khmer) → linguistically correct order
+- Multiple scripts or Latin-only → uses `undefined` (Unicode DUCET) → consistent cross-script grouping
+- Options: `{ sensitivity: 'base', numeric: true }` — case-insensitive, `System2` before `System10`
+- System name search uses `.normalize('NFC')` on both sides for correct Khmer Unicode matching
