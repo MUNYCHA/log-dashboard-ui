@@ -83,8 +83,8 @@ export default function App() {
     const base = 'log-dashboard-ui';
     const navLabels = { home: 'Home', logs: 'Logs', servers: 'Storage', settings: 'Settings' };
     const section = navLabels[activeNav] ?? activeNav;
-    const topic = activeNav === 'logs' && (splitView ? null : selectedTopic);
-    document.title = topic ? `${base} | ${section} | ${topic}` : `${base} | ${section}`;
+    const topic = activeNav === 'logs' && !splitView ? selectedTopic : null;
+    document.title = topic ? `${topic} — ${section} — ${base}` : `${section} — ${base}`;
   }, [activeNav, selectedTopic, splitView]);
 
   // ── Stable callbacks ──────────────────────────────────────────────────────
