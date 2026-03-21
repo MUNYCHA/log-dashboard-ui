@@ -1,3 +1,11 @@
+export const formatBytes = (bytes) => {
+  if (bytes >= 1e12) return `${(bytes / 1e12).toFixed(2)} TB`;
+  if (bytes >= 1e9)  return `${(bytes / 1e9).toFixed(2)} GB`;
+  if (bytes >= 1e6)  return `${(bytes / 1e6).toFixed(1)} MB`;
+  if (bytes >= 1e3)  return `${(bytes / 1e3).toFixed(1)} KB`;
+  return `${bytes} B`;
+};
+
 export const getLogLevelColor = (level, darkMode) => {
   switch(level?.toLowerCase()) {
     case 'error': return darkMode ? 'text-red-400 bg-red-500/10' : 'text-red-600 bg-red-50';
