@@ -4,6 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { KeywordFilter } from "./filters";
 import { getButtonStyles } from "./constants";
 import { logsApi } from "../../api/logsApi";
+import config from "../../config";
 import DesktopHeader from "./DesktopHeader";
 import MobileHeader from "./MobileHeader";
 import FilterBar from "./FilterBar";
