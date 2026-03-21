@@ -1,4 +1,4 @@
-# LogStream
+# log-dashboard-ui
 
 Real-time log monitoring dashboard. Streams live logs from multiple topics via WebSocket, with filtering, split-view, and server storage monitoring. Fully responsive from desktop to smartphone.
 
