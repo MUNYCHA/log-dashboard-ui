@@ -93,7 +93,7 @@ const ServerCard = ({ server, darkMode }) => {
                   <td className={`px-5 py-3 font-mono text-[12.5px] ${darkMode ? 'text-[#BDC1C6]' : 'text-[#3C4043]'}`}>
                     {mount.path}
                   </td>
-                  <td className={`px-5 py-3 text-right font-mono tabular-nums text-[12.5px] whitespace-nowrap font-medium ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}>
+                  <td className={`px-5 py-3 text-right font-mono tabular-nums text-[12.5px] whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
                     {formatBytes(mount.usedBytes)}
                   </td>
                   <td className={`px-5 py-3 text-right font-mono tabular-nums text-[12.5px] whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
