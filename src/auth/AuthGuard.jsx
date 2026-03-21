@@ -1,11 +1,16 @@
 import React, { useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import config from '../config';
 
-// Protects all routes — redirects to SSO login if no token present
+// Protects all routes — redirects to SSO login if no token present.
+// If SSO is not configured (no loginUrl), auth is skipped so local dev works without SSO.
+const ssoConfigured = Boolean(config.sso.loginUrl);
+
 const AuthGuard = ({ children }) => {
   const { token, loading, login } = useAuth();
 
   useEffect(() => {
+    if (!ssoConfigured) return; // dev mode — skip auth
     if (!loading && !token) {
       login();
     }
@@ -22,7 +27,7 @@ const AuthGuard = ({ children }) => {
     );
   }
 
-  if (!token) {
+  if (!token && ssoConfigured) {
     // Redirecting to SSO — show nothing while browser navigates
     return null;
   }
