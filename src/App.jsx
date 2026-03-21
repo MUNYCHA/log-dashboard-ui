@@ -79,6 +79,14 @@ export default function App() {
     }
   }, [topics, subscribe]);
 
+  useEffect(() => {
+    const base = 'log-dashboard-ui';
+    const navLabels = { home: 'Home', logs: 'Logs', servers: 'Storage', settings: 'Settings' };
+    const section = navLabels[activeNav] ?? activeNav;
+    const topic = activeNav === 'logs' && (splitView ? null : selectedTopic);
+    document.title = topic ? `${base} | ${section} | ${topic}` : `${base} | ${section}`;
+  }, [activeNav, selectedTopic, splitView]);
+
   // ── Stable callbacks ──────────────────────────────────────────────────────
   const handleTopicSelect = useCallback((topic) => {
     setIsPaused1(false);
