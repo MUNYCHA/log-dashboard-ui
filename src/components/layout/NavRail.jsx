@@ -111,7 +111,12 @@ const NavRail = ({ activeNav, onNavChange, darkMode, isConnected }) => {
                 : darkMode ? 'text-[#9AA0A6]' : 'text-[#5F6368]'
             }`}
           >
-            {item.icon}
+            <div className="relative">
+              {item.icon}
+              {item.id === 'logs' && isConnected && (
+                <span className={`absolute top-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ${darkMode ? 'ring-[#1E1E1E]' : 'ring-white'}`} />
+              )}
+            </div>
             <span className="text-[9px] font-medium">{item.label}</span>
           </button>
         ))}
