@@ -1,3 +1,37 @@
+/* Noto Sans Khmer — activates automatically for Khmer characters */
+@font-face {
+  font-family: 'Noto Sans Khmer';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/NotoSansKhmer-Regular.ttf) format('truetype');
+  unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D;
+}
+@font-face {
+  font-family: 'Noto Sans Khmer';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/fonts/NotoSansKhmer-Medium.ttf) format('truetype');
+  unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D;
+}
+@font-face {
+  font-family: 'Noto Sans Khmer';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/fonts/NotoSansKhmer-SemiBold.ttf) format('truetype');
+  unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D;
+}
+@font-face {
+  font-family: 'Noto Sans Khmer';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/fonts/NotoSansKhmer-Bold.ttf) format('truetype');
+  unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D;
+}
+
 /* Roboto — self-hosted, no CDN dependency */
 /* cyrillic-ext */
 @font-face {
@@ -154,7 +188,7 @@ html, body, #root {
 
 body {
   margin: 0;
-  font-family: "Roboto", "Segoe UI", Arial, sans-serif;
+  font-family: "Roboto", "Noto Sans Khmer", "Segoe UI", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: 0.01em;

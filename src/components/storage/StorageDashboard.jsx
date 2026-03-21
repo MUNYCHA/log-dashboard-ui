@@ -62,50 +62,56 @@ const ServerCard = ({ server, darkMode }) => {
         </span>
       </div>
 
-      {/* Mount paths */}
+      {/* Paths table */}
       {mounts.length > 0 ? (
-        <div className="divide-y divide-transparent">
-          {mounts.map((mount, i) => {
-            const pct = mount.usedPercent ?? 0;
-            const colors = getUsageColors(pct);
-            const isLast = i === mounts.length - 1;
-            return (
-              <div
-                key={mount.path}
-                className={`px-5 py-4 transition-colors duration-100 ${colors.rowHover} ${!isLast ? `border-b ${divider}` : ''}`}
-              >
-                {/* Top row: path + sizes */}
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <p className={`font-mono text-[13px] leading-snug break-all ${darkMode ? 'text-[#BDC1C6]' : 'text-[#3C4043]'}`}>
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className={`border-b ${divider}`}>
+              <th className={`px-5 py-2.5 text-left text-[11px] font-semibold tracking-wider uppercase ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>Path</th>
+              <th className={`px-5 py-2.5 text-right text-[11px] font-semibold tracking-wider uppercase whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>Used</th>
+              <th className={`px-5 py-2.5 text-right text-[11px] font-semibold tracking-wider uppercase whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>Total</th>
+              <th className={`px-5 py-2.5 text-right text-[11px] font-semibold tracking-wider uppercase ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`} style={{ minWidth: 200 }}>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mounts.map((mount, i) => {
+              const pct = mount.usedPercent ?? 0;
+              const colors = getUsageColors(pct);
+              const isLast = i === mounts.length - 1;
+              return (
+                <tr
+                  key={mount.path}
+                  className={`transition-colors duration-100 ${colors.rowHover} ${!isLast ? `border-b ${divider}` : ''}`}
+                >
+                  <td className={`px-5 py-3.5 font-mono tabular-nums text-[14px] whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
                     {mount.path}
-                  </p>
-                  <div className="text-right flex-shrink-0">
-                    <p className={`text-[15px] font-bold tabular-nums leading-tight ${colors.text}`}>
-                      {formatBytes(mount.usedBytes)}
-                    </p>
-                    <p className={`text-[12px] font-mono tabular-nums ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                      of {formatBytes(mount.totalBytes)}
-                    </p>
-                  </div>
-                </div>
-                {/* Bottom row: bar + percentage */}
-                <div className="flex items-center gap-3">
-                  <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`}>
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${colors.bar}`}
-                      style={{ width: `${Math.min(pct, 100)}%` }}
-                    />
-                  </div>
-                  <span className={`text-[13px] font-bold font-mono tabular-nums w-14 text-right flex-shrink-0 ${colors.text}`}>
-                    {pct.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                  </td>
+                  <td className={`px-5 py-3.5 text-right font-mono tabular-nums text-[14px] whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                    {formatBytes(mount.usedBytes)}
+                  </td>
+                  <td className={`px-5 py-3.5 text-right font-mono tabular-nums text-[14px] whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                    {formatBytes(mount.totalBytes)}
+                  </td>
+                  <td className="px-5 py-3.5" style={{ minWidth: 200 }}>
+                    <div className="flex items-center gap-3">
+                      <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`}>
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${colors.bar}`}
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
+                      </div>
+                      <span className={`text-[13px] font-bold font-mono tabular-nums w-14 text-right flex-shrink-0 ${colors.text}`}>
+                        {pct.toFixed(1)}%
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       ) : (
-        <p className={`px-5 py-6 text-[13px] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+        <p className={`px-5 py-4 text-[13px] ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
           No mount paths reported
         </p>
       )}
