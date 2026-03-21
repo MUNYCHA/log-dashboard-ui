@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useServerStorage } from './hooks/useServerStorage';
+import { useAuth } from './auth/AuthContext';
 import AppShell from './components/layout/AppShell';
 import LogPanel from './components/log';
 import StorageDashboard from './components/storage';
@@ -36,7 +37,9 @@ export default function App() {
   const [activeNav, setActiveNav] = useState('home');
   const [selectedSystemId, setSelectedSystemId] = useState(null);
 
-  const { data: storageData, loading: storageLoading, error: storageError, lastUpdated: storageLastUpdated, refresh: storageRefresh } = useServerStorage();
+  const { token } = useAuth();
+
+  const { data: storageData, loading: storageLoading, error: storageError, lastUpdated: storageLastUpdated, refresh: storageRefresh } = useServerStorage(token);
   const groupedSystems = useMemo(() => groupBySystem(storageData), [storageData]);
 
   const selectedSystem = groupedSystems.find((s) => s.systemId === selectedSystemId) ?? null;
@@ -48,7 +51,7 @@ export default function App() {
     [selectedTopic, selectedTopic2],
   );
 
-  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, trimTopicBuffer, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics);
+  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, trimTopicBuffer, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics, token);
   const theme = darkMode ? styles.dark : styles.light;
 
   // Extract topic-specific log arrays — these keep the same reference

@@ -6,6 +6,13 @@ const httpBaseUrl = wsUrl.replace(/^ws:\/\//, 'http://').replace(/^wss:\/\//, 'h
 const config = {
   httpBaseUrl,
   storageApiUrl: import.meta.env.VITE_STORAGE_API_URL || 'http://localhost:8081',
+  sso: {
+    loginUrl:    import.meta.env.VITE_SSO_LOGIN_URL    || '',
+    logoutUrl:   import.meta.env.VITE_SSO_LOGOUT_URL   || '',
+    tokenUrl:    import.meta.env.VITE_SSO_TOKEN_URL     || '',
+    clientId:    import.meta.env.VITE_SSO_CLIENT_ID     || '',
+    redirectUri: import.meta.env.VITE_SSO_REDIRECT_URI  || `${window.location.origin}/callback`,
+  },
   ws: {
     url: wsUrl,
     maxLogsPerTopic: displayCap,

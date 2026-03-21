@@ -49,7 +49,7 @@ const normalizeLogEvent = (value, nextId) => {
  *   logRates      - Record<topic, number> — logs/sec per topic (from server stats)
  *   clearLogs     - (topic: string) => void
  */
-export const useWebSocket = (url, viewedTopics) => {
+export const useWebSocket = (url, viewedTopics, token = null) => {
   const [logsByTopic, setLogsByTopic] = useState({});
   const [topics, setTopics] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -137,7 +137,10 @@ export const useWebSocket = (url, viewedTopics) => {
 
     function connect() {
       if (cancelled) return;
-      const socket = new WebSocket(url);
+      // Browsers cannot send headers on WebSocket — token goes as a query param.
+      // TODO: confirm with backend team that they read ?token= on the WS handshake.
+      const wsUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
+      const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
 
       socket.onopen = () => {
