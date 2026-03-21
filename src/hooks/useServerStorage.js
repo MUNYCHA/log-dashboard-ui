@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import config from '../config';
+import { storageApi } from '../api/storageApi';
 
 export const STORAGE_REFRESH_INTERVAL_MS = 30_000;
 
-export const useServerStorage = (token = null) => {
+export const useServerStorage = (client) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,10 +11,7 @@ export const useServerStorage = (token = null) => {
 
   const fetchData = useCallback(async () => {
     try {
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await fetch(`${config.storageApiUrl}/api/server-storage-usage/latest`, { headers });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
+      const json = await storageApi.getLatest(client);
       setData(json);
       setLastUpdated(new Date());
       setError(null);
@@ -23,7 +20,7 @@ export const useServerStorage = (token = null) => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [client]);
 
   useEffect(() => {
     fetchData();

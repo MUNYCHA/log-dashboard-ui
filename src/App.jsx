@@ -3,6 +3,7 @@ import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useServerStorage } from './hooks/useServerStorage';
 import { useAuth } from './auth/AuthContext';
+import { useApiClient } from './api/useApiClient';
 import AppShell from './components/layout/AppShell';
 import LogPanel from './components/log';
 import StorageDashboard from './components/storage';
@@ -38,8 +39,9 @@ export default function App() {
   const [selectedSystemId, setSelectedSystemId] = useState(null);
 
   const { token } = useAuth();
+  const { storageClient, logsClient } = useApiClient();
 
-  const { data: storageData, loading: storageLoading, error: storageError, lastUpdated: storageLastUpdated, refresh: storageRefresh } = useServerStorage(token);
+  const { data: storageData, loading: storageLoading, error: storageError, lastUpdated: storageLastUpdated, refresh: storageRefresh } = useServerStorage(storageClient);
   const groupedSystems = useMemo(() => groupBySystem(storageData), [storageData]);
 
   const selectedSystem = groupedSystems.find((s) => s.systemId === selectedSystemId) ?? null;
@@ -221,6 +223,7 @@ export default function App() {
             togglePause={togglePause1}
             isActivePanel={!splitView || activePanel === 1}
             onSetActive={setActive1}
+            logsClient={logsClient}
           />
 
           {splitView && (
@@ -247,6 +250,7 @@ export default function App() {
               onSetActive={setActive2}
               onClosePanel={handleClosePanel2}
               panelId={2}
+              logsClient={logsClient}
             />
           )}
         </>

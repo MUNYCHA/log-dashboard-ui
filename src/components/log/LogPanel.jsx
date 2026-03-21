@@ -3,7 +3,7 @@ import { AnimatePresence, motion as Motion } from "framer-motion";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { KeywordFilter } from "./filters";
 import { getButtonStyles } from "./constants";
-import config from "../../config";
+import { logsApi } from "../../api/logsApi";
 import DesktopHeader from "./DesktopHeader";
 import MobileHeader from "./MobileHeader";
 import FilterBar from "./FilterBar";
@@ -292,6 +292,7 @@ const LogPanel = ({
   onSetActive,
   sendFilter,
   panelId,
+  logsClient,
 }) => {
   const [frozenLogs, setFrozenLogs] = useState(null);
   const [frozenTopic, setFrozenTopic] = useState(null);
@@ -588,16 +589,8 @@ const LogPanel = ({
   };
 
   const downloadLogs = async () => {
-    const url = `${config.httpBaseUrl}/api/logs/download?topic=${encodeURIComponent(selectedTopic)}`;
     try {
-      const res = await fetch(url);
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        const msg = text.trim() || `Server returned ${res.status}`;
-        setDownloadError(msg);
-        setTimeout(() => setDownloadError(null), 5000);
-        return;
-      }
+      const res = await logsApi.download(logsClient, selectedTopic);
       const blob = await res.blob();
       const disposition = res.headers.get('Content-Disposition') || '';
       const match = disposition.match(/filename="?([^"]+)"?/);
