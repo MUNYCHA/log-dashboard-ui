@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
-// Handles the redirect back from DEC SSO after login.
+// Handles the redirect back from SSO after login.
 // SSO sends the user to /callback?code=xxx — this page exchanges that code for a token.
 const CallbackPage = () => {
   const { handleCallback } = useAuth();
@@ -28,7 +28,7 @@ const CallbackPage = () => {
       return;
     }
 
-    // TODO: Exchange the authorization code for a token using your DEC SSO token endpoint.
+    // TODO: Exchange the authorization code for a token using your SSO token endpoint.
     // Typical OIDC token exchange (done server-side or via PKCE):
     //
     // const res = await fetch(`${config.sso.tokenUrl}`, {
@@ -45,7 +45,7 @@ const CallbackPage = () => {
     // const user = parseJwt(id_token); // decode user info from JWT
     // handleCallback(access_token, user);
 
-    console.warn('CallbackPage: TODO — implement token exchange with DEC SSO');
+    console.warn('CallbackPage: TODO — implement token exchange with SSO');
     navigate('/', { replace: true });
   }, [handleCallback, navigate]);
 

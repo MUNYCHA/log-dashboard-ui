@@ -154,14 +154,14 @@ Adding a new endpoint = one line in `storageApi.js` or `logsApi.js`. Nothing els
 ```
 App opens
   → AuthGuard checks sessionStorage for token
-  → No token + VITE_SSO_LOGIN_URL set → redirect to DEC SSO login
+  → No token + VITE_SSO_LOGIN_URL set → redirect to SSO login
   → No token + VITE_SSO_LOGIN_URL empty → skip auth (dev mode)
   → Token found → render App normally
 
 SSO login:
-  User → DEC SSO login page
+  User → SSO login page
   → SSO redirects to /callback?code=xxx
-  → CallbackPage exchanges code for token  ← TODO: fill in when DEC SSO details available
+  → CallbackPage exchanges code for token  ← TODO: fill in when SSO details available
   → handleCallback(token, user) → stored in sessionStorage
   → navigate('/') → App renders
 

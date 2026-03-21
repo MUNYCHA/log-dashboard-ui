@@ -19,9 +19,9 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // Redirect browser to DEC SSO login page
+  // Redirect browser to SSO login page
   const login = useCallback(() => {
-    // TODO: Replace with actual DEC SSO authorization URL and params
+    // TODO: Replace with actual SSO authorization URL and params
     // Typical OIDC: ?response_type=code&client_id=...&redirect_uri=...&scope=openid profile
     const params = new URLSearchParams({
       response_type: 'code',
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('auth_user');
-    // TODO: Redirect to DEC SSO logout URL if required
+    // TODO: Redirect to SSO logout URL if required
     // window.location.href = config.sso.logoutUrl;
     window.location.href = '/';
   }, []);

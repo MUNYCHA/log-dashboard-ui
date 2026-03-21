@@ -63,7 +63,7 @@ BrowserRouter
 
 **API layer:** All HTTP calls go through `src/api/client.js` (auth header, 401 auto-logout, error handling). `storageApi.js` and `logsApi.js` define endpoints. `useApiClient()` builds memoized clients from the current token.
 
-**Auth:** SSO via OIDC. `AuthGuard` blocks the app until a token is present. If `VITE_SSO_LOGIN_URL` is empty, auth is skipped (dev mode). Token exchange in `CallbackPage.jsx` is a TODO pending DEC SSO details.
+**Auth:** SSO via OIDC. `AuthGuard` blocks the app until a token is present. If `VITE_SSO_LOGIN_URL` is empty, auth is skipped (dev mode). Token exchange in `CallbackPage.jsx` is a TODO pending SSO details.
 
 ## Key Rules
 
@@ -100,10 +100,10 @@ BrowserRouter
 | `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs in memory per viewed topic (non-viewed: 100) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate messages longer than this (chars) |
 | `VITE_STORAGE_API_URL` | `http://localhost:8081` | Storage monitoring REST API base URL |
-| `VITE_SSO_LOGIN_URL` | _(empty)_ | DEC SSO authorization endpoint. **If empty, auth is skipped (dev mode)** |
-| `VITE_SSO_LOGOUT_URL` | _(empty)_ | DEC SSO logout endpoint |
-| `VITE_SSO_TOKEN_URL` | _(empty)_ | DEC SSO token exchange endpoint |
-| `VITE_SSO_CLIENT_ID` | _(empty)_ | App client ID registered with DEC SSO |
+| `VITE_SSO_LOGIN_URL` | _(empty)_ | SSO authorization endpoint. **If empty, auth is skipped (dev mode)** |
+| `VITE_SSO_LOGOUT_URL` | _(empty)_ | SSO logout endpoint |
+| `VITE_SSO_TOKEN_URL` | _(empty)_ | SSO token exchange endpoint |
+| `VITE_SSO_CLIENT_ID` | _(empty)_ | App client ID registered with SSO |
 | `VITE_SSO_REDIRECT_URI` | `{origin}/callback` | SSO callback URL — defaults to current origin + /callback |
 
 ## ESLint

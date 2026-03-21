@@ -62,7 +62,7 @@ VITE_MAX_LOGS_PER_TOPIC=500
 VITE_MAX_MESSAGE_LENGTH=50000
 ```
 
-Leave all `VITE_SSO_*` empty until DEC SSO is ready — auth will be skipped.
+Leave all `VITE_SSO_*` empty until SSO is ready — auth will be skipped.
 
 ### 2. Build
 
@@ -95,7 +95,7 @@ server {
 
 ### Adding SSO later
 
-1. Get the 4 values from DEC SSO team
+1. Get the 4 values from SSO team
 2. Add them to `.env`
 3. Finish `src/auth/CallbackPage.jsx` (uncomment the token exchange block)
 4. Rebuild and redeploy
@@ -112,10 +112,10 @@ All values are baked at build time. Changing them requires a rebuild.
 | `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs kept in memory per viewed topic (non-viewed topics: 100) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncates log messages longer than this (characters) to prevent DOM bloat |
 | `VITE_STORAGE_API_URL` | `http://localhost:8081` | Storage monitoring REST API base URL (separate from the log WebSocket server) |
-| `VITE_SSO_LOGIN_URL` | _(empty)_ | DEC SSO authorization endpoint — **leave empty to skip auth in dev** |
-| `VITE_SSO_LOGOUT_URL` | _(empty)_ | DEC SSO logout endpoint |
-| `VITE_SSO_TOKEN_URL` | _(empty)_ | DEC SSO token exchange endpoint |
-| `VITE_SSO_CLIENT_ID` | _(empty)_ | App client ID registered with DEC SSO |
+| `VITE_SSO_LOGIN_URL` | _(empty)_ | SSO authorization endpoint — **leave empty to skip auth in dev** |
+| `VITE_SSO_LOGOUT_URL` | _(empty)_ | SSO logout endpoint |
+| `VITE_SSO_TOKEN_URL` | _(empty)_ | SSO token exchange endpoint |
+| `VITE_SSO_CLIENT_ID` | _(empty)_ | App client ID registered with SSO |
 | `VITE_SSO_REDIRECT_URI` | `{origin}/callback` | SSO callback URL — defaults to current origin + `/callback` |
 
 ---
@@ -200,9 +200,9 @@ All requests include `Authorization: Bearer <token>` when authenticated. Base UR
 
 ## Auth (SSO)
 
-Authentication uses OIDC authorization code flow via DEC SSO. When `VITE_SSO_LOGIN_URL` is set, `AuthGuard` blocks the app and redirects to the SSO login page. On callback, `CallbackPage` handles the code exchange and stores the JWT.
+Authentication uses OIDC authorization code flow via SSO. When `VITE_SSO_LOGIN_URL` is set, `AuthGuard` blocks the app and redirects to the SSO login page. On callback, `CallbackPage` handles the code exchange and stores the JWT.
 
-**To complete SSO setup**, the token exchange in `src/auth/CallbackPage.jsx` needs to be filled in once the DEC SSO team provides:
+**To complete SSO setup**, the token exchange in `src/auth/CallbackPage.jsx` needs to be filled in once the SSO team provides:
 - Authorization endpoint URL (`VITE_SSO_LOGIN_URL`)
 - Token exchange endpoint URL (`VITE_SSO_TOKEN_URL`)
 - Logout endpoint URL (`VITE_SSO_LOGOUT_URL`)
