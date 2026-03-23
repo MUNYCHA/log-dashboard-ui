@@ -31,7 +31,7 @@ const THEME_OPTIONS = [
 ];
 
 const SettingsPage = ({ darkMode, themeMode, onSetThemeMode, theme }) => (
-  <div className="flex flex-col flex-1 min-w-0 min-h-0">
+  <div className="flex flex-col flex-1 min-w-0 min-h-0 pb-14 md:pb-0">
     <div className={`flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden ${theme.card}`}>
 
       {/* Header */}

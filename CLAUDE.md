@@ -24,7 +24,7 @@ React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 
 - `useAuth()` → token, user, login, logout — available anywhere inside `AuthProvider`
 
 **State ownership:**
-- `App.jsx` — selectedTopic/Server (per panel), darkMode, sidebarOpen/collapsed, splitView, activePanel, isPaused1/2, viewedTopics, activeNav, selectedSystemId
+- `App.jsx` — selectedTopic/Server (per panel), darkMode, sidebarOpen/collapsed, splitView, activePanel, isPaused1/2, viewedTopics, activeNav, selectedSystemId, topicSortMode, topicSearchTerm
 - `LogPanel.jsx` — path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, frozenTopic, timestampGen, nowMs, isMobileMenuOpen
 - `useWebSocket` — logsByTopic, topics, isConnected, logRates
 - `useServerStorage` — data, loading, error, lastUpdated
@@ -33,26 +33,29 @@ React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 
 
 **Component tree:**
 ```
-BrowserRouter
-└── AuthProvider
-    ├── /callback → CallbackPage (public)
-    └── /* → AuthGuard → App
-                ├── AppShell
-                │   ├── NavRail (desktop rail + mobile bottom tab bar)
-                │   ├── SecondaryPanel (topics list for Logs, systems list for Storage)
-                │   └── [main content slot]
-                ├── HomePage        (activeNav === 'home')
-                ├── LogPanel #1     (activeNav === 'logs')
-                │   ├── DesktopHeader / MobileHeader / FilterBar / ActiveFilters
-                │   ├── KeywordFilter
-                │   ├── VirtualLogList (memo'd — @tanstack/react-virtual)
-                │   │   └── LogEntry (memo'd — key=log._id)
-                │   ├── ScrollButtons
-                │   └── StatusBar
-                ├── LogPanel #2     (activeNav === 'logs' + splitView)
-                ├── StorageDashboard (activeNav === 'servers')
-                │   └── ServerCard (per server)
-                └── SettingsPage    (activeNav === 'settings')
+Root.jsx (SplashScreen gate)
+├── SplashScreen        (shown on first load, fades out after ~2s)
+└── BrowserRouter
+    └── AuthProvider
+        ├── /callback → CallbackPage (public)
+        └── /* → AuthGuard → App
+                    ├── AppShell
+                    │   ├── NavRail (desktop rail + mobile bottom tab bar)
+                    │   ├── SecondaryPanel (topics list for Logs, systems list for Storage)
+                    │   └── [main content slot]
+                    ├── HomePage        (activeNav === 'home')
+                    ├── StorageDashboard (activeNav === 'servers')
+                    │   └── ServerCard (per server)
+                    ├── SettingsPage    (activeNav === 'settings')
+                    └── div[hidden when not logs] — always mounted to preserve filter state
+                        ├── LogPanel #1
+                        │   ├── DesktopHeader / MobileHeader / FilterBar / ActiveFilters
+                        │   ├── KeywordFilter
+                        │   ├── VirtualLogList (memo'd — @tanstack/react-virtual)
+                        │   │   └── LogEntry (memo'd — key=log._id)
+                        │   ├── ScrollButtons
+                        │   └── StatusBar
+                        └── LogPanel #2 (splitView only)
 ```
 
 **WS protocol:** Server sends `string[]` (topics) on connect, then `LogEvent` objects or **batched JSON arrays**, plus `{ type: "filter-ack" }` acks. Hook normalizes both formats. Each log gets `_id` (monotonic counter) for stable React keys. Token attached as `?token=` query param (browsers cannot send WS headers).
@@ -69,7 +72,8 @@ BrowserRouter
 
 - `selectedPath` is local to LogPanel, auto-clears on topic change via `pathForTopic` pattern
 - `selectedServer` is global (App.jsx) — SecondaryPanel badges depend on it
-- All filters reset on topic change via key-based component remount (`key=panel-X-${selectedTopic}` in App.jsx forces full LogPanel remount)
+- **LogPanel is always mounted** — hidden via `className={activeNav === 'logs' ? 'contents' : 'hidden'}` in App.jsx. This preserves all filter state (search, keywords, time range, etc.) when the user navigates away and back. Do NOT switch to conditional rendering (`activeNav === 'logs' && <LogPanel>`).
+- All filters reset on **topic change** (not nav switch) via key-based remount (`key=panel-X-${selectedTopic}` in App.jsx forces full LogPanel remount when topic changes)
 - Active filters resent on WS reconnect (stored in `activeFilterRef`)
 - Auto-scroll is disabled only by user-initiated upward scrolling (guarded by an 800ms `userScrollIntentUntilRef` window — prevents programmatic `scrollToIndex` from being misidentified as user intent). Scrolling back to the bottom re-enables it.
 - Mobile menu: 300ms `pointer-events-none` guard against double-tap

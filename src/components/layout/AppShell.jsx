@@ -68,8 +68,8 @@ const AppShell = ({
         />
       )}
 
-      {/* Main content — pb-16 on mobile reserves space above the fixed bottom tab bar */}
-      <div className="flex flex-1 min-w-0 overflow-hidden gap-2 pb-16 md:pb-0">
+      {/* Main content */}
+      <div className="flex flex-1 min-w-0 overflow-hidden gap-2">
         {children}
       </div>
     </div>

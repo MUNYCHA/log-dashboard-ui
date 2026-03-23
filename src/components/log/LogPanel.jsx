@@ -662,7 +662,7 @@ const LogPanel = ({
 
   return (
     <div
-      className={`flex-1 flex flex-col min-w-0 gap-2 ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''}`}
+      className={`flex-1 flex flex-col min-w-0 gap-2 pb-14 md:pb-0 ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''}`}
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
       <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.card} rounded-2xl flex-shrink-0 relative z-10`}>

@@ -139,16 +139,20 @@ All filtering is **client-side and instant**. A debounced server-side filter (30
 - **Active filter chips** — shows active filters with individual clear buttons
 
 ### Display
+- **Splash screen** — animated icon + progress bar on first load
 - **Relative timestamps** — `2m ago` style; hover to see the full ISO timestamp
 - **Keyword highlighting** — each keyword gets its custom color, highlighted inline
-- **Dark / light theme** toggle
+- **Dark / light / system theme** — persists across sessions via localStorage
 - **Split view** — two independent log panels side by side (desktop)
 - **Heartbeat indicator** — animated SVG line reflecting live log rate; color shifts green → yellow → orange → red by rate
 - **Log rate** — logs/sec shown per topic in the sidebar
+- **Filter state preserved** — switching to Home/Storage/Settings and back keeps all active filters intact; only topic change resets them
 
 ### Storage Monitoring
 - Per-system disk usage, polled every 30 seconds
+- Per-mount-path breakdown: used / total bytes, usage bar, colored percentage chip (green / amber / red)
 - Systems list in sidebar with A–Z / Z–A sort and search (supports multilingual names including Khmer)
+- Topics sidebar sort: Activity (highest log rate first) / A→Z / Z→A
 
 ### Actions
 - **Download logs** — export raw logs for the active topic via REST API

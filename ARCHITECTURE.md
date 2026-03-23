@@ -8,7 +8,8 @@ Deep implementation reference. CLAUDE.md links here for details.
 
 ```
 src/
-├── main.jsx                          # Entry point — BrowserRouter + AuthProvider + routes
+├── main.jsx                          # Entry point — renders Root inside StrictMode + ErrorBoundary
+├── Root.jsx                          # BrowserRouter + AuthProvider + routes + SplashScreen gate
 ├── App.jsx                           # Global state, nav routing, split view, theme resolution
 ├── config.js                         # All env vars: WS, storage API, SSO, log caps
 │
@@ -36,7 +37,8 @@ src/
 │
 └── components/
     ├── common/
-    │   └── ErrorBoundary.jsx         # App-level error boundary (used by main.jsx)
+    │   ├── ErrorBoundary.jsx         # App-level error boundary (used by main.jsx)
+    │   └── SplashScreen.jsx          # Animated splash screen shown on first load (Root.jsx)
     │
     ├── layout/
     │   ├── AppShell.jsx              # Outer layout: NavRail + SecondaryPanel + content slot
@@ -88,6 +90,7 @@ App.jsx (global)
 ├── sidebarOpen / sidebarCollapsed      ← sidebar visibility
 ├── splitView / activePanel             ← split view mode + which panel is focused
 ├── isPaused1 / isPaused2              ← per-panel pause (frozen snapshot)
+├── topicSortMode                       ← 'activity' | 'asc' | 'desc'
 ├── topicSearchTerm                     ← sidebar topic search
 ├── activeNav                           ← 'home' | 'logs' | 'servers' | 'settings'
 ├── selectedSystemId                    ← selected system in Storage view (null = nothing selected)
@@ -276,7 +279,9 @@ Server-side (parallel, does not block display):
 
 `src/constants/theme.js` exports `styles.dark` and `styles.light` — objects with ~20 Tailwind class string tokens. Components receive `theme` and `darkMode` props.
 
-Key tokens: `background`, `sidebar`, `card`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `hover`, `selected`, `logEntry`, `statusBar`, `scrollbar`, `serverBadge`, `popupBorder`
+Key tokens: `background`, `sidebar`, `card`, `panel`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `hover`, `selected`, `logEntry`, `statusBar`, `scrollbar`, `serverBadge`, `popupBorder`
+
+`card` has a box-shadow (used for floating panels). `panel` is flat — same background, no shadow (currently unused but available).
 
 ---
 

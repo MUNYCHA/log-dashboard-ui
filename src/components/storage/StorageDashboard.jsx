@@ -134,7 +134,7 @@ const StorageDashboard = ({ darkMode, theme, selectedSystem, loading, error, las
     : 'text-[#5F6368] hover:text-[#202124] hover:bg-[#E8EAED]';
 
   return (
-    <div className="flex flex-col flex-1 min-w-0 min-h-0">
+    <div className="flex flex-col flex-1 min-w-0 min-h-0 pb-14 md:pb-0">
       <div className={`flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden ${theme.card}`}>
 
         {/* Header */}
