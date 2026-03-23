@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useTheme } from './hooks/useTheme';
 import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useServerStorage } from './hooks/useServerStorage';
@@ -28,7 +29,7 @@ export default function App() {
   const [selectedTopic2, setSelectedTopic2] = useState(null);
   const [selectedServer2, setSelectedServer2] = useState(null);
   const [topicSearchTerm, setTopicSearchTerm] = useState('');
-  const [darkMode, setDarkMode] = useState(true);
+  const { themeMode, darkMode, setThemeMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [splitView, setSplitView] = useState(false);
   const [activePanel, setActivePanel] = useState(1);
@@ -129,7 +130,7 @@ export default function App() {
     sendFilter(null, 2);
   }, [sendFilter]);
 
-  const toggleDarkMode = useCallback(() => setDarkMode((d) => !d), []);
+  const toggleDarkMode = useCallback(() => setThemeMode(darkMode ? 'light' : 'dark'), [darkMode, setThemeMode]);
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const toggleSidebarCollapsed = useCallback(() => setSidebarCollapsed((v) => !v), []);
@@ -201,68 +202,68 @@ export default function App() {
       {activeNav === 'settings' && (
         <SettingsPage
           darkMode={darkMode}
+          themeMode={themeMode}
           onThemeToggle={toggleDarkMode}
+          onSetThemeMode={setThemeMode}
           theme={theme}
         />
       )}
 
-      {/* Logs */}
-      {activeNav === 'logs' && (
-        <>
+      {/* Logs — always mounted to preserve filter state; hidden via CSS when not active */}
+      <div className={activeNav === 'logs' ? 'contents' : 'hidden'}>
+        <LogPanel
+          key={`panel-1-${selectedTopic ?? 'none'}`}
+          topicLogs={topicLogs1}
+          selectedTopic={selectedTopic}
+          selectedServer={selectedServer}
+          onServerSelect={setSelectedServer}
+          onClearServer={clearServer1}
+          onClearLogs={clearLogs}
+          isConnected={isConnected}
+          isReconnecting={isReconnecting}
+          logRate={logRates[selectedTopic] || 0}
+          theme={theme}
+          darkMode={darkMode}
+          onOpenSidebar={openSidebar}
+          splitView={splitView}
+          onOpenSplit={handleOpenSplit}
+          sendFilter={sendFilter}
+          panelId={1}
+          isPaused={isPaused1}
+          togglePause={togglePause1}
+          isActivePanel={!splitView || activePanel === 1}
+          onSetActive={setActive1}
+          logsClient={logsClient}
+        />
+
+        {splitView && (
           <LogPanel
-            key={`panel-1-${selectedTopic ?? 'none'}`}
-            topicLogs={topicLogs1}
-            selectedTopic={selectedTopic}
-            selectedServer={selectedServer}
-            onServerSelect={setSelectedServer}
-            onClearServer={clearServer1}
+            key={`panel-2-${selectedTopic2 ?? 'none'}`}
+            topicLogs={topicLogs2}
+            selectedTopic={selectedTopic2}
+            selectedServer={selectedServer2}
+            onServerSelect={setSelectedServer2}
+            onClearServer={clearServer2}
             onClearLogs={clearLogs}
             isConnected={isConnected}
             isReconnecting={isReconnecting}
-            logRate={logRates[selectedTopic] || 0}
+            logRate={logRates[selectedTopic2] || 0}
             theme={theme}
             darkMode={darkMode}
             onOpenSidebar={openSidebar}
             splitView={splitView}
             onOpenSplit={handleOpenSplit}
             sendFilter={sendFilter}
-            panelId={1}
-            isPaused={isPaused1}
-            togglePause={togglePause1}
-            isActivePanel={!splitView || activePanel === 1}
-            onSetActive={setActive1}
+            isPaused={isPaused2}
+            togglePause={togglePause2}
+            isActivePanel={activePanel === 2}
+            onSetActive={setActive2}
+            onClosePanel={handleClosePanel2}
+            panelId={2}
             logsClient={logsClient}
           />
-
-          {splitView && (
-            <LogPanel
-              key={`panel-2-${selectedTopic2 ?? 'none'}`}
-              topicLogs={topicLogs2}
-              selectedTopic={selectedTopic2}
-              selectedServer={selectedServer2}
-              onServerSelect={setSelectedServer2}
-              onClearServer={clearServer2}
-              onClearLogs={clearLogs}
-              isConnected={isConnected}
-              isReconnecting={isReconnecting}
-              logRate={logRates[selectedTopic2] || 0}
-              theme={theme}
-              darkMode={darkMode}
-              onOpenSidebar={openSidebar}
-              splitView={splitView}
-              onOpenSplit={handleOpenSplit}
-              sendFilter={sendFilter}
-              isPaused={isPaused2}
-              togglePause={togglePause2}
-              isActivePanel={activePanel === 2}
-              onSetActive={setActive2}
-              onClosePanel={handleClosePanel2}
-              panelId={2}
-              logsClient={logsClient}
-            />
-          )}
-        </>
-      )}
+        )}
+      </div>
     </AppShell>
   );
 }

@@ -126,9 +126,7 @@ const StorageDashboard = ({ darkMode, theme, selectedSystem, loading, error, las
 
   return (
     <div className="flex flex-col flex-1 min-w-0 min-h-0">
-      <div className={`flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden border ${theme.card} ${
-        darkMode ? 'border-[#3C4043]' : 'border-[#DADCE0]'
-      }`}>
+      <div className={`flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden ${theme.card}`}>
 
         {/* Header */}
         <div className={`flex-shrink-0 px-5 py-3.5 flex items-center justify-between gap-3 border-b ${

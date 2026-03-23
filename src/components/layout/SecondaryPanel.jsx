@@ -3,15 +3,33 @@ import { motion } from 'framer-motion';
 
 const MotionSpan = motion.span;
 
+const SortAscIcon = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9M3 12h5m10 0V4m0 0l-3 3m3-3l3 3" />
+  </svg>
+);
+
+const SortDescIcon = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h5m10 4V4m0 16l-3-3m3 3l3-3" />
+  </svg>
+);
+
+const ActivityIcon = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+  </svg>
+);
+
 const TOPIC_SORT_OPTIONS = [
-  { value: 'activity', label: 'Active' },
-  { value: 'asc', label: 'A-Z' },
-  { value: 'desc', label: 'Z-A' },
+  { value: 'activity', label: 'Active', icon: <ActivityIcon />, title: 'Sort by activity' },
+  { value: 'asc',      label: 'A→Z',   icon: <SortAscIcon />,  title: 'Sort A → Z' },
+  { value: 'desc',     label: 'Z→A',   icon: <SortDescIcon />, title: 'Sort Z → A' },
 ];
 
 const SYSTEM_SORT_OPTIONS = [
-  { value: 'asc', label: 'A-Z' },
-  { value: 'desc', label: 'Z-A' },
+  { value: 'asc',  label: 'A→Z', icon: <SortAscIcon />,  title: 'Sort A → Z' },
+  { value: 'desc', label: 'Z→A', icon: <SortDescIcon />, title: 'Sort Z → A' },
 ];
 
 // Script detection: Unicode range → BCP-47 locale
@@ -278,14 +296,16 @@ const SecondaryPanel = ({
                   <button
                     key={option.value}
                     type="button"
+                    title={option.title}
                     onClick={() => onTopicSortModeChange(option.value)}
-                    className={`w-full rounded-xl py-1.5 text-center text-[12px] font-medium transition-all duration-150 ease-in-out active:scale-95 ${
+                    className={`w-full rounded-xl py-1.5 flex items-center justify-center gap-1 text-[12px] font-medium transition-all duration-150 ease-in-out active:scale-95 ${
                       option.value === topicSortMode
                         ? darkMode ? 'bg-[#1A3A6B]/50 text-[#8AB4F8]' : 'bg-white text-[#1A73E8] shadow-sm'
                         : darkMode ? 'text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED]' : 'text-[#5F6368] hover:bg-white hover:text-[#202124]'
                     }`}
                   >
-                    {option.label}
+                    {option.icon}
+                    <span>{option.label}</span>
                   </button>
                 ))}
               </div>
@@ -341,14 +361,16 @@ const SecondaryPanel = ({
                   <button
                     key={option.value}
                     type="button"
+                    title={option.title}
                     onClick={() => setSystemSortMode(option.value)}
-                    className={`w-full rounded-xl py-1.5 text-center text-[12px] font-medium transition-all duration-150 ease-in-out active:scale-95 ${
+                    className={`w-full rounded-xl py-1.5 flex items-center justify-center gap-1 text-[12px] font-medium transition-all duration-150 ease-in-out active:scale-95 ${
                       option.value === systemSortMode
                         ? darkMode ? 'bg-[#1A3A6B]/50 text-[#8AB4F8]' : 'bg-white text-[#1A73E8] shadow-sm'
                         : darkMode ? 'text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED]' : 'text-[#5F6368] hover:bg-white hover:text-[#202124]'
                     }`}
                   >
-                    {option.label}
+                    {option.icon}
+                    <span>{option.label}</span>
                   </button>
                 ))}
               </div>
