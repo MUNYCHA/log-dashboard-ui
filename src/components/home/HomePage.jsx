@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useMemo, useRef, useEffect, useState } from 'react';
+import { motion as Motion } from 'framer-motion';
 import { formatBytes } from '../../utils/storageUtils';
 
 const SAMPLES = 30;
@@ -8,10 +8,12 @@ const SAMPLES = 30;
 const useRateHistory = (logRates, topics) => {
   const ratesRef = useRef(logRates);
   const topicsRef = useRef(topics);
-  ratesRef.current = logRates;
-  topicsRef.current = topics;
   const buf = useRef({ total: [], byTopic: {} });
   const [snap, setSnap] = useState({ total: [], byTopic: {} });
+  useEffect(() => {
+    ratesRef.current = logRates;
+    topicsRef.current = topics;
+  });
   useEffect(() => {
     const tick = () => {
       const rates = ratesRef.current || {};
@@ -88,7 +90,7 @@ const Donut = ({ pct, size = 80, sw = 7, darkMode }) => {
     <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={sw} />
-        <motion.circle
+        <Motion.circle
           cx={size / 2} cy={size / 2} r={r}
           fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round"
           strokeDasharray={circ}
@@ -112,7 +114,7 @@ const Pulse = ({ isConnected, isReconnecting }) => {
   return (
     <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 40, height: 40 }}>
       {isConnected && [0, 0.8].map((delay, i) => (
-        <motion.div
+        <Motion.div
           key={i}
           className="absolute rounded-full"
           style={{ width: 12, height: 12, background: color }}
@@ -138,7 +140,7 @@ const SystemStorageCard = ({ system, darkMode, onNavChange }) => {
   }, [system]);
 
   return (
-    <motion.button
+    <Motion.button
       onClick={() => onNavChange('servers')}
       whileHover={{ y: -2 }}
       whileTap={{ scale: 0.98 }}
@@ -157,7 +159,7 @@ const SystemStorageCard = ({ system, darkMode, onNavChange }) => {
           {system.servers.length} server{system.servers.length !== 1 ? 's' : ''}
         </p>
       </div>
-    </motion.button>
+    </Motion.button>
   );
 };
 
