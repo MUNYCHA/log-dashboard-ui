@@ -24,8 +24,6 @@ const getUsageColors = (pct) => {
 
 const ServerCard = ({ server, darkMode }) => {
   const mounts = server.mountPathStorageUsages ?? [];
-  const worstPct = mounts.length > 0 ? Math.max(...mounts.map((m) => m.usedPercent ?? 0)) : 0;
-  const worstColors = getUsageColors(worstPct);
   const collectedAt = (() => { try { return new Date(server.collectedAt).toLocaleString(); } catch { return server.collectedAt; } })();
   const divider = darkMode ? 'border-[#3C4043]' : 'border-[#E8EAED]';
 
@@ -55,22 +53,22 @@ const ServerCard = ({ server, darkMode }) => {
             </p>
           </div>
         </div>
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-[12px] font-bold flex-shrink-0 ${
-          darkMode ? worstColors.badge : worstColors.badgeLight
-        }`}>
-          {worstPct.toFixed(0)}% used
-        </span>
       </div>
 
       {/* Paths table */}
       {mounts.length > 0 ? (
         <table className="w-full border-collapse">
           <thead>
-            <tr className={`border-b ${divider}`}>
-              <th className={`px-5 py-2.5 text-left text-[11px] font-semibold tracking-wider uppercase ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>Path</th>
-              <th className={`px-5 py-2.5 text-right text-[11px] font-semibold tracking-wider uppercase whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>Used</th>
-              <th className={`px-5 py-2.5 text-right text-[11px] font-semibold tracking-wider uppercase whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>Total</th>
-              <th className={`px-5 py-2.5 text-right text-[11px] font-semibold tracking-wider uppercase ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`} style={{ minWidth: 200 }}>Usage</th>
+            <tr className={`border-b ${divider} ${darkMode ? 'bg-[#252525]' : 'bg-white'}`}>
+              <th className={`px-5 py-3 text-left text-[11px] font-semibold tracking-wider uppercase ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                Mount Path
+              </th>
+              <th className={`px-5 py-3 text-right text-[11px] font-semibold tracking-wider uppercase whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                Used / Total
+              </th>
+              <th className={`px-5 py-3 text-right text-[11px] font-semibold tracking-wider uppercase ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`} style={{ minWidth: 220 }}>
+                Usage
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -83,24 +81,35 @@ const ServerCard = ({ server, darkMode }) => {
                   key={mount.path}
                   className={`transition-colors duration-100 ${colors.rowHover} ${!isLast ? `border-b ${divider}` : ''}`}
                 >
-                  <td className={`px-5 py-3.5 font-mono tabular-nums text-[14px] whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                    {mount.path}
+                  {/* Path — primary color, most important identifier */}
+                  <td className="px-5 py-4 max-w-[260px]">
+                    <span
+                      title={mount.path}
+                      className={`block font-mono text-[14px] font-medium truncate ${darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'}`}
+                    >
+                      {mount.path}
+                    </span>
                   </td>
-                  <td className={`px-5 py-3.5 text-right font-mono tabular-nums text-[14px] whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                    {formatBytes(mount.usedBytes)}
-                  </td>
-                  <td className={`px-5 py-3.5 text-right font-mono tabular-nums text-[14px] whitespace-nowrap ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+
+                  {/* Used / Total — merged, secondary */}
+                  <td className={`px-5 py-4 text-right font-mono tabular-nums text-[13px] whitespace-nowrap ${darkMode ? 'text-[#9AA0A6]' : 'text-[#5F6368]'}`}>
+                    <span className={darkMode ? 'text-[#BDC1C6]' : 'text-[#3C4043]'}>{formatBytes(mount.usedBytes)}</span>
+                    <span className={`mx-1.5 ${darkMode ? 'text-[#5F6368]' : 'text-[#BDBDBD]'}`}>/</span>
                     {formatBytes(mount.totalBytes)}
                   </td>
-                  <td className="px-5 py-3.5" style={{ minWidth: 200 }}>
+
+                  {/* Usage bar + % chip */}
+                  <td className="px-5 py-4" style={{ minWidth: 220 }}>
                     <div className="flex items-center gap-3">
-                      <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`}>
+                      <div className={`flex-1 h-2 rounded-full overflow-hidden ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`}>
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${colors.bar}`}
                           style={{ width: `${Math.min(pct, 100)}%` }}
                         />
                       </div>
-                      <span className={`text-[13px] font-bold font-mono tabular-nums w-14 text-right flex-shrink-0 ${colors.text}`}>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-bold tabular-nums flex-shrink-0 ${
+                        darkMode ? colors.badge : colors.badgeLight
+                      }`}>
                         {pct.toFixed(1)}%
                       </span>
                     </div>
