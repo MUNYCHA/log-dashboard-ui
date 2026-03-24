@@ -1,0 +1,11 @@
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_WS_URL: ${VITE_WS_URL}
+        VITE_MAX_LOGS_PER_TOPIC: ${VITE_MAX_LOGS_PER_TOPIC:-500}
+        VITE_MAX_MESSAGE_LENGTH: ${VITE_MAX_MESSAGE_LENGTH:-50000}
+    ports:
+      - "80:80"
+    restart: unless-stopped
