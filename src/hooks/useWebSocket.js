@@ -6,6 +6,13 @@ const SIDEBAR_LOG_CAP = 100;
 const isValidTopicList = (topics) =>
   Array.isArray(topics) && topics.every((topic) => typeof topic === 'string' && topic.trim() !== '');
 
+const LEVEL_RE = /\b(fatal|error|warn(?:ing)?|info|debug|trace)\b/i;
+const normalizeLevel = (raw) => {
+  if (!raw) return null;
+  const up = raw.toUpperCase();
+  return up === 'WARNING' ? 'WARN' : up;
+};
+
 const normalizeLogEvent = (value, nextId) => {
   if (!value || typeof value !== 'object') return null;
 
@@ -23,6 +30,10 @@ const normalizeLogEvent = (value, nextId) => {
     ? `${message.slice(0, config.ws.maxMessageLength)}\n... [truncated]`
     : message;
 
+  // Use explicit level field if present, otherwise parse from message text
+  const rawLevel = typeof value.level === 'string' ? value.level : (LEVEL_RE.exec(message)?.[1] ?? null);
+  const level = normalizeLevel(rawLevel);
+
   return {
     _id: nextId,
     topic,
@@ -30,6 +41,7 @@ const normalizeLogEvent = (value, nextId) => {
     path,
     timestamp,
     message: safeMessage,
+    level,
   };
 };
 

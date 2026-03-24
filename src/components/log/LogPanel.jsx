@@ -16,7 +16,7 @@ import LogEntry from "./LogEntry";
 const ESTIMATED_LOG_HEIGHT = 114;
 
 const VirtualLogList = React.memo(({
-  displayedLogs, isPaused, autoScroll, theme, darkMode, keywords, timestampGen,
+  displayedLogs, isPaused, autoScroll, theme, darkMode, keywords, timestampGen, timestampFormat, logCard,
   logSearchTerm,
   selectedServer, selectedPath,
   emptyState, onClearFilters, onResumeLive,
@@ -203,6 +203,8 @@ const VirtualLogList = React.memo(({
                       darkMode={darkMode}
                       keywords={keywords}
                       timestampGen={timestampGen}
+                      timestampFormat={timestampFormat}
+                      logCard={logCard}
                       logSearchTerm={logSearchTerm}
                     />
                   </div>
@@ -284,7 +286,8 @@ const LogPanel = ({
   logRate,
   theme,
   darkMode,
-  onThemeToggle,
+  timestampFormat,
+  logCard,
   onOpenSidebar,
   splitView,
   onOpenSplit,
@@ -688,7 +691,6 @@ const LogPanel = ({
           onTogglePause={handleTogglePause}
           btn={btn}
           onDownload={downloadLogs}
-          onThemeToggle={onThemeToggle}
           autoScroll={autoScroll}
           onToggleAutoScroll={toggleAutoScroll}
           onClearLogs={onClearLogs}
@@ -701,7 +703,6 @@ const LogPanel = ({
           darkMode={darkMode}
           theme={theme}
           onOpenSidebar={onOpenSidebar}
-          onThemeToggle={onThemeToggle}
           isMobileMenuOpen={isMobileMenuOpen}
           onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           mobileMenuReady={mobileMenuReady}
@@ -826,6 +827,8 @@ const LogPanel = ({
         darkMode={darkMode}
         keywords={displayKeywords}
         timestampGen={timestampGen}
+        timestampFormat={timestampFormat}
+        logCard={logCard}
         logSearchTerm={logSearchTerm}
         selectedServer={selectedServer}
         selectedPath={selectedPath}

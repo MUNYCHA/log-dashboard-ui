@@ -3,22 +3,31 @@ import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import Sidebar from './components/sidebar';
 import LogPanel from './components/log';
+import SettingsDrawer from './components/settings';
 import config from './config';
 
 export default function App() {
-  const [topicSortMode, setTopicSortMode] = useState('asc');
+  const [topicSortMode, setTopicSortMode] = useState(() => localStorage.getItem('topicSortMode') || 'asc');
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [selectedServer, setSelectedServer] = useState(null);
   const [selectedTopic2, setSelectedTopic2] = useState(null);
   const [selectedServer2, setSelectedServer2] = useState(null);
   const [topicSearchTerm, setTopicSearchTerm] = useState('');
-  const [darkMode, setDarkMode] = useState(true);
+  const [themeMode, setThemeMode] = useState(() => localStorage.getItem('themeMode') || 'system');
+  const [systemDark, setSystemDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [splitView, setSplitView] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [splitView, setSplitView] = useState(() => localStorage.getItem('splitView') === 'true');
   const [activePanel, setActivePanel] = useState(1);
   const [isPaused1, setIsPaused1] = useState(false);
   const [isPaused2, setIsPaused2] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+  const [timestampFormat, setTimestampFormat] = useState(() => localStorage.getItem('timestampFormat') || 'relative');
+  const [showServerBadge, setShowServerBadge] = useState(() => localStorage.getItem('showServerBadge') !== 'false');
+  const [showPath, setShowPath] = useState(() => localStorage.getItem('showPath') !== 'false');
+  const [copyAlwaysVisible, setCopyAlwaysVisible] = useState(() => localStorage.getItem('copyAlwaysVisible') === 'true');
+  const [logDensity, setLogDensity] = useState(() => localStorage.getItem('logDensity') || 'normal');
+  const [showLevelBadge, setShowLevelBadge] = useState(() => localStorage.getItem('showLevelBadge') !== 'false');
 
   // Which topics are currently displayed in log panels — these get full 500-log cap.
   // Non-viewed topics get a smaller cap (50) for sidebar info only.
@@ -28,6 +37,7 @@ export default function App() {
   );
 
   const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, trimTopicBuffer, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics);
+  const darkMode = themeMode === 'dark' || (themeMode === 'system' && systemDark);
   const theme = darkMode ? styles.dark : styles.light;
 
   // Extract topic-specific log arrays — these keep the same reference
@@ -46,6 +56,34 @@ export default function App() {
   useEffect(() => { selectedTopic1Ref.current = selectedTopic; }, [selectedTopic]);
   useEffect(() => { selectedTopic2Ref.current = selectedTopic2; }, [selectedTopic2]);
   useEffect(() => { topicsRef.current = topics; }, [topics]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e) => setSystemDark(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+        e.preventDefault();
+        setSettingsOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  useEffect(() => { localStorage.setItem('topicSortMode', topicSortMode); }, [topicSortMode]);
+  useEffect(() => { localStorage.setItem('sidebarCollapsed', sidebarCollapsed); }, [sidebarCollapsed]);
+  useEffect(() => { localStorage.setItem('splitView', splitView); }, [splitView]);
+  useEffect(() => { localStorage.setItem('timestampFormat', timestampFormat); }, [timestampFormat]);
+  useEffect(() => { localStorage.setItem('showServerBadge', showServerBadge); }, [showServerBadge]);
+  useEffect(() => { localStorage.setItem('showPath', showPath); }, [showPath]);
+  useEffect(() => { localStorage.setItem('copyAlwaysVisible', copyAlwaysVisible); }, [copyAlwaysVisible]);
+  useEffect(() => { localStorage.setItem('logDensity', logDensity); }, [logDensity]);
+  useEffect(() => { localStorage.setItem('showLevelBadge', showLevelBadge); }, [showLevelBadge]);
 
   // Auto-select the most active topic on first load (only if it has traffic).
   // If no topic has logs, leave unselected — user picks manually.
@@ -102,10 +140,44 @@ export default function App() {
     sendFilter(null, 2); // clear panel 2's server-side filter
   }, [sendFilter]);
 
-  const toggleDarkMode = useCallback(() => setDarkMode((d) => !d), []);
+  const setThemeModeAndPersist = useCallback((mode) => {
+    setThemeMode(mode);
+    localStorage.setItem('themeMode', mode);
+  }, []);
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const toggleSidebarCollapsed = useCallback(() => setSidebarCollapsed((v) => !v), []);
+  const openSettings = useCallback(() => setSettingsOpen(true), []);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+
+  const logCard = useMemo(
+    () => ({ showServerBadge, showPath, copyAlwaysVisible, logDensity, showLevelBadge }),
+    [showServerBadge, showPath, copyAlwaysVisible, logDensity, showLevelBadge],
+  );
+
+  const handleLogCardChange = useCallback((key, value) => {
+    if (key === 'showServerBadge') setShowServerBadge(value);
+    else if (key === 'showPath') setShowPath(value);
+    else if (key === 'copyAlwaysVisible') setCopyAlwaysVisible(value);
+    else if (key === 'logDensity') setLogDensity(value);
+    else if (key === 'showLevelBadge') setShowLevelBadge(value);
+  }, []);
+
+  const handleToggleSplitView = useCallback((value) => {
+    if (value) {
+      setSelectedTopic2(null);
+      setSelectedServer2(null);
+      setSplitView(true);
+      setActivePanel(2);
+    } else {
+      setSplitView(false);
+      setSelectedTopic2(null);
+      setSelectedServer2(null);
+      setActivePanel(1);
+      setIsPaused2(false);
+      sendFilter(null, 2);
+    }
+  }, [sendFilter]);
 
   const togglePause1 = useCallback(() => setIsPaused1((p) => !p), []);
   const togglePause2 = useCallback(() => setIsPaused2((p) => !p), []);
@@ -141,6 +213,7 @@ export default function App() {
         logRates={logRates}
         collapsed={sidebarCollapsed}
         onCollapse={toggleSidebarCollapsed}
+        onOpenSettings={openSettings}
       />
 
       <div className="flex flex-1 min-w-0 overflow-hidden gap-2">
@@ -158,7 +231,8 @@ export default function App() {
           logRate={logRates[selectedTopic] || 0}
           theme={theme}
           darkMode={darkMode}
-          onThemeToggle={toggleDarkMode}
+          timestampFormat={timestampFormat}
+          logCard={logCard}
           onOpenSidebar={openSidebar}
           splitView={splitView}
           onOpenSplit={handleOpenSplit}
@@ -186,7 +260,8 @@ export default function App() {
               logRate={logRates[selectedTopic2] || 0}
               theme={theme}
               darkMode={darkMode}
-              onThemeToggle={toggleDarkMode}
+              timestampFormat={timestampFormat}
+          logCard={logCard}
               onOpenSidebar={openSidebar}
               splitView={splitView}
               onOpenSplit={handleOpenSplit}
@@ -201,6 +276,24 @@ export default function App() {
           </>
         )}
       </div>
+
+      <SettingsDrawer
+        isOpen={settingsOpen}
+        onClose={closeSettings}
+        darkMode={darkMode}
+        themeMode={themeMode}
+        onThemeModeChange={setThemeModeAndPersist}
+        topicSortMode={topicSortMode}
+        onTopicSortModeChange={setTopicSortMode}
+        sidebarCollapsed={sidebarCollapsed}
+        onSidebarCollapsedChange={setSidebarCollapsed}
+        splitView={splitView}
+        onSplitViewToggle={handleToggleSplitView}
+        timestampFormat={timestampFormat}
+        onTimestampFormatChange={setTimestampFormat}
+        logCard={logCard}
+        onLogCardChange={handleLogCardChange}
+      />
     </div>
   );
 }
