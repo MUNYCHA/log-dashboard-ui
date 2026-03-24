@@ -27,7 +27,12 @@ export default function App() {
   const [showPath, setShowPath] = useState(() => localStorage.getItem('showPath') !== 'false');
   const [copyAlwaysVisible, setCopyAlwaysVisible] = useState(() => localStorage.getItem('copyAlwaysVisible') === 'true');
   const [logDensity, setLogDensity] = useState(() => localStorage.getItem('logDensity') || 'normal');
-  const [showLevelBadge, setShowLevelBadge] = useState(() => localStorage.getItem('showLevelBadge') !== 'false');
+  const [showFilterBar, setShowFilterBar] = useState(() => localStorage.getItem('showFilterBar') !== 'false');
+  const [showKeywordFilter, setShowKeywordFilter] = useState(() => localStorage.getItem('showKeywordFilter') !== 'false');
+  const [showStatusBar, setShowStatusBar] = useState(() => localStorage.getItem('showStatusBar') !== 'false');
+  const [showHeartbeat, setShowHeartbeat] = useState(() => localStorage.getItem('showHeartbeat') !== 'false');
+  const [showActivityDot, setShowActivityDot] = useState(() => localStorage.getItem('showActivityDot') !== 'false');
+  const [showLogRate, setShowLogRate] = useState(() => localStorage.getItem('showLogRate') !== 'false');
 
   // Which topics are currently displayed in log panels — these get full 500-log cap.
   // Non-viewed topics get a smaller cap (50) for sidebar info only.
@@ -83,7 +88,12 @@ export default function App() {
   useEffect(() => { localStorage.setItem('showPath', showPath); }, [showPath]);
   useEffect(() => { localStorage.setItem('copyAlwaysVisible', copyAlwaysVisible); }, [copyAlwaysVisible]);
   useEffect(() => { localStorage.setItem('logDensity', logDensity); }, [logDensity]);
-  useEffect(() => { localStorage.setItem('showLevelBadge', showLevelBadge); }, [showLevelBadge]);
+  useEffect(() => { localStorage.setItem('showFilterBar', showFilterBar); }, [showFilterBar]);
+  useEffect(() => { localStorage.setItem('showKeywordFilter', showKeywordFilter); }, [showKeywordFilter]);
+  useEffect(() => { localStorage.setItem('showStatusBar', showStatusBar); }, [showStatusBar]);
+  useEffect(() => { localStorage.setItem('showHeartbeat', showHeartbeat); }, [showHeartbeat]);
+  useEffect(() => { localStorage.setItem('showActivityDot', showActivityDot); }, [showActivityDot]);
+  useEffect(() => { localStorage.setItem('showLogRate', showLogRate); }, [showLogRate]);
 
   // Auto-select the most active topic on first load (only if it has traffic).
   // If no topic has logs, leave unselected — user picks manually.
@@ -151,8 +161,17 @@ export default function App() {
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
 
   const logCard = useMemo(
-    () => ({ showServerBadge, showPath, copyAlwaysVisible, logDensity, showLevelBadge }),
-    [showServerBadge, showPath, copyAlwaysVisible, logDensity, showLevelBadge],
+    () => ({
+      showServerBadge,
+      showPath,
+      copyAlwaysVisible,
+      logDensity,
+      showFilterBar,
+      showKeywordFilter,
+      showStatusBar,
+      showHeartbeat,
+    }),
+    [showServerBadge, showPath, copyAlwaysVisible, logDensity, showFilterBar, showKeywordFilter, showStatusBar, showHeartbeat],
   );
 
   const handleLogCardChange = useCallback((key, value) => {
@@ -160,7 +179,20 @@ export default function App() {
     else if (key === 'showPath') setShowPath(value);
     else if (key === 'copyAlwaysVisible') setCopyAlwaysVisible(value);
     else if (key === 'logDensity') setLogDensity(value);
-    else if (key === 'showLevelBadge') setShowLevelBadge(value);
+    else if (key === 'showFilterBar') setShowFilterBar(value);
+    else if (key === 'showKeywordFilter') setShowKeywordFilter(value);
+    else if (key === 'showStatusBar') setShowStatusBar(value);
+    else if (key === 'showHeartbeat') setShowHeartbeat(value);
+  }, []);
+
+  const sidebarPrefs = useMemo(
+    () => ({ showActivityDot, showLogRate }),
+    [showActivityDot, showLogRate],
+  );
+
+  const handleSidebarPrefChange = useCallback((key, value) => {
+    if (key === 'showActivityDot') setShowActivityDot(value);
+    else if (key === 'showLogRate') setShowLogRate(value);
   }, []);
 
   const handleToggleSplitView = useCallback((value) => {
@@ -214,6 +246,7 @@ export default function App() {
         collapsed={sidebarCollapsed}
         onCollapse={toggleSidebarCollapsed}
         onOpenSettings={openSettings}
+        sidebarPrefs={sidebarPrefs}
       />
 
       <div className="flex flex-1 min-w-0 overflow-hidden gap-2">
@@ -293,6 +326,8 @@ export default function App() {
         onTimestampFormatChange={setTimestampFormat}
         logCard={logCard}
         onLogCardChange={handleLogCardChange}
+        sidebarPrefs={sidebarPrefs}
+        onSidebarPrefChange={handleSidebarPrefChange}
       />
     </div>
   );

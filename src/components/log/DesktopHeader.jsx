@@ -5,6 +5,7 @@ const DesktopHeader = ({
   selectedTopic, displayedLogs, logRate, darkMode, theme,
   splitView, isActivePanel, onSetActive, onClosePanel, onOpenSplit,
   isPaused, onTogglePause, btn,
+  logCard,
   onDownload,
   autoScroll, onToggleAutoScroll,
   onClearLogs,
@@ -42,7 +43,7 @@ const DesktopHeader = ({
             <span className={`h-2 w-2 rounded-full ${logRate > 0 ? 'bg-emerald-500' : (darkMode ? 'bg-[#5F6368]' : 'bg-[#DADCE0]')}`} />
             {logRate}/s
           </span>
-          {logRate > 0 && (
+          {logRate > 0 && logCard.showHeartbeat !== false && (
             <span className="hidden lg:inline-flex items-center flex-shrink-0">
               <HeartbeatLine rate={logRate} darkMode={darkMode} />
             </span>

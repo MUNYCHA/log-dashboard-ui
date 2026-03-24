@@ -85,17 +85,8 @@ const highlightMessage = (message, keywords, darkMode, logSearchTerm) => {
   return combined.length === 1 ? combined[0] : combined;
 };
 
-const LEVEL_BADGE_STYLES = {
-  FATAL: { dark: 'bg-red-500/20 text-red-400',       light: 'bg-red-100 text-red-700' },
-  ERROR: { dark: 'bg-red-500/20 text-red-400',       light: 'bg-red-100 text-red-700' },
-  WARN:  { dark: 'bg-amber-500/20 text-amber-400',   light: 'bg-amber-100 text-amber-700' },
-  INFO:  { dark: 'bg-blue-500/20 text-blue-400',     light: 'bg-blue-100 text-blue-700' },
-  DEBUG: { dark: 'bg-purple-500/20 text-purple-400', light: 'bg-purple-100 text-purple-700' },
-  TRACE: { dark: 'bg-gray-500/20 text-gray-400',     light: 'bg-gray-100 text-gray-600' },
-};
-
 const LogEntry = ({ log, darkMode, keywords, timestampGen, timestampFormat, logCard, logSearchTerm }) => {
-  const { showServerBadge = true, showPath = true, copyAlwaysVisible = false, logDensity = 'normal', showLevelBadge = true } = logCard || {};
+  const { showServerBadge = true, showPath = true, copyAlwaysVisible = false, logDensity = 'normal' } = logCard || {};
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
   const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
@@ -137,14 +128,6 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, timestampFormat, logC
           <span className={`text-[11.5px] font-mono tabular-nums flex-shrink-0 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`}>
             {displayTimestamp}
           </span>
-          {showLevelBadge && log.level && (() => {
-            const s = LEVEL_BADGE_STYLES[log.level];
-            return s ? (
-              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-wide flex-shrink-0 ${darkMode ? s.dark : s.light}`}>
-                {log.level}
-              </span>
-            ) : null;
-          })()}
           {showServerBadge && (
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-wide flex-shrink-0 ${
               darkMode ? 'bg-[#1A3A6B]/60 text-[#8AB4F8]' : 'bg-[#E8F0FE] text-[#1A73E8]'

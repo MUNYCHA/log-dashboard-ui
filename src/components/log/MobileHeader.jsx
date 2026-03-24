@@ -8,6 +8,7 @@ const MobileHeader = ({
   onOpenSidebar,
   isMobileMenuOpen, onToggleMobileMenu, mobileMenuReady,
   isPaused, onTogglePause,
+  logCard,
   autoScroll, onToggleAutoScroll,
   onDownload, onClearLogs,
   logSearchTerm, onSearchChange,
@@ -55,7 +56,7 @@ const MobileHeader = ({
               <span className={`h-1.5 w-1.5 rounded-full ${logRate > 0 ? 'bg-emerald-500' : (darkMode ? 'bg-[#5F6368]' : 'bg-[#DADCE0]')}`} />
               {logRate}/s
             </span>
-            {logRate > 0 && <HeartbeatLine rate={logRate} darkMode={darkMode} />}
+            {logRate > 0 && logCard.showHeartbeat !== false && <HeartbeatLine rate={logRate} darkMode={darkMode} />}
           </div>
 
           <div className="flex items-center gap-0.5 flex-shrink-0">

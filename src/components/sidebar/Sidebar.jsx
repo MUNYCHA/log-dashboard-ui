@@ -9,7 +9,9 @@ const TOPIC_SORT_OPTIONS = [
   { value: 'desc', label: 'Z-A' },
 ];
 
-const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkMode }) => {
+const TopicItem = React.memo(({
+  topic, isSelected, onTopicSelect, logRate, darkMode, showActivityDot, showLogRate,
+}) => {
   const isActive = logRate > 0;
   const itemTone = isSelected
     ? (darkMode
@@ -32,15 +34,17 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkM
         />
       )}
       <div className="flex items-center gap-2.5">
-        <span className={`h-2 w-2 rounded-full flex-shrink-0 ${
-          isActive
-            ? 'bg-emerald-500'
-            : darkMode ? 'bg-[#5F6368]' : 'bg-[#DADCE0]'
-        }`} />
+        {showActivityDot !== false && (
+          <span className={`h-2 w-2 rounded-full flex-shrink-0 ${
+            isActive
+              ? 'bg-emerald-500'
+              : darkMode ? 'bg-[#5F6368]' : 'bg-[#DADCE0]'
+          }`} />
+        )}
         <span className="truncate text-[13.5px] font-medium">
           {topic}
         </span>
-        {isActive && (
+        {isActive && showLogRate !== false && (
           <span className={`ml-auto text-[11px] font-mono tabular-nums flex-shrink-0 ${
             darkMode ? 'text-emerald-400' : 'text-emerald-600'
           }`}>
@@ -68,6 +72,7 @@ const Sidebar = ({
   collapsed,
   onCollapse,
   onOpenSettings,
+  sidebarPrefs,
 }) => {
   const sortedTopics = useMemo(() => {
     const filtered = topics.filter((t) => t.toLowerCase().includes(topicSearchTerm.toLowerCase()));
@@ -236,6 +241,8 @@ const Sidebar = ({
                 onTopicSelect={onTopicSelect}
                 logRate={logRates?.[topic] || 0}
                 darkMode={darkMode}
+                showActivityDot={sidebarPrefs.showActivityDot}
+                showLogRate={sidebarPrefs.showLogRate}
               />
             ))}
           </div>

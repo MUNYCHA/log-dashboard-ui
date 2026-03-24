@@ -115,6 +115,8 @@ const SettingsDrawer = ({
   onTimestampFormatChange,
   logCard,
   onLogCardChange,
+  sidebarPrefs,
+  onSidebarPrefChange,
 }) => {
   const bg = darkMode ? 'bg-[#1A1A1A]' : 'bg-[#FAFAFA]';
   const borderClass = darkMode ? 'border-[#2C2C2E]' : 'border-[#E5E5EA]';
@@ -203,6 +205,17 @@ const SettingsDrawer = ({
                     </SettingRow>
                   </Section>
 
+                  <div className={`border-t ${colDivide}`} />
+
+                  <Section title="Sidebar" darkMode={darkMode}>
+                    <SettingRow label="Activity dot" description="Color dot indicating live topic activity" darkMode={darkMode}>
+                      <Toggle value={sidebarPrefs.showActivityDot} onChange={(v) => onSidebarPrefChange('showActivityDot', v)} darkMode={darkMode} />
+                    </SettingRow>
+                    <SettingRow label="Log rate" description="Logs per second displayed on each topic" darkMode={darkMode}>
+                      <Toggle value={sidebarPrefs.showLogRate} onChange={(v) => onSidebarPrefChange('showLogRate', v)} darkMode={darkMode} />
+                    </SettingRow>
+                  </Section>
+
                 </div>
 
                 {/* ── Right column: Log-related settings ── */}
@@ -219,10 +232,24 @@ const SettingsDrawer = ({
 
                   <div className={`border-t ${colDivide}`} />
 
-                  <Section title="Log Card" darkMode={darkMode}>
-                    <SettingRow label="Level badge" description="Show log level (ERROR, WARN…) on each card" darkMode={darkMode}>
-                      <Toggle value={logCard.showLevelBadge} onChange={(v) => onLogCardChange('showLevelBadge', v)} darkMode={darkMode} />
+                  <Section title="Log Panel" darkMode={darkMode}>
+                    <SettingRow label="Filter bar" description="Server, path, and time range filters" darkMode={darkMode}>
+                      <Toggle value={logCard.showFilterBar} onChange={(v) => onLogCardChange('showFilterBar', v)} darkMode={darkMode} />
                     </SettingRow>
+                    <SettingRow label="Keyword filter" description="Colored keyword highlight and filter" darkMode={darkMode}>
+                      <Toggle value={logCard.showKeywordFilter} onChange={(v) => onLogCardChange('showKeywordFilter', v)} darkMode={darkMode} />
+                    </SettingRow>
+                    <SettingRow label="Status bar" description="Connection status, rate, and log counts" darkMode={darkMode}>
+                      <Toggle value={logCard.showStatusBar} onChange={(v) => onLogCardChange('showStatusBar', v)} darkMode={darkMode} />
+                    </SettingRow>
+                    <SettingRow label="Heartbeat line" description="Animated activity line in the header" darkMode={darkMode}>
+                      <Toggle value={logCard.showHeartbeat} onChange={(v) => onLogCardChange('showHeartbeat', v)} darkMode={darkMode} />
+                    </SettingRow>
+                  </Section>
+
+                  <div className={`border-t ${colDivide}`} />
+
+                  <Section title="Log Card" darkMode={darkMode}>
                     <SettingRow label="Server badge" description="Show server name on each card" darkMode={darkMode}>
                       <Toggle value={logCard.showServerBadge} onChange={(v) => onLogCardChange('showServerBadge', v)} darkMode={darkMode} />
                     </SettingRow>

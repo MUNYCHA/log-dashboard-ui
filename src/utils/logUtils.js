@@ -1,13 +1,3 @@
-export const getLogLevelColor = (level, darkMode) => {
-  switch(level?.toLowerCase()) {
-    case 'error': return darkMode ? 'text-red-400 bg-red-500/10' : 'text-red-600 bg-red-50';
-    case 'warn': return darkMode ? 'text-amber-400 bg-amber-500/10' : 'text-amber-600 bg-amber-50';
-    case 'info': return darkMode ? 'text-sky-400 bg-sky-500/10' : 'text-sky-600 bg-sky-50';
-    case 'debug': return darkMode ? 'text-violet-400 bg-violet-500/10' : 'text-violet-600 bg-violet-50';
-    default: return darkMode ? 'text-gray-400 bg-gray-500/10' : 'text-gray-500 bg-gray-50';
-  }
-};
-
 export const getRelativeTime = (timestamp, now) => {
   try {
     const ts = new Date(timestamp).getTime();
