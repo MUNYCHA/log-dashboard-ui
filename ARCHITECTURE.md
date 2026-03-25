@@ -175,8 +175,8 @@ src/
 ├── utils/
 │   └── logUtils.js             # getLogLevelColor, getRelativeTime
 └── components/
-    ├── common/HeartbeatLine.jsx, ThemeToggle.jsx
-    ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, index.js
+    ├── common/HeartbeatLine.jsx, ThemeToggle.jsx, ErrorBoundary.jsx
+    ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, TimeRangeSelector.jsx, index.js
     ├── log/LogPanel.jsx, VirtualLogList (inside LogPanel), LogEntry.jsx, DesktopHeader.jsx,
     │   MobileHeader.jsx, FilterBar.jsx, ActiveFilters.jsx, StatusBar.jsx, EmptyState.jsx,
     │   ScrollButtons.jsx, constants.js (TIME_RANGES, button styles, getShortPath), index.js

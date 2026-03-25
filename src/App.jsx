@@ -30,6 +30,16 @@ export default function App() {
   const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, trimTopicBuffer, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics);
   const theme = darkMode ? styles.dark : styles.light;
 
+  useEffect(() => {
+    if (splitView && selectedTopic && selectedTopic2) {
+      document.title = `${selectedTopic} | ${selectedTopic2} — LogStream`;
+    } else if (selectedTopic) {
+      document.title = `${selectedTopic} — LogStream`;
+    } else {
+      document.title = 'LogStream';
+    }
+  }, [selectedTopic, selectedTopic2, splitView]);
+
   // Extract topic-specific log arrays — these keep the same reference
   // unless that specific topic received new logs in the last flush.
   const topicLogs1 = logsByTopic[selectedTopic];

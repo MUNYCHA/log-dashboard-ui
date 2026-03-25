@@ -142,7 +142,7 @@ VITE_WS_URL=ws://YOUR_SERVER_IP:8080/ws/logs
 docker compose up -d --build
 ```
 
-The app will be available at `http://YOUR_SERVER_IP` (port 80).
+The app will be available at `http://YOUR_SERVER_IP:5173`.
 
 > **Note:** All `VITE_*` env vars are baked into the build at image build time. If you change `.env`, re-run `docker compose up -d --build` to rebuild.
 
@@ -248,14 +248,16 @@ log-dashboard-ui/
     └── components/
         ├── common/
         │   ├── HeartbeatLine.jsx   # SVG heartbeat animation reflecting log rate
-        │   └── ThemeToggle.jsx     # Dark / light mode button
+        │   ├── ThemeToggle.jsx     # Dark / light mode button
+        │   └── ErrorBoundary.jsx   # React error boundary wrapper
         ├── filters/
         │   ├── index.js            # Re-exports all filter components
         │   ├── FilterDropdown.jsx  # Shared searchable dropdown base component
         │   ├── ServerDropdown.jsx  # Server filter (wraps FilterDropdown)
         │   ├── PathDropdown.jsx    # Path filter (wraps FilterDropdown)
-        │   └── KeywordFilter.jsx   # Keyword chip input, color picker,
-        │                           # AND/OR toggle
+        │   ├── KeywordFilter.jsx   # Keyword chip input, color picker,
+        │   │                       # AND/OR toggle
+        │   └── TimeRangeSelector.jsx # Time range picker (All/1m/5m/15m/1h/Custom)
         ├── log/
         │   ├── index.js            # Re-exports LogPanel
         │   ├── LogPanel.jsx        # Orchestrator — state, hooks, composition
