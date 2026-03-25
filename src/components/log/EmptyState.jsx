@@ -2,7 +2,7 @@ import React from 'react';
 
 const EmptyState = ({
   theme, darkMode, splitView, isActivePanel,
-  onSetActive, onClosePanel, onOpenSidebar,
+  onSetActive, onClosePanel, onOpenTopicSidebar,
 }) => (
   <div
     className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-[#1A73E8]/40' : ''}`}
@@ -23,12 +23,7 @@ const EmptyState = ({
       </div>
     )}
     <div className={`md:hidden flex items-center px-3 py-2.5 ${theme.header}`}>
-      <button onClick={onOpenSidebar} className={`p-1 rounded-lg ${theme.textMuted}`} aria-label="Open sidebar">
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-      <span className={`ml-3 text-xs ${theme.textMuted}`}>Select a topic</span>
+      <span className={`text-xs ${theme.textMuted}`}>Select a topic</span>
     </div>
     <div className={`flex-1 flex items-center justify-center ${theme.textMuted}`}>
       <div className="max-w-sm text-center px-4">
@@ -38,7 +33,7 @@ const EmptyState = ({
         </svg>
         <p className="text-sm font-medium">Select a topic to start monitoring</p>
         <p className="text-xs mt-1 opacity-60">Topics update live in the sidebar.</p>
-        <button onClick={onOpenSidebar} className={`md:hidden mt-3 px-3 py-1.5 rounded-lg text-xs border transition-all duration-150 ease-in-out ${
+        <button onClick={onOpenTopicSidebar} className={`md:hidden mt-4 px-6 py-3 rounded-xl text-sm font-medium border transition-all duration-150 ease-in-out active:scale-95 ${
           darkMode ? 'bg-[#303134] text-[#BDC1C6] border-[#5F6368]' : 'bg-[#F1F3F4] text-[#3C4043] border-[#DADCE0]'
         }`}>
           Open Topics

@@ -1,12 +1,11 @@
 import React from 'react';
-import ThemeToggle from '../common/ThemeToggle';
 import HeartbeatLine from '../common/HeartbeatLine';
 import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../filters';
 import { getShortPath } from './constants';
 
 const MobileHeader = ({
   selectedTopic, displayedLogs, logRate, darkMode, theme,
-  onOpenSidebar, onThemeToggle,
+  onOpenTopicSidebar,
   isMobileMenuOpen, onToggleMobileMenu, mobileMenuReady,
   isPaused, onTogglePause,
   autoScroll, onToggleAutoScroll,
@@ -29,7 +28,7 @@ const MobileHeader = ({
   const btnDanger = darkMode
     ? 'rounded-xl border border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C1F1F] hover:text-[#F28B82] hover:border-[#8B3C36]'
     : 'rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#FCE8E6] hover:text-[#C5221F] hover:border-[#F5C6C2]';
-  const btnBase = 'inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95';
+  const btnBase = 'inline-flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95';
   const btnGhost = darkMode
     ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
     : 'text-[#3C4043] hover:text-[#202124] hover:bg-[#F1F3F4]';
@@ -39,14 +38,18 @@ const MobileHeader = ({
       <div className="md:hidden">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0 flex flex-1 items-center gap-1.5">
-            <button onClick={onOpenSidebar} className={`${btnBase} ${btnGhost}`} aria-label="Open sidebar">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 6h16M4 12h16M4 18h16" />
+            <button
+              onClick={onOpenTopicSidebar}
+              className={`min-w-0 flex items-center gap-1.5 rounded-xl px-3 py-2.5 transition-all duration-150 active:scale-95 ${btnGhost}`}
+              aria-label="Select topic"
+            >
+              <span className="truncate text-[15px] font-semibold">
+                {selectedTopic ?? 'Select topic'}
+              </span>
+              <svg className="w-4 h-4 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            <h2 className="min-w-0 truncate text-sm font-semibold">
-              {selectedTopic}
-            </h2>
             <span className={`text-[11px] font-mono tabular-nums ${theme.textMuted}`}>
               {displayedLogs?.length || 0}
             </span>
@@ -60,7 +63,6 @@ const MobileHeader = ({
           </div>
 
           <div className="flex items-center gap-0.5 flex-shrink-0">
-            <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
             <button onClick={onToggleMobileMenu} className={`${btnBase} ${isMobileMenuOpen ? btnActive : btnGhost}`}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -144,27 +146,27 @@ const MobileHeader = ({
             <div className="grid grid-cols-2 gap-1.5">
               <button
                 onClick={onTogglePause}
-                className={`py-2.5 rounded-xl border text-[13px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${isPaused ? btnActive : btnIdle}`}
+                className={`py-3.5 rounded-xl border text-[14px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${isPaused ? btnActive : btnIdle}`}
               >
                 {isPaused ? 'Resume' : 'Pause'}
               </button>
               <button
                 onClick={onToggleAutoScroll}
-                className={`py-2.5 rounded-xl border text-[13px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${autoScroll ? btnActive : btnIdle}`}
+                className={`py-3.5 rounded-xl border text-[14px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${autoScroll ? btnActive : btnIdle}`}
               >
                 Auto-scroll
               </button>
 
               <button
                 onClick={onDownload}
-                className={`py-2.5 rounded-xl border text-[13px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${btnIdle}`}
+                className={`py-3.5 rounded-xl border text-[14px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${btnIdle}`}
               >
                 Download
               </button>
 
               <button
                 onClick={() => onClearLogs(selectedTopic)}
-                className={`py-2.5 rounded-xl border text-[13px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${btnDanger}`}
+                className={`py-3.5 rounded-xl border text-[14px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${btnDanger}`}
               >
                 Clear logs
               </button>

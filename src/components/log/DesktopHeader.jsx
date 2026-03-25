@@ -1,13 +1,11 @@
 import React from 'react';
 import HeartbeatLine from '../common/HeartbeatLine';
-import ThemeToggle from '../common/ThemeToggle';
 
 const DesktopHeader = ({
   selectedTopic, displayedLogs, logRate, darkMode, theme,
   splitView, isActivePanel, onSetActive, onClosePanel, onOpenSplit,
   isPaused, onTogglePause, btn,
   onDownload,
-  onThemeToggle,
   autoScroll, onToggleAutoScroll,
   onClearLogs,
 }) => {
@@ -69,7 +67,6 @@ const DesktopHeader = ({
             <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
           </button>
 
-          <ThemeToggle darkMode={darkMode} onToggle={onThemeToggle} />
           {!onClosePanel && (
             <button onClick={onOpenSplit} className={`hidden md:flex ${splitView ? btn.splitOn : btn.split}`} title="Split view">
               <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>
