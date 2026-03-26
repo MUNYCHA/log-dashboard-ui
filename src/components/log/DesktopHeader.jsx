@@ -51,7 +51,7 @@ const DesktopHeader = ({
 
         {/* Toolbar buttons */}
         <div className="flex items-center gap-0.5 flex-shrink-0">
-          <button onClick={onTogglePause} className={isPaused ? btn.paused : btn.pause} title={isPaused ? "Resume" : "Pause"}>
+          <button onClick={onTogglePause} className={isPaused ? btn.paused : btn.pause} title={isPaused ? "Resume" : "Pause"} aria-label={isPaused ? "Resume" : "Pause"} aria-pressed={isPaused}>
             {isPaused ? (
               <svg className={pauseIconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
             ) : (
@@ -59,25 +59,25 @@ const DesktopHeader = ({
             )}
           </button>
 
-          <button onClick={onToggleAutoScroll} className={autoScroll ? btn.scrollOn : btn.scroll} title="Auto-scroll">
+          <button onClick={onToggleAutoScroll} className={autoScroll ? btn.scrollOn : btn.scroll} title="Auto-scroll" aria-label="Auto-scroll" aria-pressed={autoScroll}>
             <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
           </button>
 
-          <button onClick={onDownload} className={btn.export} title="Download log file">
+          <button onClick={onDownload} className={btn.export} title="Download log file" aria-label="Download log file">
             <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
           </button>
 
           {!onClosePanel && (
-            <button onClick={onOpenSplit} className={`hidden md:flex ${splitView ? btn.splitOn : btn.split}`} title="Split view">
+            <button onClick={onOpenSplit} className={`hidden md:flex ${splitView ? btn.splitOn : btn.split}`} title="Split view" aria-label="Split view">
               <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>
             </button>
           )}
           {onClosePanel && (
-            <button onClick={onClosePanel} className={`hidden md:flex ${btn.close}`} title="Close panel">
+            <button onClick={onClosePanel} className={`hidden md:flex ${btn.close}`} title="Close panel" aria-label="Close panel">
               <svg className={pauseIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           )}
-          <button onClick={() => onClearLogs(selectedTopic)} className={btn.clear} title="Clear logs">
+          <button onClick={() => onClearLogs(selectedTopic)} className={btn.clear} title="Clear logs" aria-label="Clear logs">
             <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
           </button>
         </div>

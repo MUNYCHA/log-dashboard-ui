@@ -11,6 +11,7 @@ const ScrollButtons = ({ atTop, atBottom, scrollToTop, scrollToBottom, darkMode 
       : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
     }`}
         title="Scroll to top"
+        aria-label="Scroll to top"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -26,6 +27,7 @@ const ScrollButtons = ({ atTop, atBottom, scrollToTop, scrollToBottom, darkMode 
       : 'border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]'
     }`}
         title="Scroll to bottom"
+        aria-label="Scroll to bottom"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />

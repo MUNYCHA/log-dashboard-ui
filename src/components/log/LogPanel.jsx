@@ -326,6 +326,7 @@ const LogPanel = ({
   const pathButtonRef = useRef(null);
   const previousScrollTopRef = useRef(0);
   const userScrollIntentUntilRef = useRef(0);
+  const downloadErrorTimerRef = useRef(null);
 
   const markUserScrollIntent = useCallback(() => {
     userScrollIntentUntilRef.current = Date.now() + 800;
@@ -339,6 +340,8 @@ const LogPanel = ({
       setMobileMenuReady(false);
     };
   }, [isMobileMenuOpen]);
+
+  useEffect(() => () => clearTimeout(downloadErrorTimerRef.current), []);
 
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
@@ -588,6 +591,11 @@ const LogPanel = ({
     setTimeRange('all');
   };
 
+  const scheduleDownloadErrorClear = useCallback(() => {
+    clearTimeout(downloadErrorTimerRef.current);
+    downloadErrorTimerRef.current = setTimeout(() => setDownloadError(null), 5000);
+  }, []);
+
   const downloadLogs = async () => {
     const url = `${config.httpBaseUrl}/api/logs/download?topic=${encodeURIComponent(selectedTopic)}`;
     try {
@@ -596,7 +604,7 @@ const LogPanel = ({
         const text = await res.text().catch(() => '');
         const msg = text.trim() || `Server returned ${res.status}`;
         setDownloadError(msg);
-        setTimeout(() => setDownloadError(null), 5000);
+        scheduleDownloadErrorClear();
         return;
       }
       const blob = await res.blob();
@@ -614,7 +622,7 @@ const LogPanel = ({
       URL.revokeObjectURL(objectUrl);
     } catch {
       setDownloadError('Download failed — server unreachable');
-      setTimeout(() => setDownloadError(null), 5000);
+      scheduleDownloadErrorClear();
     }
   };
 
@@ -809,7 +817,7 @@ const LogPanel = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
             <span className="flex-1 min-w-0 truncate">Download failed: {downloadError}</span>
-            <button onClick={() => setDownloadError(null)} className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+            <button onClick={() => setDownloadError(null)} className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity" title="Dismiss download error" aria-label="Dismiss download error">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>

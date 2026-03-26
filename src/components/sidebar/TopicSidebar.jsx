@@ -89,7 +89,7 @@ export default function TopicSidebar({ topics, logRates, selectedTopic, onTopicS
         fixed inset-y-0 right-0 z-50 w-72
         transform transition-transform duration-200
         ${mobileOpen ? 'translate-x-0' : 'translate-x-full'}
-        md:relative md:inset-auto md:translate-x-0 md:z-auto md:transition-[width] md:w-60 lg:md:w-68
+        md:relative md:inset-auto md:translate-x-0 md:z-auto md:transition-[width] md:w-60 lg:w-72
         md:rounded-2xl md:overflow-hidden
       `}>
 
@@ -149,6 +149,7 @@ export default function TopicSidebar({ topics, logRates, selectedTopic, onTopicS
             <input
               type="text"
               placeholder="Search topics"
+              aria-label="Search topics"
               className={`w-full h-9 rounded-full border pl-10 pr-4 text-[13px] focus:outline-none focus:ring-2 transition-all duration-150 ease-in-out ${
                 darkMode
                   ? 'bg-[#303134] border-[#5F6368] text-[#E8EAED] placeholder:text-[#80868B] focus:ring-[#8AB4F8]/20 focus:border-[#8AB4F8]'

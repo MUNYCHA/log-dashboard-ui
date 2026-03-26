@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { getRelativeTime } from '../../utils/logUtils';
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -96,15 +96,19 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
     } catch { return log.timestamp; }
   }, [log.timestamp]);
   const [copied, setCopied] = useState(false);
+  const timerRef = useRef(null);
 
   const handleCopy = useCallback((e) => {
     e.stopPropagation();
     const text = JSON.stringify({ timestamp: log.timestamp, localTime: localTimestamp, serverName: log.serverName, path: log.path, message: log.message }, null, 2);
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), 1500);
     });
   }, [log, localTimestamp]);
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
 
   return (
     <article className="px-3 pt-1.5 pb-1.5">

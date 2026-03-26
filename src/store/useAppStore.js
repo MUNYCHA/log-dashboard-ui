@@ -12,10 +12,6 @@ const useAppStore = create((set) => ({
     : true,
   setSystemDark: (val) => set({ systemDark: val }),
 
-  sidebarOpen: false,
-  openSidebar: () => set({ sidebarOpen: true }),
-  closeSidebar: () => set({ sidebarOpen: false }),
-
   sidebarCollapsed: false,
   toggleSidebarCollapsed: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
 }))

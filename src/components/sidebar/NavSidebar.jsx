@@ -143,6 +143,7 @@ export default function NavSidebar() {
             <input
               type="text"
               placeholder="Search menu"
+              aria-label="Search topics"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`w-full h-9 rounded-full border pl-10 pr-4 text-[13px] focus:outline-none focus:ring-2 transition-all duration-150 ease-in-out ${

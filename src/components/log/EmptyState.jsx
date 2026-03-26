@@ -7,6 +7,13 @@ const EmptyState = ({
   <div
     className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-[#1A73E8]/40' : ''}`}
     onClick={splitView && !isActivePanel ? onSetActive : undefined}
+    tabIndex={splitView && !isActivePanel ? 0 : undefined}
+    onKeyDown={(e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && splitView && !isActivePanel) {
+        e.preventDefault();
+        onSetActive();
+      }
+    }}
   >
     {onClosePanel && (
       <div className={`hidden md:flex items-center justify-between px-3 py-2.5 ${theme.header}`}>
@@ -15,6 +22,7 @@ const EmptyState = ({
           onClick={(e) => { e.stopPropagation(); onClosePanel(); }}
           className={`p-1 rounded-lg transition-colors ${darkMode ? 'text-[#80868B] hover:text-[#F28B82]' : 'text-[#5F6368] hover:text-[#C5221F]'}`}
           title="Close this panel"
+          aria-label="Close this panel"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

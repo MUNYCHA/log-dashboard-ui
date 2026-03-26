@@ -56,7 +56,7 @@ export default function SettingsPage() {
           <h2 className={`text-[14px] font-semibold mb-1 ${theme.text}`}>Appearance</h2>
           <p className={`text-[12px] mb-4 ${theme.textSecondary}`}>Choose how the dashboard looks</p>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {THEME_OPTIONS.map((opt) => {
               const isSelected = themeMode === opt.value
               return (

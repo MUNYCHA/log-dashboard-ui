@@ -11,6 +11,7 @@ const FilterTag = ({ label, onClear, darkMode, style }) => (
     <span className="max-w-[140px] truncate">{label}</span>
     <button
       onClick={onClear}
+      aria-label="Remove filter"
       className={`rounded-full p-0.5 transition-colors ${darkMode ? 'hover:text-[#F28B82] hover:bg-[#3C1F1F]' : 'hover:text-[#C5221F] hover:bg-[#FCE8E6]'}`}
     >
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
