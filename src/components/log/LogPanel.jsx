@@ -4,6 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { KeywordFilter } from "../filters";
 import { getButtonStyles } from "./constants";
 import config from "../../config";
+import useAppStore, { selectLogPrefs } from "../../store/useAppStore";
 import DesktopHeader from "./DesktopHeader";
 import MobileHeader from "./MobileHeader";
 import FilterBar from "./FilterBar";
@@ -17,6 +18,7 @@ const ESTIMATED_LOG_HEIGHT = 114;
 
 const VirtualLogList = React.memo(({
   displayedLogs, isPaused, autoScroll, theme, darkMode, keywords, timestampGen,
+  density, timestampFormat, messageWrap,
   logSearchTerm,
   selectedServer, selectedPath,
   emptyState, onClearFilters, onResumeLive,
@@ -203,6 +205,9 @@ const VirtualLogList = React.memo(({
                       darkMode={darkMode}
                       keywords={keywords}
                       timestampGen={timestampGen}
+                      density={density}
+                      timestampFormat={timestampFormat}
+                      messageWrap={messageWrap}
                       logSearchTerm={logSearchTerm}
                     />
                   </div>
@@ -294,10 +299,12 @@ const LogPanel = ({
   sendFilter,
   panelId,
 }) => {
+  const [initialPrefs] = useState(() => selectLogPrefs(useAppStore.getState()));
+  const prefsRef = useRef(initialPrefs);
   const [frozenLogs, setFrozenLogs] = useState(null);
   const [frozenTopic, setFrozenTopic] = useState(null);
   const [logSearchTerm, setLogSearchTerm] = useState("");
-  const [autoScroll, setAutoScroll] = useState(true);
+  const [autoScroll, setAutoScroll] = useState(initialPrefs.autoScroll);
   const [showServerDropdown, setShowServerDropdown] = useState(false);
   const [showPathDropdown, setShowPathDropdown] = useState(false);
   const [showMobileServerDropdown, setShowMobileServerDropdown] = useState(false);
@@ -311,7 +318,7 @@ const LogPanel = ({
   const [keywords, setKeywords] = useState([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordMode, setKeywordMode] = useState('or');
-  const [timeRange, setTimeRange] = useState('all');
+  const [timeRange, setTimeRange] = useState(initialPrefs.defaultTimeRange);
   const [customRangeMs, setCustomRangeMs] = useState(0);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
@@ -588,7 +595,7 @@ const LogPanel = ({
     setLogSearchTerm("");
     setKeywords([]);
     setKeywordInput('');
-    setTimeRange('all');
+    setTimeRange(prefsRef.current.defaultTimeRange);
   };
 
   const scheduleDownloadErrorClear = useCallback(() => {
@@ -834,6 +841,9 @@ const LogPanel = ({
         darkMode={darkMode}
         keywords={displayKeywords}
         timestampGen={timestampGen}
+        density={initialPrefs.density}
+        timestampFormat={initialPrefs.timestampFormat}
+        messageWrap={initialPrefs.messageWrap}
         logSearchTerm={logSearchTerm}
         selectedServer={selectedServer}
         selectedPath={selectedPath}

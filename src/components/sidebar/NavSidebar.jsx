@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import useAppStore, { selectTheme, selectDarkMode } from '../../store/useAppStore'
@@ -85,7 +85,35 @@ export default function NavSidebar() {
   const darkMode = useAppStore(selectDarkMode)
   const collapsed = useAppStore((s) => s.sidebarCollapsed)
   const toggleCollapsed = useAppStore((s) => s.toggleSidebarCollapsed)
+  const sidebarCollapsedByDefault = useAppStore((s) => s.sidebarCollapsedByDefault)
+
   const [searchTerm, setSearchTerm] = useState('')
+  const [pendingFocus, setPendingFocus] = useState(false)
+
+  const searchInputRef = useRef(null)
+  const didSyncDefaultRef = useRef(false)
+
+  useEffect(() => {
+    if (didSyncDefaultRef.current) return
+    didSyncDefaultRef.current = true
+    if (sidebarCollapsedByDefault !== collapsed) {
+      toggleCollapsed()
+    }
+  }, [sidebarCollapsedByDefault, collapsed, toggleCollapsed])
+
+  useEffect(() => {
+    if (collapsed || !pendingFocus) return undefined
+    const timeoutId = setTimeout(() => {
+      searchInputRef.current?.focus()
+      setPendingFocus(false)
+    }, 210)
+    return () => clearTimeout(timeoutId)
+  }, [collapsed, pendingFocus])
+
+  const handleCollapsedSearchClick = () => {
+    toggleCollapsed()
+    setPendingFocus(true)
+  }
 
   const isSearching = searchTerm.trim().length > 0
   const filteredItems = isSearching
@@ -124,8 +152,8 @@ export default function NavSidebar() {
       <div className={`flex-shrink-0 ${collapsed ? 'flex justify-center px-2 pb-2' : 'px-3 pb-3'}`}>
         {collapsed ? (
           <button
-            onClick={toggleCollapsed}
-            title="Search — click to expand"
+            onClick={handleCollapsedSearchClick}
+            title="Search - click to expand"
             className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,6 +169,7 @@ export default function NavSidebar() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
+              ref={searchInputRef}
               type="text"
               placeholder="Search menu"
               aria-label="Search topics"

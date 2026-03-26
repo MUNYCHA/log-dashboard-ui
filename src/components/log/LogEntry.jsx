@@ -85,7 +85,16 @@ const highlightMessage = (message, keywords, darkMode, logSearchTerm) => {
   return combined.length === 1 ? combined[0] : combined;
 };
 
-const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
+const LogEntry = ({
+  log,
+  darkMode,
+  keywords,
+  timestampGen,
+  logSearchTerm,
+  density = 'comfortable',
+  timestampFormat = 'relative',
+  messageWrap = false,
+}) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
   const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
@@ -95,6 +104,9 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
       return new Date(log.timestamp).toLocaleString();
     } catch { return log.timestamp; }
   }, [log.timestamp]);
+  const displayedTimestamp = timestampFormat === 'absolute'
+    ? localTimestamp
+    : (relativeTime || 'now');
   const [copied, setCopied] = useState(false);
   const timerRef = useRef(null);
 
@@ -112,14 +124,14 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
 
   return (
     <article className="px-3 pt-1.5 pb-1.5">
-      <div className={`group/entry relative min-h-[80px] rounded-2xl px-4 py-3.5 transition-all duration-100 ${
+      <div className={`group/entry relative min-h-[80px] rounded-2xl px-4 ${density === 'compact' ? 'py-2' : 'py-3.5'} transition-all duration-100 ${
         darkMode
           ? 'bg-[#1E1E1E] border border-[#303134] hover:bg-[#252525] shadow-[0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]'
           : 'bg-white border border-[#E8EAED] shadow-sm hover:shadow-md'
       }`}>
         <div className="flex items-center gap-2 mb-2.5 overflow-hidden">
           <span className={`text-[11.5px] font-mono tabular-nums flex-shrink-0 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`}>
-            {relativeTime || 'now'}
+            {displayedTimestamp}
           </span>
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-wide flex-shrink-0 ${
             darkMode ? 'bg-[#1A3A6B]/60 text-[#8AB4F8]' : 'bg-[#E8F0FE] text-[#1A73E8]'
@@ -140,7 +152,7 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
           )}
         </div>
 
-        <div className={`whitespace-pre-wrap break-words text-[13.5px] leading-[1.65] font-mono ${
+        <div className={`${messageWrap ? 'whitespace-pre-wrap ' : ''}break-words text-[13.5px] leading-[1.65] font-mono ${
           darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'
         }`}>
           {highlightMessage(message, keywords, darkMode, logSearchTerm)}
