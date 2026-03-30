@@ -8,6 +8,7 @@ import SettingsPage from './pages/Settings'
 
 export default function App() {
   const setSystemDark = useAppStore((s) => s.setSystemDark)
+  const darkMode = useAppStore((s) => s.themeMode === 'dark' || (s.themeMode === 'system' && s.systemDark))
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -15,6 +16,10 @@ export default function App() {
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [setSystemDark])
+
+  useEffect(() => {
+    document.body.style.background = darkMode ? '#0F0F0F' : '#F1F3F4'
+  }, [darkMode])
 
   return (
     <Routes>
