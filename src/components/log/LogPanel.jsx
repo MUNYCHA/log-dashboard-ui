@@ -19,6 +19,8 @@ const ESTIMATED_LOG_HEIGHT = 114;
 const VirtualLogList = React.memo(({
   displayedLogs, isPaused, autoScroll, theme, darkMode, keywords, timestampGen,
   density, timestampFormat, messageWrap,
+  fontSize, showServer, showPath, messageColor,
+  showScrollButtons,
   logSearchTerm,
   selectedServer, selectedPath,
   emptyState, onClearFilters, onResumeLive,
@@ -208,6 +210,10 @@ const VirtualLogList = React.memo(({
                       density={density}
                       timestampFormat={timestampFormat}
                       messageWrap={messageWrap}
+                      fontSize={fontSize}
+                      showServer={showServer}
+                      showPath={showPath}
+                      messageColor={messageColor}
                       logSearchTerm={logSearchTerm}
                     />
                   </div>
@@ -263,13 +269,15 @@ const VirtualLogList = React.memo(({
         </div>
       </div>
 
-      <ScrollButtons
-        atTop={atTop}
-        atBottom={atBottom}
-        scrollToTop={scrollToTop}
-        scrollToBottom={scrollToBottom}
-        darkMode={darkMode}
-      />
+      {showScrollButtons && (
+        <ScrollButtons
+          atTop={atTop}
+          atBottom={atBottom}
+          scrollToTop={scrollToTop}
+          scrollToBottom={scrollToBottom}
+          darkMode={darkMode}
+        />
+      )}
       </div>
     </div>
   );
@@ -301,6 +309,14 @@ const LogPanel = ({
 }) => {
   const [initialPrefs] = useState(() => selectLogPrefs(useAppStore.getState()));
   const prefsRef = useRef(initialPrefs);
+
+  const showHeader = useAppStore((s) => s.showHeader);
+  const showFilterBar = useAppStore((s) => s.showFilterBar);
+  const showActiveFilters = useAppStore((s) => s.showActiveFilters);
+  const showKeywordFilter = useAppStore((s) => s.showKeywordFilter);
+  const showStatusBar = useAppStore((s) => s.showStatusBar);
+  const showScrollButtons = useAppStore((s) => s.showScrollButtons);
+
   const [frozenLogs, setFrozenLogs] = useState(null);
   const [frozenTopic, setFrozenTopic] = useState(null);
   const [logSearchTerm, setLogSearchTerm] = useState("");
@@ -688,126 +704,138 @@ const LogPanel = ({
       className={`flex-1 flex flex-col min-w-0 gap-2 ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''}`}
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
-      <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.card} rounded-2xl flex-shrink-0 relative z-10`}>
-        <DesktopHeader
-          selectedTopic={selectedTopic}
-          displayedLogs={displayedLogs}
-          logRate={logRate}
-          darkMode={darkMode}
-          theme={theme}
-          splitView={splitView}
-          isActivePanel={isActivePanel}
-          onSetActive={onSetActive}
-          onClosePanel={onClosePanel}
-          onOpenSplit={onOpenSplit}
-          isPaused={isPaused}
-          onTogglePause={handleTogglePause}
-          btn={btn}
-          onDownload={downloadLogs}
-          autoScroll={autoScroll}
-          onToggleAutoScroll={toggleAutoScroll}
-          onClearLogs={onClearLogs}
-        />
+      {(showHeader || showFilterBar || showKeywordFilter || showActiveFilters) && (
+        <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.card} rounded-2xl flex-shrink-0 relative z-10`}>
+          {showHeader && (
+            <DesktopHeader
+              selectedTopic={selectedTopic}
+              displayedLogs={displayedLogs}
+              logRate={logRate}
+              darkMode={darkMode}
+              theme={theme}
+              splitView={splitView}
+              isActivePanel={isActivePanel}
+              onSetActive={onSetActive}
+              onClosePanel={onClosePanel}
+              onOpenSplit={onOpenSplit}
+              isPaused={isPaused}
+              onTogglePause={handleTogglePause}
+              btn={btn}
+              onDownload={downloadLogs}
+              autoScroll={autoScroll}
+              onToggleAutoScroll={toggleAutoScroll}
+              onClearLogs={onClearLogs}
+            />
+          )}
 
-        <MobileHeader
-          selectedTopic={selectedTopic}
-          displayedLogs={displayedLogs}
-          logRate={logRate}
-          darkMode={darkMode}
-          theme={theme}
-          onOpenSidebar={onOpenSidebar}
-          onOpenTopicSidebar={onOpenTopicSidebar}
-          isMobileMenuOpen={isMobileMenuOpen}
-          onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          mobileMenuReady={mobileMenuReady}
-          isPaused={isPaused}
-          onTogglePause={handleTogglePause}
-          autoScroll={autoScroll}
-          onToggleAutoScroll={toggleAutoScroll}
-          onDownload={downloadLogs}
-          onClearLogs={onClearLogs}
-          logSearchTerm={logSearchTerm}
-          onSearchChange={setLogSearchTerm}
-          showMobileServerDropdown={showMobileServerDropdown}
-          onToggleMobileServerDropdown={(v) => setShowMobileServerDropdown(v ?? !showMobileServerDropdown)}
-          showMobilePathDropdown={showMobilePathDropdown}
-          onToggleMobilePathDropdown={(v) => setShowMobilePathDropdown(v ?? !showMobilePathDropdown)}
-          filteredServers={filteredServers}
-          selectedServer={selectedServer}
-          onServerSelect={handleServerSelect}
-          onClearServer={handleClearServer}
-          serverSearchTerm={serverSearchTerm}
-          onServerSearchChange={setServerSearchTerm}
-          filteredPaths={filteredPaths}
-          selectedPath={selectedPath}
-          onPathSelect={handlePathSelect}
-          onClearPath={handleClearPath}
-          pathSearchTerm={pathSearchTerm}
-          onPathSearchChange={setPathSearchTerm}
-          timeRange={timeRange}
-          customRangeMs={customRangeMs}
-          onTimeRangeChange={handleTimeRangeChange}
-        />
+          {showHeader && (
+            <MobileHeader
+              selectedTopic={selectedTopic}
+              displayedLogs={displayedLogs}
+              logRate={logRate}
+              darkMode={darkMode}
+              theme={theme}
+              onOpenSidebar={onOpenSidebar}
+              onOpenTopicSidebar={onOpenTopicSidebar}
+              isMobileMenuOpen={isMobileMenuOpen}
+              onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              mobileMenuReady={mobileMenuReady}
+              isPaused={isPaused}
+              onTogglePause={handleTogglePause}
+              autoScroll={autoScroll}
+              onToggleAutoScroll={toggleAutoScroll}
+              onDownload={downloadLogs}
+              onClearLogs={onClearLogs}
+              logSearchTerm={logSearchTerm}
+              onSearchChange={setLogSearchTerm}
+              showMobileServerDropdown={showMobileServerDropdown}
+              onToggleMobileServerDropdown={(v) => setShowMobileServerDropdown(v ?? !showMobileServerDropdown)}
+              showMobilePathDropdown={showMobilePathDropdown}
+              onToggleMobilePathDropdown={(v) => setShowMobilePathDropdown(v ?? !showMobilePathDropdown)}
+              filteredServers={filteredServers}
+              selectedServer={selectedServer}
+              onServerSelect={handleServerSelect}
+              onClearServer={handleClearServer}
+              serverSearchTerm={serverSearchTerm}
+              onServerSearchChange={setServerSearchTerm}
+              filteredPaths={filteredPaths}
+              selectedPath={selectedPath}
+              onPathSelect={handlePathSelect}
+              onClearPath={handleClearPath}
+              pathSearchTerm={pathSearchTerm}
+              onPathSearchChange={setPathSearchTerm}
+              timeRange={timeRange}
+              customRangeMs={customRangeMs}
+              onTimeRangeChange={handleTimeRangeChange}
+            />
+          )}
 
-        <FilterBar
-          theme={theme}
-          darkMode={darkMode}
-          serverButtonRef={serverButtonRef}
-          pathButtonRef={pathButtonRef}
-          showServerDropdown={showServerDropdown}
-          onToggleServerDropdown={(v) => setShowServerDropdown(v ?? !showServerDropdown)}
-          showPathDropdown={showPathDropdown}
-          onTogglePathDropdown={(v) => setShowPathDropdown(v ?? !showPathDropdown)}
-          filteredServers={filteredServers}
-          selectedServer={selectedServer}
-          onServerSelect={handleServerSelect}
-          onClearServer={handleClearServer}
-          serverSearchTerm={serverSearchTerm}
-          onServerSearchChange={setServerSearchTerm}
-          filteredPaths={filteredPaths}
-          selectedPath={selectedPath}
-          onPathSelect={handlePathSelect}
-          onClearPath={handleClearPath}
-          pathSearchTerm={pathSearchTerm}
-          onPathSearchChange={setPathSearchTerm}
-          timeRange={timeRange}
-          customRangeMs={customRangeMs}
-          onTimeRangeChange={handleTimeRangeChange}
-          logSearchTerm={logSearchTerm}
-          onSearchChange={setLogSearchTerm}
-        />
+          {showFilterBar && (
+            <FilterBar
+              theme={theme}
+              darkMode={darkMode}
+              serverButtonRef={serverButtonRef}
+              pathButtonRef={pathButtonRef}
+              showServerDropdown={showServerDropdown}
+              onToggleServerDropdown={(v) => setShowServerDropdown(v ?? !showServerDropdown)}
+              showPathDropdown={showPathDropdown}
+              onTogglePathDropdown={(v) => setShowPathDropdown(v ?? !showPathDropdown)}
+              filteredServers={filteredServers}
+              selectedServer={selectedServer}
+              onServerSelect={handleServerSelect}
+              onClearServer={handleClearServer}
+              serverSearchTerm={serverSearchTerm}
+              onServerSearchChange={setServerSearchTerm}
+              filteredPaths={filteredPaths}
+              selectedPath={selectedPath}
+              onPathSelect={handlePathSelect}
+              onClearPath={handleClearPath}
+              pathSearchTerm={pathSearchTerm}
+              onPathSearchChange={setPathSearchTerm}
+              timeRange={timeRange}
+              customRangeMs={customRangeMs}
+              onTimeRangeChange={handleTimeRangeChange}
+              logSearchTerm={logSearchTerm}
+              onSearchChange={setLogSearchTerm}
+            />
+          )}
 
-        <div className="mt-2.5">
-          <KeywordFilter
-            keywords={keywords}
-            inputValue={keywordInput}
-            onInputChange={setKeywordInput}
-            onAdd={(kw) => setKeywords((prev) => [...prev, kw])}
-            onRemove={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
-            onClearAll={() => {
-              setKeywords([]);
-              setKeywordInput('');
-            }}
-            mode={keywordMode}
-            onModeChange={setKeywordMode}
-            theme={theme}
-            darkMode={darkMode}
-          />
+          {showKeywordFilter && (
+            <div className="mt-2.5">
+              <KeywordFilter
+                keywords={keywords}
+                inputValue={keywordInput}
+                onInputChange={setKeywordInput}
+                onAdd={(kw) => setKeywords((prev) => [...prev, kw])}
+                onRemove={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
+                onClearAll={() => {
+                  setKeywords([]);
+                  setKeywordInput('');
+                }}
+                mode={keywordMode}
+                onModeChange={setKeywordMode}
+                theme={theme}
+                darkMode={darkMode}
+              />
+            </div>
+          )}
+
+          {showActiveFilters && (
+            <ActiveFilters
+              selectedServer={selectedServer}
+              selectedPath={selectedPath}
+              logSearchTerm={logSearchTerm}
+              keywords={keywords}
+              darkMode={darkMode}
+              theme={theme}
+              onClearServer={handleClearServer}
+              onClearPath={handleClearPath}
+              onClearSearch={() => setLogSearchTerm('')}
+              onRemoveKeyword={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
+            />
+          )}
         </div>
-
-        <ActiveFilters
-          selectedServer={selectedServer}
-          selectedPath={selectedPath}
-          logSearchTerm={logSearchTerm}
-          keywords={keywords}
-          darkMode={darkMode}
-          theme={theme}
-          onClearServer={handleClearServer}
-          onClearPath={handleClearPath}
-          onClearSearch={() => setLogSearchTerm('')}
-          onRemoveKeyword={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
-        />
-      </div>
+      )}
 
       <AnimatePresence>
         {downloadError && (
@@ -844,6 +872,11 @@ const LogPanel = ({
         density={initialPrefs.density}
         timestampFormat={initialPrefs.timestampFormat}
         messageWrap={initialPrefs.messageWrap}
+        fontSize={initialPrefs.fontSize}
+        showServer={initialPrefs.showServer}
+        showPath={initialPrefs.showPath}
+        messageColor={initialPrefs.messageColor}
+        showScrollButtons={showScrollButtons}
         logSearchTerm={logSearchTerm}
         selectedServer={selectedServer}
         selectedPath={selectedPath}
@@ -864,18 +897,20 @@ const LogPanel = ({
         virtualizerScrollToBottomRef={virtualizerScrollToBottomRef}
       />
 
-      <StatusBar
-        isConnected={isConnected}
-        isReconnecting={isReconnecting}
-        isPaused={isPaused}
-        logRate={logRate}
-        darkMode={darkMode}
-        theme={theme}
-        streamMode={streamMode}
-        visibleCount={displayedLogs.length}
-        bufferedCount={bufferedCount}
-        hasActiveFilters={hasActiveFilters}
-      />
+      {showStatusBar && (
+        <StatusBar
+          isConnected={isConnected}
+          isReconnecting={isReconnecting}
+          isPaused={isPaused}
+          logRate={logRate}
+          darkMode={darkMode}
+          theme={theme}
+          streamMode={streamMode}
+          visibleCount={displayedLogs.length}
+          bufferedCount={bufferedCount}
+          hasActiveFilters={hasActiveFilters}
+        />
+      )}
     </div>
   );
 };

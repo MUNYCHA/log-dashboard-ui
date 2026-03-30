@@ -94,6 +94,10 @@ const LogEntry = ({
   density = 'comfortable',
   timestampFormat = 'relative',
   messageWrap = false,
+  fontSize = 'medium',
+  showServer = true,
+  showPath = true,
+  messageColor = null,
 }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
@@ -107,6 +111,8 @@ const LogEntry = ({
   const displayedTimestamp = timestampFormat === 'absolute'
     ? localTimestamp
     : (relativeTime || 'now');
+
+  const fontSizeClass = fontSize === 'small' ? 'text-[11.5px]' : fontSize === 'large' ? 'text-[15.5px]' : 'text-[13.5px]';
   const [copied, setCopied] = useState(false);
   const timerRef = useRef(null);
 
@@ -129,32 +135,45 @@ const LogEntry = ({
           ? 'bg-[#1E1E1E] border border-[#303134] hover:bg-[#252525] shadow-[0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]'
           : 'bg-white border border-[#E8EAED] shadow-sm hover:shadow-md'
       }`}>
-        <div className="flex items-center gap-2 mb-2.5 overflow-hidden">
-          <span className={`text-[11.5px] font-mono tabular-nums flex-shrink-0 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`}>
-            {displayedTimestamp}
-          </span>
-          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-wide flex-shrink-0 ${
-            darkMode ? 'bg-[#1A3A6B]/60 text-[#8AB4F8]' : 'bg-[#E8F0FE] text-[#1A73E8]'
-          }`}>
-            {serverName}
-          </span>
-          <span className={`w-px h-3 flex-shrink-0 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
-          <span className={`text-[11px] font-mono tabular-nums flex-shrink-0 truncate ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-            {localTimestamp}
-          </span>
-          {log.path && (
-            <>
-              <span className={`w-px h-3 flex-shrink-0 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
-              <span className={`text-[11px] font-mono truncate ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
-                {log.path}
+        {(timestampFormat !== 'hidden' || showServer || (showPath && log.path)) && (
+          <div className="flex items-center gap-2 mb-2.5 overflow-hidden">
+            {timestampFormat !== 'hidden' && (
+              <span className={`text-[11.5px] font-mono tabular-nums flex-shrink-0 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`}>
+                {displayedTimestamp}
               </span>
-            </>
-          )}
-        </div>
+            )}
+            {showServer && (
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-wide flex-shrink-0 ${
+                darkMode ? 'bg-[#1A3A6B]/60 text-[#8AB4F8]' : 'bg-[#E8F0FE] text-[#1A73E8]'
+              }`}>
+                {serverName}
+              </span>
+            )}
+            {timestampFormat !== 'hidden' && (
+              <>
+                <span className={`w-px h-3 flex-shrink-0 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
+                <span className={`text-[11px] font-mono tabular-nums flex-shrink-0 truncate ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                  {localTimestamp}
+                </span>
+              </>
+            )}
+            {showPath && log.path && (
+              <>
+                <span className={`w-px h-3 flex-shrink-0 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />
+                <span className={`text-[11px] font-mono truncate ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+                  {log.path}
+                </span>
+              </>
+            )}
+          </div>
+        )}
 
-        <div className={`${messageWrap ? 'whitespace-pre-wrap ' : ''}break-words text-[13.5px] leading-[1.65] font-mono ${
-          darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'
-        }`}>
+        <div
+          className={`${messageWrap ? 'whitespace-pre-wrap ' : ''}break-words ${fontSizeClass} leading-[1.65] font-mono ${
+            messageColor ? '' : (darkMode ? 'text-[#E8EAED]' : 'text-[#202124]')
+          }`}
+          style={messageColor ? { color: messageColor } : undefined}
+        >
           {highlightMessage(message, keywords, darkMode, logSearchTerm)}
         </div>
 

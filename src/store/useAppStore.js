@@ -21,23 +21,59 @@ const useAppStore = create(
       sidebarCollapsedByDefault: false,
       setSidebarCollapsedByDefault: (val) => set({ sidebarCollapsedByDefault: val }),
 
+      // Log viewer — behavior
       logAutoScroll: true,
       setLogAutoScroll: (val) => set({ logAutoScroll: val }),
-
-      logTimestampFormat: 'relative',
-      setLogTimestampFormat: (val) => set({ logTimestampFormat: val }),
-
-      logDensity: 'comfortable',
-      setLogDensity: (val) => set({ logDensity: val }),
 
       logPauseOnTopicSwitch: false,
       setLogPauseOnTopicSwitch: (val) => set({ logPauseOnTopicSwitch: val }),
 
-      logDefaultTimeRange: 'all',
-      setLogDefaultTimeRange: (val) => set({ logDefaultTimeRange: val }),
+      // Log viewer — display (log card)
+      logDensity: 'comfortable',
+      setLogDensity: (val) => set({ logDensity: val }),
+
+      logFontSize: 'medium',
+      setLogFontSize: (val) => set({ logFontSize: val }),
 
       logMessageWrap: false,
       setLogMessageWrap: (val) => set({ logMessageWrap: val }),
+
+      logTimestampFormat: 'relative',
+      setLogTimestampFormat: (val) => set({ logTimestampFormat: val }),
+
+      logShowServer: true,
+      setLogShowServer: (val) => set({ logShowServer: val }),
+
+      logShowPath: true,
+      setLogShowPath: (val) => set({ logShowPath: val }),
+
+      // Log viewer — colors
+      // null = use theme default, string = custom color applied to all message text
+      logMessageColor: null,
+      setLogMessageColor: (val) => set({ logMessageColor: val }),
+
+      // Log viewer — filters
+      logDefaultTimeRange: 'all',
+      setLogDefaultTimeRange: (val) => set({ logDefaultTimeRange: val }),
+
+      // Log viewer — visibility
+      showHeader: true,
+      setShowHeader: (val) => set({ showHeader: val }),
+
+      showFilterBar: true,
+      setShowFilterBar: (val) => set({ showFilterBar: val }),
+
+      showActiveFilters: true,
+      setShowActiveFilters: (val) => set({ showActiveFilters: val }),
+
+      showKeywordFilter: true,
+      setShowKeywordFilter: (val) => set({ showKeywordFilter: val }),
+
+      showStatusBar: true,
+      setShowStatusBar: (val) => set({ showStatusBar: val }),
+
+      showScrollButtons: true,
+      setShowScrollButtons: (val) => set({ showScrollButtons: val }),
     }),
     {
       name: 'logdash-prefs',
@@ -46,11 +82,21 @@ const useAppStore = create(
         sidebarCollapsed: state.sidebarCollapsed,
         sidebarCollapsedByDefault: state.sidebarCollapsedByDefault,
         logAutoScroll: state.logAutoScroll,
-        logTimestampFormat: state.logTimestampFormat,
-        logDensity: state.logDensity,
         logPauseOnTopicSwitch: state.logPauseOnTopicSwitch,
-        logDefaultTimeRange: state.logDefaultTimeRange,
+        logDensity: state.logDensity,
+        logFontSize: state.logFontSize,
         logMessageWrap: state.logMessageWrap,
+        logTimestampFormat: state.logTimestampFormat,
+        logShowServer: state.logShowServer,
+        logShowPath: state.logShowPath,
+        logMessageColor: state.logMessageColor,
+        logDefaultTimeRange: state.logDefaultTimeRange,
+        showHeader: state.showHeader,
+        showFilterBar: state.showFilterBar,
+        showActiveFilters: state.showActiveFilters,
+        showKeywordFilter: state.showKeywordFilter,
+        showStatusBar: state.showStatusBar,
+        showScrollButtons: state.showScrollButtons,
       }),
     },
   ),
@@ -66,9 +112,13 @@ export const selectLogPrefs = (s) => ({
   autoScroll: s.logAutoScroll,
   timestampFormat: s.logTimestampFormat,
   density: s.logDensity,
+  fontSize: s.logFontSize,
   pauseOnTopicSwitch: s.logPauseOnTopicSwitch,
   defaultTimeRange: s.logDefaultTimeRange,
   messageWrap: s.logMessageWrap,
+  showServer: s.logShowServer,
+  showPath: s.logShowPath,
+  messageColor: s.logMessageColor,
 })
 
 export default useAppStore
