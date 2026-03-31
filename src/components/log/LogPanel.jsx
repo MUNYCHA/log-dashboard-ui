@@ -716,6 +716,8 @@ const LogPanel = ({
           onToggleAutoScroll={toggleAutoScroll}
           onDownload={downloadLogs}
           onClearLogs={onClearLogs}
+          terminalMode={terminalMode}
+          onToggleTerminalMode={() => setTerminalMode((v) => !v)}
           logSearchTerm={logSearchTerm}
           onSearchChange={setLogSearchTerm}
           showMobileServerDropdown={showMobileServerDropdown}

@@ -19,6 +19,7 @@ const MobileHeader = ({
   filteredPaths, selectedPath, onPathSelect, onClearPath,
   pathSearchTerm, onPathSearchChange,
   timeRange, customRangeMs, onTimeRangeChange,
+  terminalMode, onToggleTerminalMode,
 }) => {
   const btnIdle = darkMode
     ? 'rounded-xl border border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED] hover:border-[#80868B]'
@@ -163,8 +164,15 @@ const MobileHeader = ({
               </button>
 
               <button
+                onClick={onToggleTerminalMode}
+                className={`py-2.5 rounded-xl border text-[13px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${terminalMode ? btnActive : btnIdle}`}
+              >
+                Terminal
+              </button>
+
+              <button
                 onClick={() => onClearLogs(selectedTopic)}
-                className={`py-2.5 rounded-xl border text-[13px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${btnDanger}`}
+                className={`col-span-2 py-2.5 rounded-xl border text-[13px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${btnDanger}`}
               >
                 Clear logs
               </button>
