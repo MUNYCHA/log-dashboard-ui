@@ -3,8 +3,11 @@ const displayCap = Number(import.meta.env.VITE_MAX_LOGS_PER_TOPIC) || 500;
 const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws/logs';
 const httpBaseUrl = wsUrl.replace(/^ws:\/\//, 'http://').replace(/^wss:\/\//, 'https://').replace(/\/ws\/.*$/, '');
 
+const storageApiUrl = import.meta.env.VITE_STORAGE_API_URL || httpBaseUrl;
+
 const config = {
   httpBaseUrl,
+  storageApiUrl,
   ws: {
     url: wsUrl,
     maxLogsPerTopic: displayCap,
