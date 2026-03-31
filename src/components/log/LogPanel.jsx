@@ -23,12 +23,13 @@ const VirtualLogList = React.memo(({
   scrollRef, atTop, atBottom, scrollToTop, scrollToBottom,
   handleClearPath, handleClearServer, markUserScrollIntent,
   virtualizerScrollToBottomRef,
+  terminalMode,
 }) => {
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual is designed this way
   const virtualizer = useVirtualizer({
     count: displayedLogs.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => ESTIMATED_LOG_HEIGHT,
+    estimateSize: () => terminalMode ? 20 : ESTIMATED_LOG_HEIGHT,
     overscan: 20,
     getItemKey: (index) => displayedLogs[index]._id,
   });
@@ -158,7 +159,7 @@ const VirtualLogList = React.memo(({
     : 0;
 
   return (
-    <div className={`flex-1 flex flex-col overflow-hidden rounded-2xl group/logpanel ${theme.card}`}>
+    <div className={`flex-1 flex flex-col overflow-hidden rounded-2xl group/logpanel ${terminalMode ? (darkMode ? 'bg-black' : 'bg-white border border-[#E8EAED]') : theme.card}`}>
       {isPaused && (
         <div className={`animate-paused-banner flex items-center justify-between gap-3 px-4 py-2 text-xs border-b flex-shrink-0 ${
           darkMode ? 'border-[#303134] bg-[#1E1E1E] text-[#80868B]' : 'border-[#E8EAED] bg-white text-[#5F6368]'
@@ -204,6 +205,7 @@ const VirtualLogList = React.memo(({
                       keywords={keywords}
                       timestampGen={timestampGen}
                       logSearchTerm={logSearchTerm}
+                      terminalMode={terminalMode}
                     />
                   </div>
                 );
@@ -296,6 +298,7 @@ const LogPanel = ({
 }) => {
   const [frozenLogs, setFrozenLogs] = useState(null);
   const [frozenTopic, setFrozenTopic] = useState(null);
+  const [terminalMode, setTerminalMode] = useState(false);
   const [logSearchTerm, setLogSearchTerm] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
   const [showServerDropdown, setShowServerDropdown] = useState(false);
@@ -692,6 +695,8 @@ const LogPanel = ({
           autoScroll={autoScroll}
           onToggleAutoScroll={toggleAutoScroll}
           onClearLogs={onClearLogs}
+          terminalMode={terminalMode}
+          onToggleTerminalMode={() => setTerminalMode((v) => !v)}
         />
 
         <MobileHeader
@@ -844,6 +849,7 @@ const LogPanel = ({
         handleClearServer={handleClearServer}
         markUserScrollIntent={markUserScrollIntent}
         virtualizerScrollToBottomRef={virtualizerScrollToBottomRef}
+        terminalMode={terminalMode}
       />
 
       <StatusBar

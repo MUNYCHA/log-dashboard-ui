@@ -85,7 +85,7 @@ const highlightMessage = (message, keywords, darkMode, logSearchTerm) => {
   return combined.length === 1 ? combined[0] : combined;
 };
 
-const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
+const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm, terminalMode }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
   const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
@@ -105,6 +105,14 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm }) => {
       setTimeout(() => setCopied(false), 1500);
     });
   }, [log, localTimestamp]);
+
+  if (terminalMode) {
+    return (
+      <div className={`px-4 font-mono text-[13px] leading-5 whitespace-pre-wrap break-words ${darkMode ? 'text-white' : 'text-black'}`}>
+        {highlightMessage(message, keywords, darkMode, logSearchTerm)}
+      </div>
+    );
+  }
 
   return (
     <article className="px-3 pt-1.5 pb-1.5">
