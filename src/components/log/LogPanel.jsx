@@ -180,7 +180,7 @@ const VirtualLogList = React.memo(({
           </button>
         </div>
       )}
-      <div className="flex-1 relative overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0%,black_20px,black_100%)]">
+      <div className={`flex-1 relative overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0%,black_20px,black_100%)] ${terminalMode && !darkMode ? 'bg-white' : theme.logArea}`}>
         <div
           className="absolute inset-0 overflow-auto font-mono text-sm"
         ref={scrollRef}
@@ -286,7 +286,7 @@ const LogPanel = ({
   logRate,
   theme,
   darkMode,
-  onThemeToggle,
+  terminalMode,
   onOpenSidebar,
   splitView,
   onOpenSplit,
@@ -298,7 +298,6 @@ const LogPanel = ({
 }) => {
   const [frozenLogs, setFrozenLogs] = useState(null);
   const [frozenTopic, setFrozenTopic] = useState(null);
-  const [terminalMode, setTerminalMode] = useState(false);
   const [logSearchTerm, setLogSearchTerm] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
   const [showServerDropdown, setShowServerDropdown] = useState(false);
@@ -721,7 +720,7 @@ const LogPanel = ({
 
   return (
     <div
-      className={`flex-1 flex flex-col min-w-0 gap-2 ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''}`}
+      className={`flex-1 flex flex-col min-w-0 gap-2 ${splitView && !isActivePanel ? 'cursor-pointer' : ''}`}
       onClick={splitView && !isActivePanel ? onSetActive : undefined}
     >
       <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.card} rounded-2xl flex-shrink-0 relative z-10`}>
@@ -740,12 +739,9 @@ const LogPanel = ({
           onTogglePause={handleTogglePause}
           btn={btn}
           onDownload={downloadLogs}
-          onThemeToggle={onThemeToggle}
           autoScroll={autoScroll}
           onToggleAutoScroll={toggleAutoScroll}
           onClearLogs={onClearLogs}
-          terminalMode={terminalMode}
-          onToggleTerminalMode={() => setTerminalMode((v) => !v)}
         />
 
         <MobileHeader
@@ -755,7 +751,6 @@ const LogPanel = ({
           darkMode={darkMode}
           theme={theme}
           onOpenSidebar={onOpenSidebar}
-          onThemeToggle={onThemeToggle}
           isMobileMenuOpen={isMobileMenuOpen}
           onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           mobileMenuReady={mobileMenuReady}
@@ -765,8 +760,6 @@ const LogPanel = ({
           onToggleAutoScroll={toggleAutoScroll}
           onDownload={downloadLogs}
           onClearLogs={onClearLogs}
-          terminalMode={terminalMode}
-          onToggleTerminalMode={() => setTerminalMode((v) => !v)}
           logSearchTerm={logSearchTerm}
           onSearchChange={setLogSearchTerm}
           showMobileServerDropdown={showMobileServerDropdown}

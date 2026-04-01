@@ -5,7 +5,7 @@ const EmptyState = ({
   onSetActive, onClosePanel, onOpenSidebar,
 }) => (
   <div
-    className={`flex-1 flex flex-col min-w-0 ${theme.background} ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-[#1A73E8]/40' : ''}`}
+    className={`flex-1 flex flex-col min-w-0 ${theme.card} rounded-2xl ${splitView && !isActivePanel ? 'cursor-pointer opacity-60' : ''} ${splitView && isActivePanel ? 'ring-1 ring-[#1A73E8]/40' : ''}`}
     onClick={splitView && !isActivePanel ? onSetActive : undefined}
   >
     {onClosePanel && (

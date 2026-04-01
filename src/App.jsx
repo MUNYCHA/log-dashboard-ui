@@ -3,22 +3,45 @@ import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import Sidebar from './components/sidebar';
 import LogPanel from './components/log';
+import SettingsModal from './components/settings';
 import config from './config';
 
+const readStoredSetting = (key, fallback, parse = (value) => value) => {
+  if (typeof window === 'undefined') return fallback;
+
+  try {
+    const stored = window.localStorage.getItem(key);
+    return stored == null ? fallback : parse(stored);
+  } catch {
+    return fallback;
+  }
+};
+
 export default function App() {
-  const [topicSortMode, setTopicSortMode] = useState('asc');
+  const [topicSortMode, setTopicSortMode] = useState(() => readStoredSetting('logstream:topicSortMode', 'asc', (value) => (
+    ['activity', 'asc', 'desc'].includes(value) ? value : 'asc'
+  )));
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [selectedServer, setSelectedServer] = useState(null);
   const [selectedTopic2, setSelectedTopic2] = useState(null);
   const [selectedServer2, setSelectedServer2] = useState(null);
   const [topicSearchTerm, setTopicSearchTerm] = useState('');
-  const [darkMode, setDarkMode] = useState(true);
+  const [themeMode, setThemeMode] = useState(() => readStoredSetting('logstream:themeMode', 'system', (value) => (
+    ['light', 'dark', 'system'].includes(value) ? value : 'system'
+  )));
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [splitView, setSplitView] = useState(false);
   const [activePanel, setActivePanel] = useState(1);
   const [isPaused1, setIsPaused1] = useState(false);
   const [isPaused2, setIsPaused2] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readStoredSetting('logstream:sidebarCollapsed', false, (value) => value === 'true'));
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [terminalMode, setTerminalMode] = useState(() => readStoredSetting('logstream:terminalMode', false, (value) => value === 'true'));
+  const [systemPrefersDark, setSystemPrefersDark] = useState(() => (
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : true
+  ));
 
   // Which topics are currently displayed in log panels — these get full 500-log cap.
   // Non-viewed topics get a smaller cap (50) for sidebar info only.
@@ -28,7 +51,46 @@ export default function App() {
   );
 
   const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics);
+  const darkMode = themeMode === 'system' ? systemPrefersDark : themeMode === 'dark';
   const theme = darkMode ? styles.dark : styles.light;
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (event) => setSystemPrefersDark(event.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.style.colorScheme = darkMode ? 'dark' : 'light';
+    return () => {
+      document.documentElement.style.colorScheme = '';
+    };
+  }, [darkMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem('logstream:themeMode', themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem('logstream:topicSortMode', topicSortMode);
+  }, [topicSortMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem('logstream:sidebarCollapsed', String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    window.localStorage.setItem('logstream:terminalMode', String(terminalMode));
+  }, [terminalMode]);
 
   useEffect(() => {
     if (splitView && selectedTopic && selectedTopic2) {
@@ -98,10 +160,14 @@ export default function App() {
     sendFilter(null, 2); // clear panel 2's server-side filter
   }, [sendFilter]);
 
-  const toggleDarkMode = useCallback(() => setDarkMode((d) => !d), []);
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const toggleSidebarCollapsed = useCallback(() => setSidebarCollapsed((v) => !v), []);
+  const openSettings = useCallback(() => {
+    setSidebarOpen(false);
+    setIsSettingsOpen(true);
+  }, []);
+  const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
 
   const togglePause1 = useCallback(() => setIsPaused1((p) => !p), []);
   const togglePause2 = useCallback(() => setIsPaused2((p) => !p), []);
@@ -137,9 +203,10 @@ export default function App() {
         logRates={logRates}
         collapsed={sidebarCollapsed}
         onCollapse={toggleSidebarCollapsed}
+        onOpenSettings={openSettings}
       />
 
-      <div className="flex flex-1 min-w-0 overflow-hidden gap-2">
+      <div className={`flex flex-1 min-w-0 gap-2 ${theme.background}`}>
         {/* Panel 1 */}
         <LogPanel
           topicLogs={topicLogs1}
@@ -153,7 +220,7 @@ export default function App() {
           logRate={logRates[selectedTopic] || 0}
           theme={theme}
           darkMode={darkMode}
-          onThemeToggle={toggleDarkMode}
+          terminalMode={terminalMode}
           onOpenSidebar={openSidebar}
           splitView={splitView}
           onOpenSplit={handleOpenSplit}
@@ -180,7 +247,7 @@ export default function App() {
               logRate={logRates[selectedTopic2] || 0}
               theme={theme}
               darkMode={darkMode}
-              onThemeToggle={toggleDarkMode}
+              terminalMode={terminalMode}
               onOpenSidebar={openSidebar}
               splitView={splitView}
               onOpenSplit={handleOpenSplit}
@@ -195,6 +262,20 @@ export default function App() {
           </>
         )}
       </div>
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={closeSettings}
+        darkMode={darkMode}
+        themeMode={themeMode}
+        onThemeModeChange={setThemeMode}
+        topicSortMode={topicSortMode}
+        onTopicSortModeChange={setTopicSortMode}
+        sidebarCollapsed={sidebarCollapsed}
+        onSidebarCollapsedChange={setSidebarCollapsed}
+        terminalMode={terminalMode}
+        onTerminalModeChange={setTerminalMode}
+      />
     </div>
   );
 }

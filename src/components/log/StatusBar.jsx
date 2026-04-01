@@ -16,7 +16,7 @@ const StatusBar = ({
   const dot = <span className={`w-px h-3.5 ${darkMode ? 'bg-[#303134]' : 'bg-[#E8EAED]'}`} />;
 
   return (
-    <div className={`px-4 sm:px-5 py-2 ${theme.statusBar} rounded-2xl text-[12px] font-mono flex items-center gap-2.5 flex-shrink-0 overflow-x-auto`}>
+    <div className={`px-4 sm:px-5 py-2 ${theme.card} rounded-2xl text-[12px] font-mono flex items-center gap-2.5 flex-shrink-0 overflow-x-auto`}>
 
       {/* Connection */}
       <span className="inline-flex items-center gap-1.5 flex-shrink-0">
