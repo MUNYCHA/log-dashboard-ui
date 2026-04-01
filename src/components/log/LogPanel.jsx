@@ -393,6 +393,7 @@ const LogPanel = ({
       onClearServer();
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- topic changes intentionally reset panel-local UI state without remounting the panel
     setFrozenLogs(null);
     setFrozenTopic(null);
     setLogSearchTerm("");
