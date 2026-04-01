@@ -27,7 +27,7 @@ export default function App() {
     [selectedTopic, selectedTopic2],
   );
 
-  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, trimTopicBuffer, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics);
+  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics);
   const theme = darkMode ? styles.dark : styles.light;
 
   useEffect(() => {
@@ -48,14 +48,8 @@ export default function App() {
   // Refs to read current values in stable callbacks without re-creating them
   const splitViewRef = useRef(splitView);
   const activePanelRef = useRef(activePanel);
-  const selectedTopic1Ref = useRef(selectedTopic);
-  const selectedTopic2Ref = useRef(selectedTopic2);
-  const topicsRef = useRef(topics);
   useEffect(() => { splitViewRef.current = splitView; }, [splitView]);
   useEffect(() => { activePanelRef.current = activePanel; }, [activePanel]);
-  useEffect(() => { selectedTopic1Ref.current = selectedTopic; }, [selectedTopic]);
-  useEffect(() => { selectedTopic2Ref.current = selectedTopic2; }, [selectedTopic2]);
-  useEffect(() => { topicsRef.current = topics; }, [topics]);
 
   // Auto-select the most active topic on first load (only if it has traffic).
   // If no topic has logs, leave unselected — user picks manually.
@@ -75,17 +69,9 @@ export default function App() {
     setIsPaused2(false);
 
     if (splitViewRef.current && activePanelRef.current === 2) {
-      const previousTopic = selectedTopic2Ref.current;
-      if (previousTopic && previousTopic !== topic) {
-        trimTopicBuffer(previousTopic);
-      }
       setSelectedTopic2(topic);
       setSelectedServer2(null);
     } else {
-      const previousTopic = selectedTopic1Ref.current;
-      if (previousTopic && previousTopic !== topic) {
-        trimTopicBuffer(previousTopic);
-      }
       setSelectedTopic(topic);
       setSelectedServer(null);
     }
@@ -94,7 +80,7 @@ export default function App() {
     sendFilter(null, pid);
     setTopicSearchTerm('');
     setSidebarOpen(false);
-  }, [sendFilter, trimTopicBuffer]);
+  }, [sendFilter]);
 
   const handleOpenSplit = useCallback(() => {
     setSelectedTopic2(null);
@@ -156,7 +142,6 @@ export default function App() {
       <div className="flex flex-1 min-w-0 overflow-hidden gap-2">
         {/* Panel 1 */}
         <LogPanel
-          key={`panel-1-${selectedTopic ?? 'none'}`}
           topicLogs={topicLogs1}
           selectedTopic={selectedTopic}
           selectedServer={selectedServer}
@@ -184,7 +169,6 @@ export default function App() {
         {splitView && (
           <>
             <LogPanel
-              key={`panel-2-${selectedTopic2 ?? 'none'}`}
               topicLogs={topicLogs2}
               selectedTopic={selectedTopic2}
               selectedServer={selectedServer2}

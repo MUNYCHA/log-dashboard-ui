@@ -329,6 +329,7 @@ const LogPanel = ({
   const pathButtonRef = useRef(null);
   const previousScrollTopRef = useRef(0);
   const userScrollIntentUntilRef = useRef(0);
+  const previousTopicRef = useRef(selectedTopic);
 
   const markUserScrollIntent = useCallback(() => {
     userScrollIntentUntilRef.current = Date.now() + 800;
@@ -381,6 +382,53 @@ const LogPanel = ({
     el.addEventListener('scroll', handleScroll, { passive: true });
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll, selectedTopic]);
+
+  useEffect(() => {
+    const previousTopic = previousTopicRef.current;
+    previousTopicRef.current = selectedTopic;
+
+    if (!selectedTopic || previousTopic === selectedTopic) return;
+
+    if (selectedServer != null) {
+      onClearServer();
+    }
+
+    setFrozenLogs(null);
+    setFrozenTopic(null);
+    setLogSearchTerm("");
+    setDebouncedSearch('');
+    setShowServerDropdown(false);
+    setShowPathDropdown(false);
+    setShowMobileServerDropdown(false);
+    setShowMobilePathDropdown(false);
+    setServerSearchTerm("");
+    setPathSearchTerm("");
+    setPathForTopic({ topic: selectedTopic, path: null });
+    setIsMobileMenuOpen(false);
+    setMobileMenuReady(false);
+    setKeywords([]);
+    setKeywordInput('');
+    setDebouncedKeywordInput('');
+    setKeywordMode('or');
+    setTimeRange('all');
+    setCustomRangeMs(0);
+    setDownloadError(null);
+    userScrollIntentUntilRef.current = 0;
+    previousScrollTopRef.current = 0;
+    setAtTop(true);
+    setAtBottom(true);
+    setAutoScroll(true);
+
+    requestAnimationFrame(() => {
+      if (virtualizerScrollToBottomRef.current) {
+        virtualizerScrollToBottomRef.current();
+        return;
+      }
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+    });
+  }, [selectedTopic, selectedServer, onClearServer]);
 
 
   useEffect(() => {
