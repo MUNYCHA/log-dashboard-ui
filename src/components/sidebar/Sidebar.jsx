@@ -67,6 +67,7 @@ const Sidebar = ({
   logRates,
   collapsed,
   onCollapse,
+  onOpenSettings,
 }) => {
   const sortedTopics = useMemo(() => {
     const filtered = topics.filter((t) => t.toLowerCase().includes(topicSearchTerm.toLowerCase()));
@@ -111,14 +112,28 @@ const Sidebar = ({
       `}
     >
       {collapsed && (
-        <div className="hidden md:flex flex-col items-center justify-start pt-3 flex-1">
+        <div className="hidden md:flex flex-1 flex-col items-center justify-between py-3">
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={onCollapse}
+              title="Show sidebar"
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
           <button
-            onClick={onCollapse}
-            title="Show sidebar"
+            onClick={onOpenSettings}
+            title="Settings"
+            aria-label="Open settings"
             className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${ghostBtn}`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.928 1.69 1.724 1.724 0 00.856 2.79 1.724 1.724 0 010 2.984 1.724 1.724 0 00-.856 2.79 1.724 1.724 0 01-2.928 1.69 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.928-1.69 1.724 1.724 0 00-.856-2.79 1.724 1.724 0 010-2.984 1.724 1.724 0 00.856-2.79 1.724 1.724 0 012.928-1.69 1.724 1.724 0 002.573-1.066z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
         </div>
@@ -228,6 +243,30 @@ const Sidebar = ({
               />
             ))}
           </div>
+        </div>
+
+        <div className="px-3 pb-3 pt-2 flex-shrink-0">
+          <button
+            onClick={onOpenSettings}
+            className={`w-full rounded-[20px] border px-3 py-2.5 text-left transition-all duration-150 ease-in-out active:scale-[0.99] ${
+              darkMode
+                ? 'border-[#353941] bg-[#202124] text-[#E8EAED] shadow-[0_1px_2px_rgba(0,0,0,0.44),0_8px_22px_rgba(0,0,0,0.22)] hover:bg-[#25272B] hover:shadow-[0_2px_4px_rgba(0,0,0,0.46),0_12px_26px_rgba(0,0,0,0.24)]'
+                : 'border-[#E3E7EB] bg-white text-[#202124] shadow-[0_1px_3px_rgba(60,64,67,0.1),0_4px_14px_rgba(60,64,67,0.1)] hover:bg-[#F8F9FA] hover:shadow-[0_2px_6px_rgba(60,64,67,0.12),0_10px_22px_rgba(60,64,67,0.12)]'
+            }`}
+            type="button"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`inline-flex h-10 w-10 items-center justify-center rounded-[16px] ${
+                darkMode ? 'bg-[#1A3A6B]/55 text-[#8AB4F8]' : 'bg-[#E8F0FE] text-[#1A73E8]'
+              }`}>
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.928 1.69 1.724 1.724 0 00.856 2.79 1.724 1.724 0 010 2.984 1.724 1.724 0 00-.856 2.79 1.724 1.724 0 01-2.928 1.69 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.928-1.69 1.724 1.724 0 00-.856-2.79 1.724 1.724 0 010-2.984 1.724 1.724 0 00.856-2.79 1.724 1.724 0 012.928-1.69 1.724 1.724 0 002.573-1.066z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1 text-[13px] font-semibold tracking-[0.01em]">Settings</div>
+            </div>
+          </button>
         </div>
       </div>
     </div>

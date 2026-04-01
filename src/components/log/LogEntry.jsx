@@ -118,8 +118,8 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm, termin
     <article className="px-3 pt-1.5 pb-1.5">
       <div className={`group/entry relative min-h-[80px] rounded-2xl px-4 py-3.5 transition-all duration-100 ${
         darkMode
-          ? 'bg-[#1E1E1E] border border-[#303134] hover:bg-[#252525] shadow-[0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]'
-          : 'bg-white border border-[#E8EAED] shadow-sm hover:shadow-md'
+          ? 'bg-[#202124] border border-[#353941] hover:bg-[#25272B] shadow-[0_1px_2px_rgba(0,0,0,0.44),0_8px_22px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.05)]'
+          : 'bg-white border border-[#E3E7EB] shadow-[0_1px_3px_rgba(60,64,67,0.1),0_4px_14px_rgba(60,64,67,0.1)] hover:shadow-[0_2px_6px_rgba(60,64,67,0.12),0_10px_22px_rgba(60,64,67,0.12)]'
       }`}>
         <div className="flex items-center gap-2 mb-2.5 overflow-hidden">
           <span className={`text-[11.5px] font-mono tabular-nums flex-shrink-0 ${darkMode ? 'text-[#80868B]' : 'text-[#5F6368]'}`}>
