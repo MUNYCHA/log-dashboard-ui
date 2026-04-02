@@ -5,6 +5,7 @@ const ServerDropdown = ({
   isOpen,
   onClose,
   servers,
+  renderServerItem,
   selectedServer,
   onServerSelect,
   onClearServer,
@@ -25,6 +26,7 @@ const ServerDropdown = ({
     allLabel="All Servers"
     placeholder="Search servers"
     emptyLabel="No servers found"
+    renderItem={renderServerItem}
     selectedClass={darkMode ? 'bg-[#0842A0]/30 text-[#A8C7FA]' : 'bg-[#D3E3FD] text-[#0B57D0]'}
     theme={theme}
   />

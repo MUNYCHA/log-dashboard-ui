@@ -42,6 +42,7 @@ const initialPanelState = (topic) => ({
   atTop: true,
   atBottom: true,
   downloadError: null,
+  topicMeta: null,
 });
 
 function panelReducer(state, action) {
@@ -341,7 +342,7 @@ const LogPanel = ({
     isMobileMenuOpen, mobileMenuReady,
     keywords, keywordInput, debouncedKeywordInput, keywordMode,
     timeRange, customRangeMs,
-    atTop, atBottom, downloadError,
+    atTop, atBottom, downloadError, topicMeta,
   } = state;
   const selectedPathForTopic = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
   const [timestampGen, setTimestampGen] = useState(0);
@@ -425,6 +426,17 @@ const LogPanel = ({
     });
   }, [selectedTopic]);
 
+  useEffect(() => {
+    if (!selectedTopic) return;
+    let cancelled = false;
+    fetch(`${config.httpBaseUrl}/api/topics/${encodeURIComponent(selectedTopic)}/meta`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!cancelled && data) dispatch({ type: 'PATCH', payload: { topicMeta: data } });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [selectedTopic]);
 
   useEffect(() => {
     const t = setTimeout(() => dispatch({ type: 'PATCH', payload: { debouncedSearch: logSearchTerm } }), 300);
@@ -448,21 +460,42 @@ const LogPanel = ({
     return [...new Set(logs.map((l) => l.path))].sort();
   }, [selectedTopic, topicLogs, selectedServer]);
 
-  const selectedPath = selectedPathForTopic && pathsForSelectedServer.includes(selectedPathForTopic)
-    ? selectedPathForTopic
-    : null;
+  // Merge backend meta (all-time) with buffer (recently seen) — meta order preserved,
+  // buffer-only servers appended at the end for brand-new servers not yet in meta.
+  const mergedServers = useMemo(() => {
+    const metaNames = topicMeta?.servers?.map((s) => s.name) ?? [];
+    const metaSet = new Set(metaNames);
+    const bufferOnly = serversForSelectedTopic.filter((s) => !metaSet.has(s));
+    return [...metaNames, ...bufferOnly];
+  }, [topicMeta, serversForSelectedTopic]);
 
+  const mergedPaths = useMemo(() => {
+    const serverMeta = selectedServer
+      ? topicMeta?.servers?.find((s) => s.name === selectedServer)
+      : null;
+    const metaPaths = serverMeta?.paths?.map((p) => p.path) ?? [];
+    const metaSet = new Set(metaPaths);
+    const bufferOnly = pathsForSelectedServer.filter((p) => !metaSet.has(p));
+    return [...metaPaths, ...bufferOnly];
+  }, [topicMeta, selectedServer, pathsForSelectedServer]);
+
+  const selectedPath = selectedPathForTopic && (
+    mergedPaths.includes(selectedPathForTopic) || pathsForSelectedServer.includes(selectedPathForTopic)
+  ) ? selectedPathForTopic : null;
+
+  // Auto-clear selected server if it's gone from both meta and buffer.
+  // Guard on mergedServers.length so we don't clear before meta has loaded.
   useEffect(() => {
-    if (selectedServer && !serversForSelectedTopic.includes(selectedServer)) {
+    if (selectedServer && mergedServers.length > 0 && !mergedServers.includes(selectedServer)) {
       onServerSelect(null);
     }
-  }, [selectedServer, serversForSelectedTopic, onServerSelect]);
+  }, [selectedServer, mergedServers, onServerSelect]);
 
   useEffect(() => {
-    if (selectedPathForTopic && !pathsForSelectedServer.includes(selectedPathForTopic)) {
+    if (selectedPathForTopic && mergedPaths.length > 0 && !mergedPaths.includes(selectedPathForTopic)) {
       dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } });
     }
-  }, [selectedPathForTopic, pathsForSelectedServer, selectedTopic]);
+  }, [selectedPathForTopic, mergedPaths, selectedTopic]);
 
   useEffect(() => {
     if (!sendFilter) return;
@@ -485,14 +518,27 @@ const LogPanel = ({
   }, [selectedServer, selectedPath, debouncedSearch, keywords, debouncedKeywordInput, keywordMode, timeRange, customRangeMs, sendFilter, panelId]);
 
   const filteredServers = useMemo(
-    () => serversForSelectedTopic.filter((s) => s.toLowerCase().includes(serverSearchTerm.toLowerCase())),
-    [serversForSelectedTopic, serverSearchTerm],
+    () => mergedServers.filter((s) => s.toLowerCase().includes(serverSearchTerm.toLowerCase())),
+    [mergedServers, serverSearchTerm],
   );
 
   const filteredPaths = useMemo(
-    () => pathsForSelectedServer.filter((p) => p.toLowerCase().includes(pathSearchTerm.toLowerCase())),
-    [pathsForSelectedServer, pathSearchTerm],
+    () => mergedPaths.filter((p) => p.toLowerCase().includes(pathSearchTerm.toLowerCase())),
+    [mergedPaths, pathSearchTerm],
   );
+
+  const renderServerItem = useCallback((serverName) => {
+    const meta = topicMeta?.servers?.find((s) => s.name === serverName);
+    const isActive = serversForSelectedTopic.includes(serverName);
+    const parts = [];
+    if (isActive) parts.push('● Active');
+    if (meta?.count) {
+      const n = meta.count;
+      const fmt = n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}k` : String(n);
+      parts.push(`${fmt} logs`);
+    }
+    return { primary: serverName, secondary: parts.length > 0 ? parts.join(' · ') : null };
+  }, [topicMeta, serversForSelectedTopic]);
 
   const filteredLogs = useMemo(() => {
     if (!selectedTopic || !topicLogs) return [];
@@ -745,6 +791,7 @@ const LogPanel = ({
           showMobilePathDropdown={showMobilePathDropdown}
           onToggleMobilePathDropdown={(v) => dispatch({ type: 'PATCH', payload: { showMobilePathDropdown: v ?? !showMobilePathDropdown } })}
           filteredServers={filteredServers}
+          renderServerItem={renderServerItem}
           selectedServer={selectedServer}
           onServerSelect={handleServerSelect}
           onClearServer={handleClearServer}
@@ -771,6 +818,7 @@ const LogPanel = ({
           showPathDropdown={showPathDropdown}
           onTogglePathDropdown={(v) => dispatch({ type: 'PATCH', payload: { showPathDropdown: v ?? !showPathDropdown } })}
           filteredServers={filteredServers}
+          renderServerItem={renderServerItem}
           selectedServer={selectedServer}
           onServerSelect={handleServerSelect}
           onClearServer={handleClearServer}

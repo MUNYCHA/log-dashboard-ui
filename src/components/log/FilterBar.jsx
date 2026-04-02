@@ -19,7 +19,7 @@ const FilterBar = ({
   serverButtonRef, pathButtonRef,
   showServerDropdown, onToggleServerDropdown,
   showPathDropdown, onTogglePathDropdown,
-  filteredServers, selectedServer, onServerSelect, onClearServer,
+  filteredServers, renderServerItem, selectedServer, onServerSelect, onClearServer,
   serverSearchTerm, onServerSearchChange,
   filteredPaths, selectedPath, onPathSelect, onClearPath,
   pathSearchTerm, onPathSearchChange,
@@ -60,7 +60,8 @@ const FilterBar = ({
       </button>
       <ServerDropdown
         isOpen={showServerDropdown} onClose={() => onToggleServerDropdown(false)}
-        servers={filteredServers} selectedServer={selectedServer}
+        servers={filteredServers} renderServerItem={renderServerItem}
+        selectedServer={selectedServer}
         onServerSelect={onServerSelect} onClearServer={onClearServer}
         searchTerm={serverSearchTerm} onSearchChange={onServerSearchChange}
         theme={theme} darkMode={darkMode}

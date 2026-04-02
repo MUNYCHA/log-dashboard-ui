@@ -13,7 +13,7 @@ const MobileHeader = ({
   logSearchTerm, onSearchChange,
   showMobileServerDropdown, onToggleMobileServerDropdown,
   showMobilePathDropdown, onToggleMobilePathDropdown,
-  filteredServers, selectedServer, onServerSelect, onClearServer,
+  filteredServers, renderServerItem, selectedServer, onServerSelect, onClearServer,
   serverSearchTerm, onServerSearchChange,
   filteredPaths, selectedPath, onPathSelect, onClearPath,
   pathSearchTerm, onPathSearchChange,
@@ -96,7 +96,8 @@ const MobileHeader = ({
               </button>
               <ServerDropdown
                 isOpen={showMobileServerDropdown} onClose={() => onToggleMobileServerDropdown(false)}
-                servers={filteredServers} selectedServer={selectedServer}
+                servers={filteredServers} renderServerItem={renderServerItem}
+                selectedServer={selectedServer}
                 onServerSelect={onServerSelect} onClearServer={onClearServer}
                 searchTerm={serverSearchTerm} onSearchChange={onServerSearchChange}
                 theme={theme} darkMode={darkMode}
