@@ -27,7 +27,7 @@ export const styles = {
   },
   dark: {
     background: "bg-[#0F0F0F]",
-    sidebar: "bg-[#202124] border border-[#32353B] shadow-[0_1px_2px_rgba(0,0,0,0.52),0_14px_32px_rgba(0,0,0,0.3)]",
+    sidebar: "bg-[#202124] shadow-[0_1px_2px_rgba(0,0,0,0.52),0_14px_32px_rgba(0,0,0,0.3)]",
     header: "bg-[#202124]",
     logArea: "bg-[#121212]",
     text: "text-[#E8EAED]",
@@ -35,7 +35,7 @@ export const styles = {
     textMuted: "text-[#80868B]",
     border: "border-[#303134]",
     input: "bg-[#303134] border border-[#5F6368] text-[#E8EAED] placeholder:text-[#80868B]",
-    card: "bg-[#202124] border border-[#32353B] shadow-[0_1px_2px_rgba(0,0,0,0.52),0_14px_32px_rgba(0,0,0,0.3)]",
+    card: "bg-[#202124] shadow-[0_1px_2px_rgba(0,0,0,0.52),0_14px_32px_rgba(0,0,0,0.3)]",
     hover: "hover:bg-[#303134] transition-all duration-150 ease-in-out",
     selected: "bg-[#1A3A6B]/50 border-l-2 border-l-[#8AB4F8]",
     topicItem: "border-transparent",
