@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useReducer, useRef, useEffect, useMemo, useCallback } from "react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { KeywordFilter } from "../filters";
@@ -14,6 +14,43 @@ import ScrollButtons from "./ScrollButtons";
 import LogEntry from "./LogEntry";
 
 const ESTIMATED_LOG_HEIGHT = 114;
+
+// ── Panel-local state ────────────────────────────────────────────────────────
+// All fields here reset automatically on topic switch via RESET_TOPIC.
+// Adding a new field here is sufficient — no separate reset list to maintain.
+const initialPanelState = (topic) => ({
+  frozenLogs: null,
+  frozenTopic: null,
+  logSearchTerm: "",
+  debouncedSearch: "",
+  autoScroll: true,
+  showServerDropdown: false,
+  showPathDropdown: false,
+  showMobileServerDropdown: false,
+  showMobilePathDropdown: false,
+  serverSearchTerm: "",
+  pathSearchTerm: "",
+  pathForTopic: { topic, path: null },
+  isMobileMenuOpen: false,
+  mobileMenuReady: false,
+  keywords: [],
+  keywordInput: "",
+  debouncedKeywordInput: "",
+  keywordMode: "or",
+  timeRange: "all",
+  customRangeMs: 0,
+  atTop: true,
+  atBottom: true,
+  downloadError: null,
+});
+
+function panelReducer(state, action) {
+  switch (action.type) {
+    case 'RESET_TOPIC': return initialPanelState(action.topic);
+    case 'PATCH': return { ...state, ...action.payload };
+    default: return state;
+  }
+}
 
 const VirtualLogList = React.memo(({
   displayedLogs, isPaused, autoScroll, theme, darkMode, keywords, timestampGen,
@@ -296,31 +333,18 @@ const LogPanel = ({
   sendFilter,
   panelId,
 }) => {
-  const [frozenLogs, setFrozenLogs] = useState(null);
-  const [frozenTopic, setFrozenTopic] = useState(null);
-  const [logSearchTerm, setLogSearchTerm] = useState("");
-  const [autoScroll, setAutoScroll] = useState(true);
-  const [showServerDropdown, setShowServerDropdown] = useState(false);
-  const [showPathDropdown, setShowPathDropdown] = useState(false);
-  const [showMobileServerDropdown, setShowMobileServerDropdown] = useState(false);
-  const [showMobilePathDropdown, setShowMobilePathDropdown] = useState(false);
-  const [serverSearchTerm, setServerSearchTerm] = useState("");
-  const [pathSearchTerm, setPathSearchTerm] = useState("");
-  const [pathForTopic, setPathForTopic] = useState({ topic: null, path: null });
+  const [state, dispatch] = useReducer(panelReducer, undefined, () => initialPanelState(selectedTopic));
+  const {
+    frozenLogs, frozenTopic, logSearchTerm, debouncedSearch, autoScroll,
+    showServerDropdown, showPathDropdown, showMobileServerDropdown, showMobilePathDropdown,
+    serverSearchTerm, pathSearchTerm, pathForTopic,
+    isMobileMenuOpen, mobileMenuReady,
+    keywords, keywordInput, debouncedKeywordInput, keywordMode,
+    timeRange, customRangeMs,
+    atTop, atBottom, downloadError,
+  } = state;
   const selectedPathForTopic = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [mobileMenuReady, setMobileMenuReady] = useState(false);
-  const [keywords, setKeywords] = useState([]);
-  const [keywordInput, setKeywordInput] = useState('');
-  const [keywordMode, setKeywordMode] = useState('or');
-  const [timeRange, setTimeRange] = useState('all');
-  const [customRangeMs, setCustomRangeMs] = useState(0);
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [debouncedKeywordInput, setDebouncedKeywordInput] = useState('');
-  const [atTop, setAtTop] = useState(true);
-  const [atBottom, setAtBottom] = useState(true);
   const [timestampGen, setTimestampGen] = useState(0);
-  const [downloadError, setDownloadError] = useState(null);
 
   const scrollRef = useRef(null);
   const virtualizerScrollToBottomRef = useRef(null);
@@ -336,10 +360,10 @@ const LogPanel = ({
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
-    const id = setTimeout(() => setMobileMenuReady(true), 300);
+    const id = setTimeout(() => dispatch({ type: 'PATCH', payload: { mobileMenuReady: true } }), 300);
     return () => {
       clearTimeout(id);
-      setMobileMenuReady(false);
+      dispatch({ type: 'PATCH', payload: { mobileMenuReady: false } });
     };
   }, [isMobileMenuOpen]);
 
@@ -353,8 +377,7 @@ const LogPanel = ({
   }, []);
 
   const handleTimeRangeChange = useCallback((value, ms = 0) => {
-    setTimeRange(value);
-    setCustomRangeMs(ms);
+    dispatch({ type: 'PATCH', payload: { timeRange: value, customRangeMs: ms } });
     if (value !== 'all') setNowMs(Date.now());
   }, []);
 
@@ -367,10 +390,9 @@ const LogPanel = ({
     const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
     const userInitiated = userScrollIntentUntilRef.current > Date.now();
     previousScrollTopRef.current = scrollTop;
-    setAtTop(isNearTop);
-    setAtBottom(isNearBottom);
+    dispatch({ type: 'PATCH', payload: { atTop: isNearTop, atBottom: isNearBottom } });
     if (userInitiated && didScrollUp && !isNearBottom) {
-      setAutoScroll(false);
+      dispatch({ type: 'PATCH', payload: { autoScroll: false } });
     }
   }, []);
 
@@ -388,36 +410,9 @@ const LogPanel = ({
 
     if (!selectedTopic || previousTopic === selectedTopic) return;
 
-    if (selectedServer != null) {
-      onClearServer();
-    }
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- topic changes intentionally reset panel-local UI state without remounting the panel
-    setFrozenLogs(null);
-    setFrozenTopic(null);
-    setLogSearchTerm("");
-    setDebouncedSearch('');
-    setShowServerDropdown(false);
-    setShowPathDropdown(false);
-    setShowMobileServerDropdown(false);
-    setShowMobilePathDropdown(false);
-    setServerSearchTerm("");
-    setPathSearchTerm("");
-    setPathForTopic({ topic: selectedTopic, path: null });
-    setIsMobileMenuOpen(false);
-    setMobileMenuReady(false);
-    setKeywords([]);
-    setKeywordInput('');
-    setDebouncedKeywordInput('');
-    setKeywordMode('or');
-    setTimeRange('all');
-    setCustomRangeMs(0);
-    setDownloadError(null);
+    dispatch({ type: 'RESET_TOPIC', topic: selectedTopic });
     userScrollIntentUntilRef.current = 0;
     previousScrollTopRef.current = 0;
-    setAtTop(true);
-    setAtBottom(true);
-    setAutoScroll(true);
 
     requestAnimationFrame(() => {
       if (virtualizerScrollToBottomRef.current) {
@@ -428,16 +423,16 @@ const LogPanel = ({
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
     });
-  }, [selectedTopic, selectedServer, onClearServer]);
+  }, [selectedTopic]);
 
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(logSearchTerm), 300);
+    const t = setTimeout(() => dispatch({ type: 'PATCH', payload: { debouncedSearch: logSearchTerm } }), 300);
     return () => clearTimeout(t);
   }, [logSearchTerm]);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedKeywordInput(keywordInput), 300);
+    const t = setTimeout(() => dispatch({ type: 'PATCH', payload: { debouncedKeywordInput: keywordInput } }), 300);
     return () => clearTimeout(t);
   }, [keywordInput]);
 
@@ -465,8 +460,7 @@ const LogPanel = ({
 
   useEffect(() => {
     if (selectedPathForTopic && !pathsForSelectedServer.includes(selectedPathForTopic)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPathForTopic({ topic: selectedTopic, path: null });
+      dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } });
     }
   }, [selectedPathForTopic, pathsForSelectedServer, selectedTopic]);
 
@@ -598,11 +592,9 @@ const LogPanel = ({
 
   const handleTogglePause = () => {
     if (!isPaused) {
-      setFrozenTopic(selectedTopic);
-      setFrozenLogs(filteredLogs);
+      dispatch({ type: 'PATCH', payload: { frozenTopic: selectedTopic, frozenLogs: filteredLogs } });
     } else {
-      setFrozenTopic(null);
-      setFrozenLogs(null);
+      dispatch({ type: 'PATCH', payload: { frozenTopic: null, frozenLogs: null } });
     }
     togglePause();
   };
@@ -610,33 +602,23 @@ const LogPanel = ({
 
   const handleServerSelect = (server) => {
     onServerSelect(server);
-    setPathForTopic({ topic: selectedTopic, path: null });
-    setShowServerDropdown(false);
-    setShowMobileServerDropdown(false);
-    setServerSearchTerm("");
+    dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null }, showServerDropdown: false, showMobileServerDropdown: false, serverSearchTerm: "" } });
   };
 
   const handlePathSelect = (path) => {
-    setPathForTopic({ topic: selectedTopic, path });
-    setShowPathDropdown(false);
-    setShowMobilePathDropdown(false);
-    setPathSearchTerm("");
+    dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path }, showPathDropdown: false, showMobilePathDropdown: false, pathSearchTerm: "" } });
   };
 
   const handleClearServer = () => {
     onClearServer();
-    setPathForTopic({ topic: selectedTopic, path: null });
+    dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } });
   };
 
-  const handleClearPath = () => setPathForTopic({ topic: selectedTopic, path: null });
+  const handleClearPath = () => dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } });
 
   const clearAllFilters = () => {
     handleClearServer();
-    handleClearPath();
-    setLogSearchTerm("");
-    setKeywords([]);
-    setKeywordInput('');
-    setTimeRange('all');
+    dispatch({ type: 'PATCH', payload: { logSearchTerm: "", keywords: [], keywordInput: "", timeRange: "all" } });
   };
 
   const downloadLogs = async () => {
@@ -646,8 +628,8 @@ const LogPanel = ({
       if (!res.ok) {
         const text = await res.text().catch(() => '');
         const msg = text.trim() || `Server returned ${res.status}`;
-        setDownloadError(msg);
-        setTimeout(() => setDownloadError(null), 5000);
+        dispatch({ type: 'PATCH', payload: { downloadError: msg } });
+        setTimeout(() => dispatch({ type: 'PATCH', payload: { downloadError: null } }), 5000);
         return;
       }
       const blob = await res.blob();
@@ -664,8 +646,8 @@ const LogPanel = ({
       a.click();
       URL.revokeObjectURL(objectUrl);
     } catch {
-      setDownloadError('Download failed — server unreachable');
-      setTimeout(() => setDownloadError(null), 5000);
+      dispatch({ type: 'PATCH', payload: { downloadError: 'Download failed — server unreachable' } });
+      setTimeout(() => dispatch({ type: 'PATCH', payload: { downloadError: null } }), 5000);
     }
   };
 
@@ -673,10 +655,8 @@ const LogPanel = ({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0;
       previousScrollTopRef.current = 0;
-      setAtTop(true);
-      setAtBottom(false);
     }
-    setAutoScroll(false);
+    dispatch({ type: 'PATCH', payload: { atTop: true, atBottom: false, autoScroll: false } });
   };
 
   const scrollToBottom = () => {
@@ -690,15 +670,13 @@ const LogPanel = ({
     if (scrollRef.current) {
       previousScrollTopRef.current = scrollRef.current.scrollTop;
     }
-    setAtTop(false);
-    setAtBottom(true);
-    setAutoScroll(true);
+    dispatch({ type: 'PATCH', payload: { atTop: false, atBottom: true, autoScroll: true } });
   };
 
   const btn = getButtonStyles(darkMode);
   const toggleAutoScroll = () => {
     if (autoScroll) {
-      setAutoScroll(false);
+      dispatch({ type: 'PATCH', payload: { autoScroll: false } });
       return;
     }
     scrollToBottom();
@@ -752,7 +730,7 @@ const LogPanel = ({
           theme={theme}
           onOpenSidebar={onOpenSidebar}
           isMobileMenuOpen={isMobileMenuOpen}
-          onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          onToggleMobileMenu={() => dispatch({ type: 'PATCH', payload: { isMobileMenuOpen: !isMobileMenuOpen } })}
           mobileMenuReady={mobileMenuReady}
           isPaused={isPaused}
           onTogglePause={handleTogglePause}
@@ -761,23 +739,23 @@ const LogPanel = ({
           onDownload={downloadLogs}
           onClearLogs={onClearLogs}
           logSearchTerm={logSearchTerm}
-          onSearchChange={setLogSearchTerm}
+          onSearchChange={(v) => dispatch({ type: 'PATCH', payload: { logSearchTerm: v } })}
           showMobileServerDropdown={showMobileServerDropdown}
-          onToggleMobileServerDropdown={(v) => setShowMobileServerDropdown(v ?? !showMobileServerDropdown)}
+          onToggleMobileServerDropdown={(v) => dispatch({ type: 'PATCH', payload: { showMobileServerDropdown: v ?? !showMobileServerDropdown } })}
           showMobilePathDropdown={showMobilePathDropdown}
-          onToggleMobilePathDropdown={(v) => setShowMobilePathDropdown(v ?? !showMobilePathDropdown)}
+          onToggleMobilePathDropdown={(v) => dispatch({ type: 'PATCH', payload: { showMobilePathDropdown: v ?? !showMobilePathDropdown } })}
           filteredServers={filteredServers}
           selectedServer={selectedServer}
           onServerSelect={handleServerSelect}
           onClearServer={handleClearServer}
           serverSearchTerm={serverSearchTerm}
-          onServerSearchChange={setServerSearchTerm}
+          onServerSearchChange={(v) => dispatch({ type: 'PATCH', payload: { serverSearchTerm: v } })}
           filteredPaths={filteredPaths}
           selectedPath={selectedPath}
           onPathSelect={handlePathSelect}
           onClearPath={handleClearPath}
           pathSearchTerm={pathSearchTerm}
-          onPathSearchChange={setPathSearchTerm}
+          onPathSearchChange={(v) => dispatch({ type: 'PATCH', payload: { pathSearchTerm: v } })}
           timeRange={timeRange}
           customRangeMs={customRangeMs}
           onTimeRangeChange={handleTimeRangeChange}
@@ -789,41 +767,38 @@ const LogPanel = ({
           serverButtonRef={serverButtonRef}
           pathButtonRef={pathButtonRef}
           showServerDropdown={showServerDropdown}
-          onToggleServerDropdown={(v) => setShowServerDropdown(v ?? !showServerDropdown)}
+          onToggleServerDropdown={(v) => dispatch({ type: 'PATCH', payload: { showServerDropdown: v ?? !showServerDropdown } })}
           showPathDropdown={showPathDropdown}
-          onTogglePathDropdown={(v) => setShowPathDropdown(v ?? !showPathDropdown)}
+          onTogglePathDropdown={(v) => dispatch({ type: 'PATCH', payload: { showPathDropdown: v ?? !showPathDropdown } })}
           filteredServers={filteredServers}
           selectedServer={selectedServer}
           onServerSelect={handleServerSelect}
           onClearServer={handleClearServer}
           serverSearchTerm={serverSearchTerm}
-          onServerSearchChange={setServerSearchTerm}
+          onServerSearchChange={(v) => dispatch({ type: 'PATCH', payload: { serverSearchTerm: v } })}
           filteredPaths={filteredPaths}
           selectedPath={selectedPath}
           onPathSelect={handlePathSelect}
           onClearPath={handleClearPath}
           pathSearchTerm={pathSearchTerm}
-          onPathSearchChange={setPathSearchTerm}
+          onPathSearchChange={(v) => dispatch({ type: 'PATCH', payload: { pathSearchTerm: v } })}
           timeRange={timeRange}
           customRangeMs={customRangeMs}
           onTimeRangeChange={handleTimeRangeChange}
           logSearchTerm={logSearchTerm}
-          onSearchChange={setLogSearchTerm}
+          onSearchChange={(v) => dispatch({ type: 'PATCH', payload: { logSearchTerm: v } })}
         />
 
         <div className="mt-2.5">
           <KeywordFilter
             keywords={keywords}
             inputValue={keywordInput}
-            onInputChange={setKeywordInput}
-            onAdd={(kw) => setKeywords((prev) => [...prev, kw])}
-            onRemove={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
-            onClearAll={() => {
-              setKeywords([]);
-              setKeywordInput('');
-            }}
+            onInputChange={(v) => dispatch({ type: 'PATCH', payload: { keywordInput: v } })}
+            onAdd={(kw) => dispatch({ type: 'PATCH', payload: { keywords: [...keywords, kw] } })}
+            onRemove={(text) => dispatch({ type: 'PATCH', payload: { keywords: keywords.filter((k) => k.text !== text) } })}
+            onClearAll={() => dispatch({ type: 'PATCH', payload: { keywords: [], keywordInput: '' } })}
             mode={keywordMode}
-            onModeChange={setKeywordMode}
+            onModeChange={(v) => dispatch({ type: 'PATCH', payload: { keywordMode: v } })}
             theme={theme}
             darkMode={darkMode}
           />
@@ -838,8 +813,8 @@ const LogPanel = ({
           theme={theme}
           onClearServer={handleClearServer}
           onClearPath={handleClearPath}
-          onClearSearch={() => setLogSearchTerm('')}
-          onRemoveKeyword={(text) => setKeywords((prev) => prev.filter((k) => k.text !== text))}
+          onClearSearch={() => dispatch({ type: 'PATCH', payload: { logSearchTerm: '' } })}
+          onRemoveKeyword={(text) => dispatch({ type: 'PATCH', payload: { keywords: keywords.filter((k) => k.text !== text) } })}
         />
       </div>
 
@@ -858,7 +833,7 @@ const LogPanel = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
             <span className="flex-1 min-w-0 truncate">Download failed: {downloadError}</span>
-            <button onClick={() => setDownloadError(null)} className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+            <button onClick={() => dispatch({ type: 'PATCH', payload: { downloadError: null } })} className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>

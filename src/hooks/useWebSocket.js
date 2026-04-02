@@ -96,7 +96,7 @@ export const useWebSocket = (url, viewedTopics) => {
         for (const [topic, newLogs] of Object.entries(byTopic)) {
           const existing = updated[topic] || [];
           // Viewed topics get the full cap (500) for the log panel.
-          // Non-viewed topics keep a small cap (50) — enough for sidebar
+          // Non-viewed topics keep a small cap (100) — enough for sidebar
           // (last log, server badges, count) without wasting memory.
           const cap = viewed.has(topic) ? config.ws.rawBufferPerTopic : SIDEBAR_LOG_CAP;
           updated[topic] = newLogs.reverse().concat(existing).slice(0, cap);

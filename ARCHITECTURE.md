@@ -10,11 +10,16 @@ Deep implementation reference. CLAUDE.md links here for details.
 App.jsx (global)
 ├── selectedTopic / selectedTopic2      ← which topic each panel shows
 ├── selectedServer / selectedServer2    ← server filter (global because Sidebar badges need it)
-├── darkMode                            ← theme toggle
-├── sidebarOpen / sidebarCollapsed      ← sidebar visibility
+├── themeMode                           ← 'light' | 'dark' | 'system' (persisted to localStorage)
+│   └── darkMode                        ← derived: themeMode === 'dark' || (system && systemPrefersDark)
+├── systemPrefersDark                   ← mirrors window.matchMedia prefers-color-scheme
+├── terminalMode                        ← compact monospace log display (persisted to localStorage)
+├── topicSortMode                       ← 'asc' | 'desc' | 'activity' (persisted to localStorage)
+├── sidebarOpen / sidebarCollapsed      ← sidebar visibility (collapsed persisted)
 ├── splitView / activePanel             ← split view mode + which panel is focused
 ├── isPaused1 / isPaused2              ← per-panel pause (frozen snapshot)
 ├── topicSearchTerm                     ← sidebar topic search
+├── isSettingsOpen                      ← settings modal visibility
 ├── viewedTopics                       ← useMemo([selectedTopic, selectedTopic2]) for tiered log caps
 │
 ├── useWebSocket(url, viewedTopics) → shared across all components
@@ -24,10 +29,10 @@ App.jsx (global)
 │   ├── logRates       — Record<topic, number> (logs/sec, 5s window)
 │   ├── clearLogs(topic), subscribe(topics), sendFilter(filters)
 │
-LogPanel.jsx (per-panel local)
+LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelReducer)
 ├── frozenLogs / frozenTopic ← snapshot of logs + topic when paused
 ├── logSearchTerm / debouncedSearch     ← text search (300ms debounce for server-side)
-├── pathForTopic        ← { topic, path } — auto-clears on topic change
+├── pathForTopic        ← { topic, path } — resets on topic change via RESET_TOPIC action
 ├── keywords / keywordInput / keywordMode / debouncedKeywordInput
 │   └── filteredLogs uses debouncedKeywordInput (300ms) — keeps filter and keyword chip in sync
 ├── timeRange / customRangeMs
@@ -36,8 +41,10 @@ LogPanel.jsx (per-panel local)
 ├── serverSearchTerm / pathSearchTerm
 ├── isMobileMenuOpen / mobileMenuReady
 ├── atTop / atBottom    ← scroll position indicators
-├── timestampGen        ← counter bumped every 5s for relative time refresh
-└── nowMs               ← Date.now() updated every 5s + on timeRange change (pure render)
+├── downloadError       ← transient download error message (auto-clears after 5s)
+│
+├── timestampGen        ← separate useState, counter bumped every 5s for relative time refresh
+└── nowMs               ← separate useState, Date.now() updated every 5s + on timeRange change
 ```
 
 ## Render Optimization Strategy
@@ -159,13 +166,14 @@ Key tokens: `background`, `sidebar`, `header`, `text`, `textSecondary`, `textMut
 | `EmptyState` | theme, splitView, panel callbacks | None |
 | `KeywordFilter` | keywords, inputValue, callbacks, mode | selectedColor, hexInput, inputRef |
 | `FilterDropdown` | isOpen, items, selectedItem, searchTerm, callbacks | dropdownRef (click-outside) |
+| `SettingsModal` | isOpen, onClose, themeMode, terminalMode, topicSortMode, sidebarCollapsed + change callbacks | None |
 
 ## File Map
 
 ```
 src/
-├── main.jsx                    # Entry point
-├── App.jsx                     # Global state, split view, theme resolution
+├── main.jsx                    # Entry point — renders <App /> directly
+├── App.jsx                     # Global state, split view, theme resolution, settings modal
 ├── config.js                   # VITE_WS_URL, VITE_MAX_LOGS_PER_TOPIC, VITE_MAX_MESSAGE_LENGTH + derives httpBaseUrl for REST API
 ├── constants/
 │   ├── theme.js                # styles.dark / styles.light token objects
@@ -175,10 +183,12 @@ src/
 ├── utils/
 │   └── logUtils.js             # getLogLevelColor, getRelativeTime
 └── components/
-    ├── common/HeartbeatLine.jsx, ThemeToggle.jsx, ErrorBoundary.jsx
+    ├── common/HeartbeatLine.jsx, ErrorBoundary.jsx
+    │   (ThemeToggle.jsx exists but is unused — dead file)
     ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, TimeRangeSelector.jsx, index.js
     ├── log/LogPanel.jsx, VirtualLogList (inside LogPanel), LogEntry.jsx, DesktopHeader.jsx,
     │   MobileHeader.jsx, FilterBar.jsx, ActiveFilters.jsx, StatusBar.jsx, EmptyState.jsx,
     │   ScrollButtons.jsx, constants.js (TIME_RANGES, button styles, getShortPath), index.js
+    ├── settings/SettingsModal.jsx, index.js  # themeMode, terminalMode, topicSortMode controls
     └── sidebar/Sidebar.jsx (contains TopicItem), index.js
 ```
