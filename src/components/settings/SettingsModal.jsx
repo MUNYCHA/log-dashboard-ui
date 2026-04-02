@@ -61,7 +61,7 @@ const ToggleSwitch = ({ checked, onChange, darkMode, ariaLabel }) => (
 );
 
 const SettingRow = ({ icon, title, description, control, darkMode, last }) => (
-  <div className={`flex items-center justify-between gap-4 px-1 py-3 ${
+  <div className={`flex items-center justify-between gap-4 px-1 py-4 ${
     !last ? `border-b ${darkMode ? 'border-[#303134]' : 'border-[#F1F3F4]'}` : ''
   }`}>
     <div className="flex min-w-0 items-center gap-3">
@@ -140,34 +140,34 @@ const SettingsModal = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-          <Motion.button
-            type="button"
-            aria-label="Close settings"
-            className="absolute inset-0 bg-[#202124]/50 backdrop-blur-[2px]"
+        <>
+          {/* Backdrop */}
+          <Motion.div
+            className="fixed inset-0 z-[59] bg-[#202124]/40 backdrop-blur-sm"
             onClick={onClose}
-            initial={{ opacity: 1 }}
+            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.06, ease: 'linear' }}
+            transition={{ duration: 0.15, ease: 'linear' }}
           />
 
+          {/* Drawer */}
           <Motion.div
             role="dialog"
             aria-modal="true"
             aria-label="Settings"
             ref={dialogRef}
-            initial={{ opacity: 0, y: 18, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 14, scale: 0.985 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             onClick={(event) => event.stopPropagation()}
-            className={`relative z-10 w-full max-w-[520px] overflow-hidden rounded-[28px] border shadow-[0_8px_32px_rgba(32,33,36,0.2)] ${
-              darkMode ? 'border-[#303134] bg-[#1E1E1E] text-[#E8EAED]' : 'border-[#E8EAED] bg-white text-[#202124]'
-            }`}
+            className={`fixed top-0 left-0 bottom-0 z-[60] flex flex-col overflow-hidden border-r shadow-xl
+                        w-[90vw] max-w-[520px]
+                        ${darkMode ? 'border-[#303134] bg-[#1E1E1E] text-[#E8EAED]' : 'border-[#E8EAED] bg-white text-[#202124]'}`}
           >
             {/* Header */}
-            <div className={`flex items-center justify-between px-6 py-4 border-b ${darkMode ? 'border-[#303134]' : 'border-[#E8EAED]'}`}>
+            <div className={`flex flex-shrink-0 items-center justify-between px-6 py-5 border-b ${darkMode ? 'border-[#303134]' : 'border-[#E8EAED]'}`}>
               <h2 className="text-[16px] font-semibold tracking-tight">Settings</h2>
               <button
                 type="button"
@@ -179,18 +179,18 @@ const SettingsModal = ({
                     : 'text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]'
                 }`}
               >
-                <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {/* Body */}
-            <div className="max-h-[min(78vh,600px)] overflow-y-auto">
+            <div className="flex-1 overflow-y-auto">
 
               {/* Appearance section */}
-              <div className="px-6 pt-5 pb-2">
-                <div className={`text-[11px] font-semibold uppercase tracking-widest mb-1 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+              <div className="px-6 pt-6 pb-2">
+                <div className={`text-[11px] font-semibold uppercase tracking-widest mb-2 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
                   Appearance
                 </div>
                 <SettingRow
@@ -220,14 +220,14 @@ const SettingsModal = ({
               <div className={`mx-6 border-t ${darkMode ? 'border-[#303134]' : 'border-[#E8EAED]'}`} />
 
               {/* Layout section */}
-              <div className="px-6 pt-4 pb-5">
-                <div className={`text-[11px] font-semibold uppercase tracking-widest mb-1 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+              <div className="px-6 pt-5 pb-6">
+                <div className={`text-[11px] font-semibold uppercase tracking-widest mb-2 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
                   Layout
                 </div>
                 <SettingRow
                   darkMode={darkMode}
                   title="Collapsed sidebar"
-                  description="Show icons only, hide topic labels"
+                  description="Icons only, hide topic labels"
                   control={<ToggleSwitch checked={sidebarCollapsed} onChange={onSidebarCollapsedChange} darkMode={darkMode} ariaLabel="Toggle collapsed sidebar" />}
                   icon={<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16v14H4z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5v14" /></svg>}
                 />
@@ -249,7 +249,7 @@ const SettingsModal = ({
 
             </div>
           </Motion.div>
-        </div>
+        </>
       )}
     </AnimatePresence>
   );
