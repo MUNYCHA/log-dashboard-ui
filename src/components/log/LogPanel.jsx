@@ -326,6 +326,7 @@ const LogPanel = ({
   darkMode,
   terminalMode,
   onOpenSidebar,
+  isSidebarOpen,
   splitView,
   onOpenSplit,
   onClosePanel,
@@ -775,6 +776,7 @@ const LogPanel = ({
           darkMode={darkMode}
           theme={theme}
           onOpenSidebar={onOpenSidebar}
+          isSidebarOpen={isSidebarOpen}
           isMobileMenuOpen={isMobileMenuOpen}
           onToggleMobileMenu={() => dispatch({ type: 'PATCH', payload: { isMobileMenuOpen: !isMobileMenuOpen } })}
           mobileMenuReady={mobileMenuReady}

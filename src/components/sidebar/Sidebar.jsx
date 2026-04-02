@@ -245,27 +245,21 @@ const Sidebar = ({
           </div>
         </div>
 
-        <div className="px-3 pb-3 pt-2 flex-shrink-0">
+        <div className={`mx-3 mb-3 mt-1 border-t flex-shrink-0 ${darkMode ? 'border-[#303134]' : 'border-[#E8EAED]'}`}>
           <button
             onClick={onOpenSettings}
-            className={`w-full rounded-[20px] border px-3 py-2.5 text-left transition-all duration-150 ease-in-out active:scale-[0.99] ${
+            className={`mt-1 w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-150 ease-in-out active:scale-[0.99] ${
               darkMode
-                ? 'border-[#353941] bg-[#202124] text-[#E8EAED] shadow-[0_1px_2px_rgba(0,0,0,0.44),0_8px_22px_rgba(0,0,0,0.22)] hover:bg-[#25272B] hover:shadow-[0_2px_4px_rgba(0,0,0,0.46),0_12px_26px_rgba(0,0,0,0.24)]'
-                : 'border-[#E3E7EB] bg-white text-[#202124] shadow-[0_1px_3px_rgba(60,64,67,0.1),0_4px_14px_rgba(60,64,67,0.1)] hover:bg-[#F8F9FA] hover:shadow-[0_2px_6px_rgba(60,64,67,0.12),0_10px_22px_rgba(60,64,67,0.12)]'
+                ? 'text-[#9AA0A6] hover:bg-[#303134] hover:text-[#E8EAED]'
+                : 'text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]'
             }`}
             type="button"
           >
-            <div className="flex items-center gap-3">
-              <div className={`inline-flex h-10 w-10 items-center justify-center rounded-[16px] ${
-                darkMode ? 'bg-[#1A3A6B]/55 text-[#8AB4F8]' : 'bg-[#E8F0FE] text-[#1A73E8]'
-              }`}>
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.928 1.69 1.724 1.724 0 00.856 2.79 1.724 1.724 0 010 2.984 1.724 1.724 0 00-.856 2.79 1.724 1.724 0 01-2.928 1.69 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.928-1.69 1.724 1.724 0 00-.856-2.79 1.724 1.724 0 010-2.984 1.724 1.724 0 00.856-2.79 1.724 1.724 0 012.928-1.69 1.724 1.724 0 002.573-1.066z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <div className="min-w-0 flex-1 text-[13px] font-semibold tracking-[0.01em]">Settings</div>
-            </div>
+            <svg className="h-[18px] w-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.928 1.69 1.724 1.724 0 00.856 2.79 1.724 1.724 0 010 2.984 1.724 1.724 0 00-.856 2.79 1.724 1.724 0 01-2.928 1.69 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.928-1.69 1.724 1.724 0 00-.856-2.79 1.724 1.724 0 010-2.984 1.724 1.724 0 00.856-2.79 1.724 1.724 0 012.928-1.69 1.724 1.724 0 002.573-1.066z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="text-[13px] font-medium">Settings</span>
           </button>
         </div>
       </div>

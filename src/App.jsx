@@ -222,6 +222,7 @@ export default function App() {
           darkMode={darkMode}
           terminalMode={terminalMode}
           onOpenSidebar={openSidebar}
+          isSidebarOpen={sidebarOpen}
           splitView={splitView}
           onOpenSplit={handleOpenSplit}
           sendFilter={sendFilter}
@@ -249,6 +250,7 @@ export default function App() {
               darkMode={darkMode}
               terminalMode={terminalMode}
               onOpenSidebar={openSidebar}
+              isSidebarOpen={sidebarOpen}
               splitView={splitView}
               onOpenSplit={handleOpenSplit}
               sendFilter={sendFilter}
