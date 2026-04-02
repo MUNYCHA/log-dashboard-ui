@@ -100,10 +100,25 @@ const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm, termin
   const handleCopy = useCallback((e) => {
     e.stopPropagation();
     const text = JSON.stringify({ timestamp: log.timestamp, localTime: localTimestamp, serverName: log.serverName, path: log.path, message: log.message }, null, 2);
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
+
+    const confirm = () => { setCopied(true); setTimeout(() => setCopied(false), 1500); };
+
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { if (document.execCommand('copy')) confirm(); } catch { /* execCommand not supported */ }
+      document.body.removeChild(ta);
+    };
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(confirm).catch(fallback);
+    } else {
+      fallback();
+    }
   }, [log, localTimestamp]);
 
   if (terminalMode) {
