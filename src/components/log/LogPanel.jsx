@@ -529,17 +529,8 @@ const LogPanel = ({
   );
 
   const renderServerItem = useCallback((serverName) => {
-    const meta = topicMeta?.servers?.find((s) => s.name === serverName);
-    const isActive = serversForSelectedTopic.includes(serverName);
-    const parts = [];
-    if (isActive) parts.push('● Active');
-    if (meta?.count) {
-      const n = meta.count;
-      const fmt = n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}k` : String(n);
-      parts.push(`${fmt} logs`);
-    }
-    return { primary: serverName, secondary: parts.length > 0 ? parts.join(' · ') : null };
-  }, [topicMeta, serversForSelectedTopic]);
+    return { primary: serverName, secondary: null };
+  }, []);
 
   const filteredLogs = useMemo(() => {
     if (!selectedTopic || !topicLogs) return [];
