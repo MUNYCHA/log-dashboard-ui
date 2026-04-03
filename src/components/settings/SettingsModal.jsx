@@ -8,8 +8,8 @@ const SortChip = ({ active, children, onClick, darkMode }) => (
     className={`rounded-full px-3.5 py-2 text-[12px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${
       active
         ? darkMode
-          ? 'bg-[#1A3A6B]/60 text-[#8AB4F8] shadow-[inset_0_0_0_1px_rgba(138,180,248,0.24)]'
-          : 'bg-[#E8F0FE] text-[#1A73E8] shadow-[inset_0_0_0_1px_rgba(26,115,232,0.12)]'
+          ? 'bg-[#8AB4F8] text-[#071435]'
+          : 'bg-[#1A73E8] text-white'
         : darkMode
           ? 'bg-[#2A2B2E] text-[#BDC1C6] hover:bg-[#303134] hover:text-[#E8EAED]'
           : 'bg-[#F1F3F4] text-[#3C4043] hover:bg-[#E8EAED] hover:text-[#202124]'
@@ -26,52 +26,38 @@ const ToggleSwitch = ({ checked, onChange, darkMode, ariaLabel }) => (
     aria-checked={checked}
     aria-label={ariaLabel}
     onClick={() => onChange(!checked)}
-    className={`relative inline-flex h-8 w-14 items-center rounded-full border transition-all duration-200 ease-out active:scale-95 ${
+    className={`relative inline-flex h-[28px] w-[52px] flex-shrink-0 rounded-full transition-all duration-200 ease-out active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
       checked
         ? darkMode
-          ? 'border-[#8AB4F8]/50 bg-[#1A3A6B]'
-          : 'border-[#A8C7FA] bg-[#D2E3FC]'
+          ? 'bg-[#8AB4F8] focus-visible:ring-[#8AB4F8]'
+          : 'bg-[#1A73E8] focus-visible:ring-[#1A73E8]'
         : darkMode
-          ? 'border-[#5F6368] bg-[#303134]'
-          : 'border-[#DADCE0] bg-[#F1F3F4]'
+          ? 'bg-[#5F6368] focus-visible:ring-[#5F6368]'
+          : 'bg-[#DADCE0] focus-visible:ring-[#BDC1C6]'
     }`}
   >
     <span
-      className={`absolute left-1 inline-flex h-6 w-6 items-center justify-center rounded-full shadow-sm transition-all duration-200 ease-out ${
-        checked ? 'translate-x-6' : 'translate-x-0'
-      } ${
-        checked
-          ? darkMode
-            ? 'bg-[#8AB4F8] text-[#071435]'
-            : 'bg-[#1A73E8] text-white'
-          : darkMode
-            ? 'bg-[#BDC1C6] text-[#202124]'
-            : 'bg-white text-[#5F6368]'
+      className={`absolute top-[3px] left-[3px] h-[22px] w-[22px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.3),0_1px_2px_rgba(0,0,0,0.2)] transition-all duration-200 ease-out ${
+        checked ? 'translate-x-[24px]' : 'translate-x-0'
       }`}
-    >
-      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        {checked ? (
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 12l4 4L19 6" />
-        ) : (
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 12h12" />
-        )}
-      </svg>
-    </span>
+    />
   </button>
 );
 
 const SettingRow = ({ icon, title, description, control, darkMode, last }) => (
-  <div className={`flex items-center justify-between gap-4 px-1 py-4 ${
-    !last ? `border-b ${darkMode ? 'border-[#303134]' : 'border-[#F1F3F4]'}` : ''
+  <div className={`flex items-center justify-between gap-4 py-5 ${
+    !last ? `border-b ${darkMode ? 'border-[#2A2B2E]' : 'border-[#F1F3F4]'}` : ''
   }`}>
-    <div className="flex min-w-0 items-center gap-3">
-      <div className={`flex-shrink-0 ${darkMode ? 'text-[#9AA0A6]' : 'text-[#5F6368]'}`}>
+    <div className="flex min-w-0 items-center gap-3.5">
+      <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${
+        darkMode ? 'bg-[#2A2B2E] text-[#9AA0A6]' : 'bg-[#F1F3F4] text-[#5F6368]'
+      }`}>
         {icon}
       </div>
       <div className="min-w-0">
-        <div className="text-[13.5px] font-medium">{title}</div>
+        <div className="text-[14px] font-semibold leading-snug">{title}</div>
         {description && (
-          <div className={`mt-0.5 text-[12px] ${darkMode ? 'text-[#9AA0A6]' : 'text-[#80868B]'}`}>{description}</div>
+          <div className={`mt-0.5 text-[12px] leading-snug ${darkMode ? 'text-[#9AA0A6]' : 'text-[#80868B]'}`}>{description}</div>
         )}
       </div>
     </div>
@@ -162,24 +148,27 @@ const SettingsModal = ({
             exit={{ x: '-100%' }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             onClick={(event) => event.stopPropagation()}
-            className={`fixed top-0 left-0 bottom-0 z-[60] flex flex-col overflow-hidden border-r shadow-xl
-                        w-[90vw] max-w-[520px]
-                        ${darkMode ? 'border-[#303134] bg-[#1E1E1E] text-[#E8EAED]' : 'border-[#E8EAED] bg-white text-[#202124]'}`}
+            className={`fixed top-0 left-0 bottom-0 z-[60] flex flex-col overflow-hidden border-r shadow-2xl
+                        w-[90vw] max-w-[480px]
+                        ${darkMode ? 'border-[#2A2B2E] bg-[#1C1C1E] text-[#E8EAED]' : 'border-[#E8EAED] bg-[#FAFAFA] text-[#202124]'}`}
           >
             {/* Header */}
-            <div className={`flex flex-shrink-0 items-center justify-between px-6 py-5 border-b ${darkMode ? 'border-[#303134]' : 'border-[#E8EAED]'}`}>
-              <h2 className="text-[16px] font-semibold tracking-tight">Settings</h2>
+            <div className={`flex flex-shrink-0 items-center justify-between px-6 py-5 border-b ${darkMode ? 'border-[#2A2B2E]' : 'border-[#EBEBEB]'}`}>
+              <div>
+                <h2 className="text-[20px] font-bold tracking-tight">Settings</h2>
+                <p className={`text-[12px] mt-0.5 ${darkMode ? 'text-[#9AA0A6]' : 'text-[#80868B]'}`}>Log Dashboard</p>
+              </div>
               <button
                 type="button"
                 ref={closeButtonRef}
                 onClick={onClose}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 ease-in-out active:scale-95 ${
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-150 ease-in-out active:scale-95 ${
                   darkMode
                     ? 'text-[#9AA0A6] hover:bg-[#303134] hover:text-[#E8EAED]'
-                    : 'text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124]'
+                    : 'text-[#5F6368] hover:bg-[#EBEBEB] hover:text-[#202124]'
                 }`}
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -189,8 +178,8 @@ const SettingsModal = ({
             <div className="flex-1 overflow-y-auto">
 
               {/* Appearance section */}
-              <div className="px-6 pt-6 pb-2">
-                <div className={`text-[11px] font-semibold uppercase tracking-widest mb-2 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+              <div className="px-6 pt-7 pb-2">
+                <div className={`text-[11px] font-bold uppercase tracking-[0.1em] mb-1 ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`}>
                   Appearance
                 </div>
                 <SettingRow
@@ -223,11 +212,11 @@ const SettingsModal = ({
               </div>
 
               {/* Divider */}
-              <div className={`mx-6 border-t ${darkMode ? 'border-[#303134]' : 'border-[#E8EAED]'}`} />
+              <div className={`mx-6 border-t ${darkMode ? 'border-[#2A2B2E]' : 'border-[#EBEBEB]'}`} />
 
               {/* Layout section */}
-              <div className="px-6 pt-5 pb-6">
-                <div className={`text-[11px] font-semibold uppercase tracking-widest mb-2 ${darkMode ? 'text-[#5F6368]' : 'text-[#9AA0A6]'}`}>
+              <div className="px-6 pt-7 pb-8">
+                <div className={`text-[11px] font-bold uppercase tracking-[0.1em] mb-1 ${darkMode ? 'text-[#8AB4F8]' : 'text-[#1A73E8]'}`}>
                   Layout
                 </div>
                 <SettingRow
