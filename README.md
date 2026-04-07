@@ -18,7 +18,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Topic sidebar** — all topics auto-subscribed; live log rate (logs/sec) per topic
 - **Server filter** — searchable dropdown to filter logs by server name
 - **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
-- **Text search** — instant client-side search across message, server name, and path
+- **Text search** — instant client-side search across log message content
 - **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h / Custom; sent to the server as a bandwidth optimization and applied client-side for instant feedback
 - **Keyword filter** — add multiple keywords as colored chips; matches are highlighted in log messages
 - **AND / OR mode** toggle for keyword filter logic
@@ -221,6 +221,7 @@ The base URL is derived automatically from `VITE_WS_URL` (`ws://` → `http://`,
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/logs/download?topic=<topic>` | Download the raw log file for the given topic |
+| `GET` | `/api/topics/{topic}/meta` | Topic metadata: all-time server names and file paths for the given topic |
 
 ---
 
@@ -291,5 +292,5 @@ All values are baked at build time via Vite's `import.meta.env`. Changing them r
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL |
-| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs kept in memory per viewed topic (non-viewed topics: 100) |
+| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Display cap per viewed topic (internal buffer stores 4× this for filter headroom; non-viewed topics: 100) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate log messages longer than this (chars) to prevent DOM bloat |

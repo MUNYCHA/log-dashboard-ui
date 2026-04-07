@@ -26,8 +26,8 @@ App.jsx (global)
 │   ├── logsByTopic    — Record<topic, LogEntry[]> (newest-first after flush, 500 cap viewed / 100 non-viewed)
 │   ├── topics         — string[]
 │   ├── isConnected / isReconnecting
-│   ├── logRates       — Record<topic, number> (logs/sec, 5s window)
-│   ├── clearLogs(topic), subscribe(topics), sendFilter(filters), trimTopicBuffer(topic, cap?)
+│   ├── logRates       — Record<topic, number> (logs/sec, from server stats message)
+│   ├── clearLogs(topic), subscribe(topics), trimTopicBuffer(topic, cap?), sendFilter(filters, panelId)
 │
 LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelReducer)
 ├── frozenLogs / frozenTopic ← snapshot of logs + topic when paused
@@ -53,7 +53,7 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 ### What's memoized
 | Component | `React.memo` | Internal `useMemo` | Notes |
 |---|---|---|---|
-| `LogPanel` | Yes | `filteredLogs`, `serversForSelectedTopic`, `pathsForSelectedServer`, `filteredServers`, `filteredPaths`, `displayKeywords`, `emptyState` | Main orchestrator |
+| `LogPanel` | Yes | `filteredLogs`, `serversForSelectedTopic`, `pathsForSelectedServer`, `mergedServers`, `mergedPaths`, `filteredServers`, `filteredPaths`, `displayKeywords`, `emptyState` | Main orchestrator |
 | `VirtualLogList` | Yes | — | Extracted to avoid re-rendering when LogPanel state changes that don't affect the list |
 | `LogEntry` | Yes | `relativeTime` (via timestampGen) | Only re-renders when its specific log object or keywords change |
 | `TopicItem` (Sidebar) | Yes | — | Only re-renders when its topic's log array ref changes |
@@ -75,10 +75,10 @@ WebSocket frame arrives (single or batch JSON)
   → Normalize to array (single event or batch)
   → Assign _id (monotonic counter) to each log
   → Truncate oversized messages (>50KB)
-  → Push to pendingRef (per-topic capped at 500 viewed / 100 non-viewed)
+  → Push to pendingRef (per-topic capped at rawBufferPerTopic viewed / 100 non-viewed)
   ...150ms later (setInterval flush)...
   → Group pending by topic
-  → setLogsByTopic(prev => { ...prev, [topic]: newLogs.reverse().concat(existing).slice(0, cap) })
+  → setLogsByTopic(prev => { ...prev, [topic]: newLogs.reverse().concat(existing).slice(0, cap) })  // cap = rawBufferPerTopic (displayCap×4 = 2000) or SIDEBAR_LOG_CAP (100)
   → App re-renders → topicLogs1/2 derived → LogPanel re-renders
   → filteredLogs = useMemo(reverse + all filters: server/path/search/keywords/timeRange)
   → VirtualLogList renders only visible rows (~20-30, overscan 20)
@@ -109,7 +109,7 @@ WebSocket frame arrives (single or batch JSON)
 ### Queues and buffers
 | Ref | Purpose | Cap |
 |---|---|---|
-| `pendingRef` | Logs waiting for next 150ms flush | maxLogsPerTopic per topic (pendingCountRef) |
+| `pendingRef` | Logs waiting for next 150ms flush | `rawBufferPerTopic` (displayCap×4) per viewed topic, 100 per non-viewed (pendingCountRef) |
 | `logCountRef` | Raw count per topic for rate calc | Reset every 5s |
 
 ### Message discrimination
@@ -140,19 +140,25 @@ User types in search box / changes any filter
 
 Server-side bandwidth optimization (parallel, does not block display):
   → 300ms debounce → setDebouncedSearch
-  → useEffect fires → sendFilter({ server, path, search, keywords, timeRange, timeRangeMs? })
+  → useEffect fires → sendFilter(filters, panelId)
+  → useWebSocket merges per-panel filters (panelFiltersRef):
+      - 0 panels with filters → clear-filters action
+      - 1 panel with filters  → send that panel's filter directly
+      - 2 panels with filters → clear-filters (client handles each panel independently)
   → Server applies filter, sends only matching logs going forward (reduces WS traffic)
   → Server sends { type: "filter-ack", filters }
 ```
 
 ### Client-side `filteredLogs` (single source of truth)
-`filteredLogs` in LogPanel applies ALL filters locally: server/path exact match, plain text search, keywords with `debouncedKeywordInput` (AND/OR mode), and time range (using `nowMs` state for render purity). The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses the debounced value so the filter result and the pending keyword chip in the UI appear in sync.
+`filteredLogs` in LogPanel applies ALL filters locally: server/path exact match, plain text search (message field only), keywords with `debouncedKeywordInput` (AND/OR mode), and time range (using `nowMs` state for render purity). The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses the debounced value so the filter result and the pending keyword chip in the UI appear in sync.
+
+`mergedServers` and `mergedPaths` are derived by merging backend metadata (`/api/topics/{topic}/meta`) with the local buffer — meta order is preserved, buffer-only entries appended. `filteredServers`/`filteredPaths` then apply the search term on top of the merged lists.
 
 ## Theme System
 
 `src/constants/theme.js` exports `styles.dark` and `styles.light` — objects with 25 keys, each a Tailwind class string. Components receive `theme` prop and use `theme.background`, `theme.text`, `theme.logEntry`, etc.
 
-Key tokens: `background`, `sidebar`, `header`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `card`, `hover`, `selected`, `topicItem`, `logEntry`, `statusBar`, `scrollbar`, `serverBadge`, `serverBadgeHover`, `popupBorder`, `dropdownItemSelected`, `inputFocus`, `button`, `buttonPrimary`, `accent`, `accentBg`
+Key tokens: `background`, `sidebar`, `header`, `logArea`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `card`, `hover`, `selected`, `topicItem`, `logEntry`, `scrollbar`, `serverBadge`, `serverBadgeHover`, `popupBorder`, `dropdownItemSelected`, `inputFocus`, `button`, `buttonPrimary`, `accent`, `accentBg`
 
 ## Sub-component Props Quick Reference
 

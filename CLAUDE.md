@@ -22,7 +22,7 @@ React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 
 **State ownership:**
 - `App.jsx` — selectedTopic/Server (per panel), themeMode (→ darkMode derived), terminalMode, topicSortMode, sidebarOpen/collapsed, splitView, activePanel, isPaused1/2, viewedTopics, isSettingsOpen, systemPrefersDark
 - `LogPanel.jsx` — all panel-local state via `useReducer` (`panelReducer`): path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, frozenTopic, isMobileMenuOpen + separate useState for timestampGen, nowMs
-- `useWebSocket` — logsByTopic, topics, isConnected, isReconnecting, logRates
+- `useWebSocket` — logsByTopic, topics, isConnected, isReconnecting, logRates, clearLogs, trimTopicBuffer, subscribe, sendFilter
 
 **Component tree:**
 ```
@@ -42,14 +42,14 @@ App
 
 **Client-side filtering:** All filtering (server, path, search, keywords, timeRange) runs client-side in `filteredLogs` useMemo for instant real-time feedback. Keyword input uses `debouncedKeywordInput` (300ms) so the filter and the pending keyword chip appear in sync. Server-side filter (debounced 300ms) is a bandwidth optimization only — UI does not depend on it for display.
 
-**Topic subscription:** All topics auto-subscribed on connect. Viewed topics get full 500-log cap; non-viewed topics capped at 100 (sidebar info only).
+**Topic subscription:** All topics auto-subscribed on connect. Viewed topics get a raw buffer of `displayCap × 4` (2000 at default) so filtered views can fill the display cap (500). Non-viewed topics capped at 100 (sidebar info only). The 500 display cap is applied in `filteredLogs.slice(0, config.ws.maxLogsPerTopic)`.
 
 ## Key Rules
 
 - `selectedPath` is local to LogPanel, auto-clears on topic change via `pathForTopic` pattern
 - `selectedServer` is global (App.jsx, passed to LogPanel only) — kept at App level to sync across both panels in split view
 - All filters reset on topic change via `dispatch({ type: 'RESET_TOPIC', topic })` in a `useEffect` inside `LogPanel.jsx`. State is owned by a `useReducer` (`panelReducer`) — `initialPanelState(topic)` is the single source of truth for what resets. LogPanel is NOT remounted; it stays alive to avoid flicker.
-- Active filters resent on WS reconnect (stored in `activeFilterRef`)
+- Active filters resent on WS reconnect. `sendFilter(filters, panelId)` tracks per-panel filters in `panelFiltersRef` — in split view, if both panels have filters, server-side filter is cleared so both panels receive all logs and filter independently client-side
 - Auto-scroll is disabled only by user-initiated upward scrolling (guarded by an 800ms `userScrollIntentUntilRef` window — prevents programmatic `scrollToIndex` from being misidentified as user intent). Scrolling back to the bottom re-enables it.
 - Mobile menu: 300ms `pointer-events-none` guard against double-tap
 
@@ -75,7 +75,7 @@ App
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL. Also used to derive `httpBaseUrl` for REST API calls (`ws://` → `http://`, `wss://` → `https://`) |
-| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Max logs in memory per viewed topic (non-viewed: 100) |
+| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Display cap per viewed topic; internal raw buffer stores 4× this for filter headroom (non-viewed: 100) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate messages longer than this (chars) |
 
 ## ESLint
