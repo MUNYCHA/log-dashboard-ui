@@ -9,7 +9,7 @@ Deep implementation reference. CLAUDE.md links here for details.
 ```
 App.jsx (global)
 ├── selectedTopic / selectedTopic2      ← which topic each panel shows
-├── selectedServer / selectedServer2    ← server filter (global, passed to LogPanel only — kept at App level to sync across both panels in split view)
+├── selectedServer / selectedServer2    ← server filter (per-panel independent state — each panel has its own server filter)
 ├── themeMode                           ← 'light' | 'dark' | 'system' (persisted to localStorage)
 │   └── darkMode                        ← derived: themeMode === 'dark' || (system && systemPrefersDark)
 ├── systemPrefersDark                   ← mirrors window.matchMedia prefers-color-scheme
@@ -23,7 +23,7 @@ App.jsx (global)
 ├── viewedTopics                       ← useMemo([selectedTopic, selectedTopic2]) for tiered log caps
 │
 ├── useWebSocket(url, viewedTopics) → shared across all components
-│   ├── logsByTopic    — Record<topic, LogEntry[]> (newest-first after flush, 500 cap viewed / 100 non-viewed)
+│   ├── logsByTopic    — Record<topic, LogEntry[]> (newest-first after flush, rawBufferPerTopic cap viewed (2000 at default) / 100 non-viewed)
 │   ├── topics         — string[]
 │   ├── isConnected / isReconnecting
 │   ├── logRates       — Record<topic, number> (logs/sec, from server stats message)
@@ -117,7 +117,7 @@ WebSocket frame arrives (single or batch JSON)
 JSON.parse(event.data)
   → { type: "topics", topics: string[] }?  → Topic list (primary format, on connect)
   → { type: "stats", topics: {...}, intervalMs }?  → Per-topic rate stats (~every 2s)
-  → { type: "filter-ack" }?  → Filter acknowledgment (ignored, client filters locally)
+  → { type: "filter-ack" }?  → No explicit branch; non-log objects are discarded by normalization
   → Array of strings? (legacy)  → Topic list (backwards-compat fallback)
   → Array of objects?  → Batched log events (iterate, assign _id each)
   → Single object?  → Single log event (wrap in array, same path)
@@ -146,7 +146,7 @@ Server-side bandwidth optimization (parallel, does not block display):
       - 1 panel with filters  → send that panel's filter directly
       - 2 panels with filters → clear-filters (client handles each panel independently)
   → Server applies filter, sends only matching logs going forward (reduces WS traffic)
-  → Server sends { type: "filter-ack", filters }
+  → Server may send { type: "filter-ack", filters } (discarded by hook; client does not rely on it)
 ```
 
 ### Client-side `filteredLogs` (single source of truth)
@@ -171,7 +171,7 @@ Key tokens: `background`, `sidebar`, `header`, `logArea`, `text`, `textSecondary
 | `StatusBar` | isConnected, isReconnecting, isPaused, logRate | None |
 | `ScrollButtons` | atTop, atBottom, scroll callbacks | None |
 | `EmptyState` | theme, splitView, panel callbacks | None |
-| `KeywordFilter` | keywords, inputValue, callbacks, mode | selectedColor, hexInput, inputRef |
+| `KeywordFilter` | keywords, inputValue, callbacks, mode | selectedColor, inputRef |
 | `FilterDropdown` | isOpen, items, selectedItem, searchTerm, callbacks | dropdownRef (click-outside) |
 | `SettingsModal` | isOpen, onClose, themeMode, terminalMode, topicSortMode, sidebarCollapsed + change callbacks | None (left-side drawer, not a centered modal) |
 

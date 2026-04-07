@@ -9,7 +9,7 @@ A real-time log monitoring dashboard built with React + Vite. Connects to a WebS
 ### Real-time Streaming
 - WebSocket connection with **auto-reconnect** (exponential backoff, up to 30s between attempts)
 - **Reconnecting** status indicator in the status bar
-- **Pause / resume** stream — incoming logs are buffered while paused and flushed on resume
+- **Pause / resume** stream — display freezes on the current snapshot while paused; underlying buffer continues accumulating; live view resumes on unpause
 - **Batched rendering** — log updates are flushed every 150ms to minimize re-renders under high volume
 
 ### Topic & Filtering (Client-Side, Real-Time)
@@ -22,18 +22,18 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h / Custom; sent to the server as a bandwidth optimization and applied client-side for instant feedback
 - **Keyword filter** — add multiple keywords as colored chips; matches are highlighted in log messages
 - **AND / OR mode** toggle for keyword filter logic
-- **Custom keyword colors** — color wheel picker with hex/RGB input for each keyword
+- **Custom keyword colors** — native color picker when adding a keyword chip
 
 ### Display
-- **Relative timestamps** — shows `2m ago` style time; hover to see the full timestamp
+- **Timestamps** — full localized timestamp shown on each log entry (normal mode); timestamps omitted in terminal mode
 - **Keyword highlight** — each keyword gets a custom hex color; matches are highlighted inline
 - **Light / Dark / System theme** — 3-way selector, follows OS preference in System mode
 - **Fully responsive** — sidebar is a slide-in drawer on mobile, fixed panel on tablet/desktop
 - **Collapsible sidebar** — desktop sidebar collapses to a thin strip with an expand button
 - **Split view** — open two independent log panels side by side (desktop only)
 - **Per-panel independent pause** — each split-view panel has its own pause state
-- **Focus ring** — active panel in split view is highlighted with a focus ring
-- **Heartbeat indicator** — SVG line animation in the DesktopHeader topic info row (desktop only, `lg` breakpoint) reflecting log ingestion rate; color shifts from green to yellow to orange to red based on rate
+- **Active panel indicator** — active panel in split view is indicated by a dot in the header; empty-state panels show a focus ring
+- **Heartbeat indicator** — SVG line animation reflecting log ingestion rate; shown in DesktopHeader (desktop, `lg` breakpoint) and MobileHeader; animation speed varies with rate
 - **Log rate indicator** — logs/sec shown per topic in the sidebar
 - **Settings drawer** — left-side drawer with theme selector, terminal mode, sidebar collapse, and topic sort order
 - **Terminal mode** — compact monospace log view without cards
@@ -244,7 +244,7 @@ log-dashboard-ui/
     │   └── keywordColors.js   # Preset keyword highlight colors
     ├── hooks/
     │   └── useWebSocket.js    # WebSocket connection, auto-reconnect,
-    │                          # pause/buffer, log rate tracker,
+    │                          # log batching, rate tracking,
     │                          # server-side filter dispatch
     ├── utils/
     │   └── logUtils.js        # getLogLevelColor, getRelativeTime

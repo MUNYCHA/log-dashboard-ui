@@ -13,7 +13,7 @@ npm run preview   # Preview production build locally
 
 ## Stack
 
-React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 3. JavaScript/JSX only (no TypeScript). Styling is 100% Tailwind utility classes.
+React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 3. JavaScript/JSX only (no TypeScript). Styling is primarily Tailwind utility classes; `src/index.css` adds custom CSS for self-hosted fonts, global base styles, and keyframe animations.
 
 ## Architecture (Summary)
 
@@ -30,7 +30,7 @@ App
 ├── Sidebar (topics list, TopicItem per topic — memo'd)
 ├── LogPanel #1 (memo'd)
 │   ├── DesktopHeader / MobileHeader / FilterBar / ActiveFilters (presentational, no memo)
-│   ├── KeywordFilter (has local state: selectedColor, hexInput)
+│   ├── KeywordFilter (has local state: selectedColor)
 │   ├── VirtualLogList (memo'd — @tanstack/react-virtual, ~20-30 visible rows)
 │   │   └── LogEntry (memo'd — key=log._id, useMemo for relativeTime)
 │   ├── ScrollButtons
@@ -38,7 +38,7 @@ App
 └── LogPanel #2 (split view only, same structure)
 ```
 
-**WS protocol:** Server sends `string[]` (topics) on connect, then `LogEvent` objects or **batched JSON arrays**, plus `{ type: "filter-ack" }` acks. Hook normalizes both formats. Each log gets `_id` (monotonic counter) for stable React keys.
+**WS protocol:** Server sends `{ type: "topics", topics: string[] }` on connect (legacy bare `string[]` also accepted), then `LogEvent` objects or **batched JSON arrays**, plus `{ type: "stats" }` rate updates. Each log gets `_id` (monotonic counter) for stable React keys.
 
 **Client-side filtering:** All filtering (server, path, search, keywords, timeRange) runs client-side in `filteredLogs` useMemo for instant real-time feedback. Keyword input uses `debouncedKeywordInput` (300ms) so the filter and the pending keyword chip appear in sync. Server-side filter (debounced 300ms) is a bandwidth optimization only — UI does not depend on it for display.
 
@@ -47,7 +47,7 @@ App
 ## Key Rules
 
 - `selectedPath` is local to LogPanel, auto-clears on topic change via `pathForTopic` pattern
-- `selectedServer` is global (App.jsx, passed to LogPanel only) — kept at App level to sync across both panels in split view
+- `selectedServer` / `selectedServer2` are per-panel independent state in App.jsx — each panel has its own server filter, not shared
 - All filters reset on topic change via `dispatch({ type: 'RESET_TOPIC', topic })` in a `useEffect` inside `LogPanel.jsx`. State is owned by a `useReducer` (`panelReducer`) — `initialPanelState(topic)` is the single source of truth for what resets. LogPanel is NOT remounted; it stays alive to avoid flicker.
 - Active filters resent on WS reconnect. `sendFilter(filters, panelId)` tracks per-panel filters in `panelFiltersRef` — in split view, if both panels have filters, server-side filter is cleared so both panels receive all logs and filter independently client-side
 - Auto-scroll is disabled only by user-initiated upward scrolling (guarded by an 800ms `userScrollIntentUntilRef` window — prevents programmatic `scrollToIndex` from being misidentified as user intent). Scrolling back to the bottom re-enables it.
