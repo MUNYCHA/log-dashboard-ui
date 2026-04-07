@@ -248,7 +248,6 @@ log-dashboard-ui/
     └── components/
         ├── common/
         │   ├── HeartbeatLine.jsx   # SVG heartbeat animation reflecting log rate
-        │   ├── ThemeToggle.jsx     # Dark / light mode button
         │   └── ErrorBoundary.jsx   # React error boundary wrapper
         ├── filters/
         │   ├── index.js            # Re-exports all filter components

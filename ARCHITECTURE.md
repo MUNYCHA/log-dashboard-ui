@@ -9,7 +9,7 @@ Deep implementation reference. CLAUDE.md links here for details.
 ```
 App.jsx (global)
 ├── selectedTopic / selectedTopic2      ← which topic each panel shows
-├── selectedServer / selectedServer2    ← server filter (global because Sidebar badges need it)
+├── selectedServer / selectedServer2    ← server filter (global, passed to LogPanel only — kept at App level to sync across both panels in split view)
 ├── themeMode                           ← 'light' | 'dark' | 'system' (persisted to localStorage)
 │   └── darkMode                        ← derived: themeMode === 'dark' || (system && systemPrefersDark)
 ├── systemPrefersDark                   ← mirrors window.matchMedia prefers-color-scheme
@@ -27,7 +27,7 @@ App.jsx (global)
 │   ├── topics         — string[]
 │   ├── isConnected / isReconnecting
 │   ├── logRates       — Record<topic, number> (logs/sec, 5s window)
-│   ├── clearLogs(topic), subscribe(topics), sendFilter(filters)
+│   ├── clearLogs(topic), subscribe(topics), sendFilter(filters), trimTopicBuffer(topic, cap?)
 │
 LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelReducer)
 ├── frozenLogs / frozenTopic ← snapshot of logs + topic when paused
@@ -42,6 +42,7 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 ├── isMobileMenuOpen / mobileMenuReady
 ├── atTop / atBottom    ← scroll position indicators
 ├── downloadError       ← transient download error message (auto-clears after 5s)
+├── topicMeta           ← backend-provided metadata for current topic (servers/paths)
 │
 ├── timestampGen        ← separate useState, counter bumped every 5s for relative time refresh
 └── nowMs               ← separate useState, Date.now() updated every 5s + on timeRange change
@@ -149,9 +150,9 @@ Server-side bandwidth optimization (parallel, does not block display):
 
 ## Theme System
 
-`src/constants/theme.js` exports `styles.dark` and `styles.light` — objects with ~20 keys, each a Tailwind class string. Components receive `theme` prop and use `theme.background`, `theme.text`, `theme.logEntry`, etc.
+`src/constants/theme.js` exports `styles.dark` and `styles.light` — objects with 25 keys, each a Tailwind class string. Components receive `theme` prop and use `theme.background`, `theme.text`, `theme.logEntry`, etc.
 
-Key tokens: `background`, `sidebar`, `header`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `card`, `hover`, `selected`, `topicItem`, `logEntry`, `statusBar`, `scrollbar`, `serverBadge`, `popupBorder`
+Key tokens: `background`, `sidebar`, `header`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `card`, `hover`, `selected`, `topicItem`, `logEntry`, `statusBar`, `scrollbar`, `serverBadge`, `serverBadgeHover`, `popupBorder`, `dropdownItemSelected`, `inputFocus`, `button`, `buttonPrimary`, `accent`, `accentBg`
 
 ## Sub-component Props Quick Reference
 
@@ -166,7 +167,7 @@ Key tokens: `background`, `sidebar`, `header`, `text`, `textSecondary`, `textMut
 | `EmptyState` | theme, splitView, panel callbacks | None |
 | `KeywordFilter` | keywords, inputValue, callbacks, mode | selectedColor, hexInput, inputRef |
 | `FilterDropdown` | isOpen, items, selectedItem, searchTerm, callbacks | dropdownRef (click-outside) |
-| `SettingsModal` | isOpen, onClose, themeMode, terminalMode, topicSortMode, sidebarCollapsed + change callbacks | None |
+| `SettingsModal` | isOpen, onClose, themeMode, terminalMode, topicSortMode, sidebarCollapsed + change callbacks | None (left-side drawer, not a centered modal) |
 
 ## File Map
 
@@ -184,7 +185,6 @@ src/
 │   └── logUtils.js             # getLogLevelColor, getRelativeTime
 └── components/
     ├── common/HeartbeatLine.jsx, ErrorBoundary.jsx
-    │   (ThemeToggle.jsx exists but is unused — dead file)
     ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, TimeRangeSelector.jsx, index.js
     ├── log/LogPanel.jsx, VirtualLogList (inside LogPanel), LogEntry.jsx, DesktopHeader.jsx,
     │   MobileHeader.jsx, FilterBar.jsx, ActiveFilters.jsx, StatusBar.jsx, EmptyState.jsx,

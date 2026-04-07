@@ -47,7 +47,7 @@ App
 ## Key Rules
 
 - `selectedPath` is local to LogPanel, auto-clears on topic change via `pathForTopic` pattern
-- `selectedServer` is global (App.jsx) — Sidebar badges depend on it
+- `selectedServer` is global (App.jsx, passed to LogPanel only) — kept at App level to sync across both panels in split view
 - All filters reset on topic change via `dispatch({ type: 'RESET_TOPIC', topic })` in a `useEffect` inside `LogPanel.jsx`. State is owned by a `useReducer` (`panelReducer`) — `initialPanelState(topic)` is the single source of truth for what resets. LogPanel is NOT remounted; it stays alive to avoid flicker.
 - Active filters resent on WS reconnect (stored in `activeFilterRef`)
 - Auto-scroll is disabled only by user-initiated upward scrolling (guarded by an 800ms `userScrollIntentUntilRef` window — prevents programmatic `scrollToIndex` from being misidentified as user intent). Scrolling back to the bottom re-enables it.
