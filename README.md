@@ -15,7 +15,7 @@ A real-time log monitoring dashboard built with React + Vite. Connects to a WebS
 ### Topic & Filtering (Client-Side, Real-Time)
 All filtering runs client-side for instant feedback on every keystroke. A debounced server-side filter (300ms) runs in parallel as a bandwidth optimization to reduce WebSocket traffic.
 
-- **Topic sidebar** — all topics auto-subscribed; live log count, rate (logs/sec), server badges, and last message per topic
+- **Topic sidebar** — all topics auto-subscribed; live log rate (logs/sec) per topic
 - **Server filter** — searchable dropdown to filter logs by server name
 - **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
 - **Text search** — instant client-side search across message, server name, and path
@@ -27,7 +27,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 ### Display
 - **Relative timestamps** — shows `2m ago` style time; hover to see the full timestamp
 - **Keyword highlight** — each keyword gets a custom hex color; matches are highlighted inline
-- **Dark / light theme** toggle
+- **Light / Dark / System theme** — 3-way selector, follows OS preference in System mode
 - **Fully responsive** — sidebar is a slide-in drawer on mobile, fixed panel on tablet/desktop
 - **Collapsible sidebar** — desktop sidebar collapses to a thin strip with an expand button
 - **Split view** — open two independent log panels side by side (desktop only)
@@ -35,6 +35,8 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Focus ring** — active panel in split view is highlighted with a focus ring
 - **Heartbeat indicator** — SVG line animation in the DesktopHeader topic info row (desktop only, `lg` breakpoint) reflecting log ingestion rate; color shifts from green to yellow to orange to red based on rate
 - **Log rate indicator** — logs/sec shown per topic in the sidebar
+- **Settings drawer** — left-side drawer with theme selector, terminal mode, sidebar collapse, and topic sort order
+- **Terminal mode** — compact monospace log view without cards
 
 ### Actions
 - **Download logs** — download the full log file for the selected topic directly from the server
@@ -261,7 +263,7 @@ log-dashboard-ui/
         │   ├── index.js            # Re-exports LogPanel
         │   ├── LogPanel.jsx        # Orchestrator — state, hooks, composition
         │   ├── DesktopHeader.jsx   # Desktop topic info, toolbar, search bar
-        │   ├── MobileHeader.jsx    # Mobile topic bar, hamburger menu, search
+        │   ├── MobileHeader.jsx    # Mobile topic bar, filter icon menu, search
         │   ├── FilterBar.jsx       # Desktop server/path dropdowns, time range
         │   ├── ActiveFilters.jsx   # Active filter chip badges
         │   ├── StatusBar.jsx       # Bottom connection/filter status bar
@@ -270,6 +272,10 @@ log-dashboard-ui/
         │   ├── LogEntry.jsx        # Single log row with keyword highlighting
         │   │                       # and relative timestamp
         │   └── constants.js        # TIME_RANGES, button styles, getShortPath
+        ├── settings/
+        │   ├── index.js            # Re-exports SettingsModal
+        │   └── SettingsModal.jsx   # Left-side drawer — theme, terminal mode,
+        │                           # sidebar collapse, topic sort order
         └── sidebar/
             ├── index.js            # Re-exports Sidebar
             └── Sidebar.jsx         # Topic list with search, log rate badges,
