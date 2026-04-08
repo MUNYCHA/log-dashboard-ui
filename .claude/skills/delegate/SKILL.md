@@ -1,6 +1,6 @@
 ---
 name: delegate
-description: Boss mode — Claude plans and architects, Codex CLI does ALL coding. Claude never writes code directly. Use for any coding task: features, fixes, refactors, or investigations. Claude acts as senior dev, Codex is the developer.
+description: "Boss mode — Claude plans and architects, Codex CLI does ALL coding. Claude never writes code directly. Use for any coding task: features, fixes, refactors, or investigations. Claude acts as senior dev, Codex is the developer."
 ---
 
 # Boss Mode
