@@ -56,9 +56,11 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 | `LogPanel` | Yes | `filteredLogs`, `serversForSelectedTopic`, `pathsForSelectedServer`, `mergedServers`, `mergedPaths`, `filteredServers`, `filteredPaths`, `displayKeywords`, `emptyState` | Main orchestrator |
 | `VirtualLogList` | Yes | — | Extracted to avoid re-rendering when LogPanel state changes that don't affect the list |
 | `LogEntry` | Yes | `relativeTime` (via timestampGen) | Only re-renders when its specific log object or keywords change |
-| `TopicItem` (Sidebar) | Yes | — | Only re-renders when its topic's log array ref changes |
-| `Sidebar` | Yes | — | Re-renders when `logsByTopic` ref changes (every flush) but children are protected |
-| All other sub-components | **No** | — | DesktopHeader, MobileHeader, FilterBar, ActiveFilters, StatusBar, ScrollButtons, EmptyState, KeywordFilter, FilterDropdown — all pure presentational, re-render with parent |
+| `TopicItem` (Sidebar) | Yes | — | Only re-renders when `topic`, `isSelected`, `logRate`, or `darkMode` props change |
+| `Sidebar` | Yes | — | Re-renders on its own props changes; `TopicItem` children are protected by their own memo |
+| Most other sub-components | **No** | — | DesktopHeader, MobileHeader, FilterBar, ActiveFilters, StatusBar, ScrollButtons, EmptyState — purely presentational, re-render with parent |
+| `KeywordFilter` | **No** | — | Has local state (`selectedColor`) and a ref (`inputRef`) — not purely presentational |
+| `FilterDropdown` | **No** | — | Has a ref and a click-outside effect — not purely presentational |
 
 ### What triggers re-renders and why it's OK
 | Trigger | Frequency | What re-renders | Why it's OK |
@@ -109,8 +111,7 @@ WebSocket frame arrives (single or batch JSON)
 ### Queues and buffers
 | Ref | Purpose | Cap |
 |---|---|---|
-| `pendingRef` | Logs waiting for next 150ms flush | `rawBufferPerTopic` (displayCap×4) per viewed topic, 100 per non-viewed (pendingCountRef) |
-| `logCountRef` | Raw count per topic for rate calc | Reset every 5s |
+| `pendingRef` | Logs waiting for next 150ms flush | Enqueue cap: `rawBufferPerTopic` (displayCap×4) for all topics via `pendingCountRef`; at flush, non-viewed topics are further capped to 100 (`SIDEBAR_LOG_CAP`) when written to `logsByTopic` |
 
 ### Message discrimination
 ```
@@ -156,7 +157,7 @@ Server-side bandwidth optimization (parallel, does not block display):
 
 ## Theme System
 
-`src/constants/theme.js` exports `styles.dark` and `styles.light` — objects with 25 keys, each a Tailwind class string. Components receive `theme` prop and use `theme.background`, `theme.text`, `theme.logEntry`, etc.
+`src/constants/theme.js` exports `styles.dark` and `styles.light` — objects with 24 keys, each a Tailwind class string. Components receive `theme` prop and use `theme.background`, `theme.text`, `theme.logEntry`, etc.
 
 Key tokens: `background`, `sidebar`, `header`, `logArea`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `card`, `hover`, `selected`, `topicItem`, `logEntry`, `scrollbar`, `serverBadge`, `serverBadgeHover`, `popupBorder`, `dropdownItemSelected`, `inputFocus`, `button`, `buttonPrimary`, `accent`, `accentBg`
 
@@ -179,8 +180,8 @@ Key tokens: `background`, `sidebar`, `header`, `logArea`, `text`, `textSecondary
 
 ```
 src/
-├── main.jsx                    # Entry point — renders <App /> directly
-├── App.jsx                     # Global state, split view, theme resolution, settings modal
+├── main.jsx                    # Entry point — wraps <App /> in ErrorBoundary (fallback: recovery screen + reload button)
+├── App.jsx                     # Global state, split view, theme resolution, settings modal; updates document.title to track selected topic(s)
 ├── config.js                   # VITE_WS_URL, VITE_MAX_LOGS_PER_TOPIC, VITE_MAX_MESSAGE_LENGTH + derives httpBaseUrl for REST API
 ├── constants/
 │   ├── theme.js                # styles.dark / styles.light token objects

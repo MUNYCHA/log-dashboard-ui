@@ -19,7 +19,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Server filter** — searchable dropdown to filter logs by server name
 - **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
 - **Text search** — instant client-side search across log message content
-- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h / Custom; sent to the server as a bandwidth optimization and applied client-side for instant feedback
+- **Time range filter** — show logs from the last: All / 1m / 5m / 15m / 1h / Custom; Custom accepts free-form durations like `30s`, `5m`, `2h` (decimals supported); sent to the server as a bandwidth optimization and applied client-side for instant feedback
 - **Keyword filter** — add multiple keywords as colored chips; matches are highlighted in log messages
 - **AND / OR mode** toggle for keyword filter logic
 - **Custom keyword colors** — native color picker when adding a keyword chip
@@ -27,6 +27,8 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 ### Display
 - **Timestamps** — full localized timestamp shown on each log entry (normal mode); timestamps omitted in terminal mode
 - **Keyword highlight** — each keyword gets a custom hex color; matches are highlighted inline
+- **Search highlight** — plain-text search matches are highlighted inline in yellow, separately from keyword colors
+- **Copy log entry** — hover a log entry to reveal a copy button; copies a JSON payload of the entry to the clipboard
 - **Light / Dark / System theme** — 3-way selector, follows OS preference in System mode
 - **Fully responsive** — sidebar is a slide-in drawer on mobile, fixed panel on tablet/desktop
 - **Collapsible sidebar** — desktop sidebar collapses to a thin strip with an expand button
@@ -34,14 +36,16 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Per-panel independent pause** — each split-view panel has its own pause state
 - **Active panel indicator** — active panel in split view is indicated by a dot in the header; empty-state panels show a focus ring
 - **Heartbeat indicator** — SVG line animation reflecting log ingestion rate; shown in DesktopHeader (desktop, `lg` breakpoint) and MobileHeader; animation speed varies with rate
-- **Log rate indicator** — logs/sec shown per topic in the sidebar
+- **Log rate indicator** — logs/sec shown per topic in the sidebar; sidebar header shows an active-topic counter (active / total)
+- **Status bar counts** — shows "shown" vs "buffered" log counts; a `Filtered` badge appears when any filter is active
+- **Dynamic tab title** — browser tab tracks the selected topic (or both topics in split view)
 - **Settings drawer** — left-side drawer with theme selector, terminal mode, sidebar collapse, and topic sort order
 - **Terminal mode** — compact monospace log view without cards
 
 ### Actions
 - **Download logs** — download the full log file for the selected topic directly from the server
 - **Clear logs** per topic
-- **Auto-scroll** to latest logs — disabled only by user-initiated upward scrolling; re-enables automatically when scrolled back to the bottom
+- **Auto-scroll** to latest logs — disabled only by user-initiated upward scrolling; re-enables via the scroll-to-bottom button or the auto-scroll toggle button
 - **Scroll to top / bottom** floating buttons appear when needed
 
 ---
@@ -263,7 +267,7 @@ log-dashboard-ui/
         ├── log/
         │   ├── index.js            # Re-exports LogPanel
         │   ├── LogPanel.jsx        # Orchestrator — state, hooks, composition
-        │   ├── DesktopHeader.jsx   # Desktop topic info, toolbar, search bar
+        │   ├── DesktopHeader.jsx   # Desktop topic info, toolbar (search is in FilterBar)
         │   ├── MobileHeader.jsx    # Mobile topic bar, filter icon menu, search
         │   ├── FilterBar.jsx       # Desktop server/path dropdowns, time range
         │   ├── ActiveFilters.jsx   # Active filter chip badges

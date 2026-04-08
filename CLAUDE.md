@@ -50,7 +50,7 @@ App
 - `selectedServer` / `selectedServer2` are per-panel independent state in App.jsx — each panel has its own server filter, not shared
 - All filters reset on topic change via `dispatch({ type: 'RESET_TOPIC', topic })` in a `useEffect` inside `LogPanel.jsx`. State is owned by a `useReducer` (`panelReducer`) — `initialPanelState(topic)` is the single source of truth for what resets. LogPanel is NOT remounted; it stays alive to avoid flicker.
 - Active filters resent on WS reconnect. `sendFilter(filters, panelId)` tracks per-panel filters in `panelFiltersRef` — in split view, if both panels have filters, server-side filter is cleared so both panels receive all logs and filter independently client-side
-- Auto-scroll is disabled only by user-initiated upward scrolling (guarded by an 800ms `userScrollIntentUntilRef` window — prevents programmatic `scrollToIndex` from being misidentified as user intent). Scrolling back to the bottom re-enables it.
+- Auto-scroll is disabled only by user-initiated upward scrolling (guarded by an 800ms `userScrollIntentUntilRef` window — prevents programmatic `scrollToIndex` from being misidentified as user intent). Re-enabling requires an explicit action: clicking `scrollToBottom()` (scroll-to-bottom button) or toggling the auto-scroll button.
 - Mobile menu: 300ms `pointer-events-none` guard against double-tap
 
 ## Performance Rules (DO NOT REGRESS)
