@@ -1,5 +1,5 @@
 import React from 'react';
-import HeartbeatLine from '../common/HeartbeatLine';
+import HeartbeatLine from '../../common/HeartbeatLine';
 
 const DesktopHeader = ({
   selectedTopic, displayedLogs, logRate, darkMode, theme,
