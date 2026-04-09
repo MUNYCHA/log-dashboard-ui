@@ -41,7 +41,7 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 ├── serverSearchTerm / pathSearchTerm
 ├── isMobileMenuOpen / mobileMenuReady
 ├── atTop / atBottom    ← scroll position indicators
-├── downloadError       ← transient download error message (auto-clears after 5s)
+├── downloadError       ← transient download error message (auto-clears after 5s); download filename is derived from Content-Disposition header when present, otherwise falls back to the topic name with a timestamp suffix
 ├── topicMeta           ← backend-provided metadata for current topic (servers/paths)
 │
 ├── timestampGen        ← separate useState, counter bumped every 5s for relative time refresh
@@ -124,6 +124,14 @@ JSON.parse(event.data)
   → Single object?  → Single log event (wrap in array, same path)
 ```
 
+### Log event normalization
+- `normalizeLogEvent` drops any event missing `topic`, `serverName`, `path`, `timestamp`, or `message`; all five fields are required.
+- Messages longer than `config.ws.maxMessageLength` are truncated and suffixed with `... [truncated]`.
+
+### Log rate decay
+- Per-topic rates are zeroed immediately on disconnect.
+- While connected, if a topic's rate arrives as `0` in the stats payload **or** no stats message has been seen for more than `statsIntervalMs × 2`, its rate is reset to `0` in `logRates`.
+
 ### Reconnect
 - Exponential backoff: `min(1000 * 2^attempts, 30000)ms`
 - On reconnect: re-sends subscriptions + active filter
@@ -161,6 +169,8 @@ Server-side bandwidth optimization (parallel, does not block display):
 
 Key tokens: `background`, `sidebar`, `header`, `logArea`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `card`, `hover`, `selected`, `topicItem`, `logEntry`, `scrollbar`, `serverBadge`, `serverBadgeHover`, `popupBorder`, `dropdownItemSelected`, `inputFocus`, `button`, `buttonPrimary`, `accent`, `accentBg`
 
+`App.jsx` also sets the root `color-scheme` CSS property to `dark` or `light` and registers a `matchMedia('(prefers-color-scheme: dark)')` listener so that System-mode theme changes apply immediately without a reload.
+
 ## Sub-component Props Quick Reference
 
 | Component | Key props | State? |
@@ -169,12 +179,12 @@ Key tokens: `background`, `sidebar`, `header`, `logArea`, `text`, `textSecondary
 | `MobileHeader` | Same as Desktop + mobile-specific dropdowns, server/path filters, onDownload | None |
 | `FilterBar` | server/path dropdowns, timeRange, refs for positioning | None |
 | `ActiveFilters` | selectedServer/Path, logSearchTerm, keywords, clear callbacks | None (returns null if no filters) |
-| `StatusBar` | isConnected, isReconnecting, isPaused, logRate | None |
+| `StatusBar` | isConnected, isReconnecting, logRate, darkMode, theme, streamMode, visibleCount, bufferedCount, hasActiveFilters | None |
 | `ScrollButtons` | atTop, atBottom, scroll callbacks | None |
 | `EmptyState` | theme, splitView, panel callbacks | None |
 | `KeywordFilter` | keywords, inputValue, callbacks, mode | selectedColor, inputRef |
 | `FilterDropdown` | isOpen, items, selectedItem, searchTerm, callbacks | dropdownRef (click-outside) |
-| `SettingsModal` | isOpen, onClose, themeMode, terminalMode, topicSortMode, sidebarCollapsed + change callbacks | None (left-side drawer, not a centered modal) |
+| `SettingsModal` | isOpen, onClose, themeMode, terminalMode, topicSortMode, sidebarCollapsed + change callbacks | None (left-side drawer, not a centered modal); traps keyboard focus, autofocuses close button, handles Escape, and locks body scroll while open |
 
 ## File Map
 

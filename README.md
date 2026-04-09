@@ -32,7 +32,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Light / Dark / System theme** — 3-way selector, follows OS preference in System mode
 - **Fully responsive** — sidebar is a slide-in drawer on mobile, fixed panel on tablet/desktop
 - **Collapsible sidebar** — desktop sidebar collapses to a thin strip with an expand button
-- **Split view** — open two independent log panels side by side (desktop only)
+- **Split view** — open two independent log panels side by side (tablet/desktop, `md` breakpoint and above)
 - **Per-panel independent pause** — each split-view panel has its own pause state
 - **Active panel indicator** — active panel in split view is indicated by a dot in the header; empty-state panels show a focus ring
 - **Heartbeat indicator** — SVG line animation reflecting log ingestion rate; shown in DesktopHeader (desktop, `lg` breakpoint) and MobileHeader; animation speed varies with rate
@@ -46,7 +46,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Download logs** — download the full log file for the selected topic directly from the server
 - **Clear logs** per topic
 - **Auto-scroll** to latest logs — disabled only by user-initiated upward scrolling; re-enables via the scroll-to-bottom button or the auto-scroll toggle button
-- **Scroll to top / bottom** floating buttons appear when needed
+- **Scroll to top / bottom** floating buttons appear on hover when scroll position is not already at the target end
 
 ---
 
@@ -67,7 +67,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 
 ## Requirements
 
-- **Node.js** >= 18
+- **Node.js** >= 20
 - **npm** >= 9 (or pnpm / yarn)
 - A WebSocket server that follows the message protocol below
 
@@ -167,7 +167,7 @@ docker compose down
 | Type | Shape | When |
 |---|---|---|
 | Topic list | `{ type: "topics", topics: string[] }` (primary), legacy `string[]` fallback | Once on connect — list of all topic names |
-| Stats | `{ type: "stats", topics: { [topic]: { rate, servers } }, intervalMs }` | Periodic (~every 2s) — per-topic log rate and server info |
+| Stats | `{ type: "stats", topics: { [topic]: { rate, servers } }, intervalMs }` | Periodic (~every 2s) — per-topic log rate (client reads `rate` only; `servers` field is ignored by the client) |
 | Log event | `{ topic, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events (already filtered server-side); single object or batched array |
 
 ### Client → Server
