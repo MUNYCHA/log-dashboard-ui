@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useMemo, useCallback } from "react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
-import { KeywordFilter } from "../filters";
+import { KeywordFilter } from "./filters";
 import { getButtonStyles } from "./constants";
 import { downloadLogs as fetchDownloadLogs } from "../../api/logs";
 import useTopicMeta from "../../hooks/useTopicMeta";
@@ -9,10 +9,10 @@ import useFilteredLogs from "../../hooks/useFilteredLogs";
 import useScrollBehavior from "../../hooks/useScrollBehavior";
 import DesktopHeader from "./header/DesktopHeader";
 import MobileHeader from "./header/MobileHeader";
-import FilterBar from "./FilterBar";
-import ActiveFilters from "./ActiveFilters";
-import StatusBar from "./StatusBar";
-import EmptyState from "./EmptyState";
+import FilterBar from "./filters/FilterBar";
+import ActiveFilters from "./filters/ActiveFilters";
+import StatusBar from "./status/StatusBar";
+import EmptyState from "./status/EmptyState";
 import VirtualLogList from "./VirtualLogList";
 
 const LogPanel = ({

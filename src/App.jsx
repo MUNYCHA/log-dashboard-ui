@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
 import Sidebar from './components/sidebar';
-import LogPanel from './components/log';
+import LogPanel from './components/panel';
 import SettingsModal from './components/settings';
 import config from './config';
 

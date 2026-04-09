@@ -1,5 +1,5 @@
 import React from 'react';
-import FilterDropdown from './FilterDropdown';
+import FilterDropdown from '../../ui/FilterDropdown';
 
 const getFileName = (path) => path?.split('/').pop() || path;
 

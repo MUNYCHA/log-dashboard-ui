@@ -1,6 +1,6 @@
 import React from 'react';
-import HeartbeatLine from '../../common/HeartbeatLine';
-import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../../filters';
+import HeartbeatLine from '../../ui/HeartbeatLine';
+import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../filters';
 import { getShortPath } from '../constants';
 
 const MobileHeader = ({

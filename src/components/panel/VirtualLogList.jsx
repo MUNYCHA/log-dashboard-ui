@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import LogEntry from './LogEntry';
-import ScrollButtons from './ScrollButtons';
+import ScrollButtons from '../ui/ScrollButtons';
 
 const ESTIMATED_LOG_HEIGHT = 114;
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../filters';
-import { getShortPath } from './constants';
+import { ServerDropdown, PathDropdown, TimeRangeSelector } from '.';
+import { getShortPath } from '../constants';
 
 const chip = (active, darkMode) =>
   `h-8 inline-flex items-center gap-1.5 rounded-full border px-4 text-[13px] font-medium
