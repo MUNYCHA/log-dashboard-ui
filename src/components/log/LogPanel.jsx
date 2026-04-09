@@ -1,10 +1,11 @@
-import React, { useState, useReducer, useRef, useEffect, useMemo, useCallback } from "react";
+import React, { useRef, useEffect, useMemo, useCallback } from "react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { KeywordFilter } from "../filters";
 import { getButtonStyles } from "./constants";
-import config from "../../config";
 import { downloadLogs as fetchDownloadLogs } from "../../api/logs";
 import useTopicMeta from "../../hooks/useTopicMeta";
+import usePanelState from "../../hooks/usePanelState";
+import useFilteredLogs from "../../hooks/useFilteredLogs";
 import DesktopHeader from "./DesktopHeader";
 import MobileHeader from "./MobileHeader";
 import FilterBar from "./FilterBar";
@@ -12,43 +13,6 @@ import ActiveFilters from "./ActiveFilters";
 import StatusBar from "./StatusBar";
 import EmptyState from "./EmptyState";
 import VirtualLogList from "./VirtualLogList";
-
-// ── Panel-local state ────────────────────────────────────────────────────────
-// All fields here reset automatically on topic switch via RESET_TOPIC.
-// Adding a new field here is sufficient — no separate reset list to maintain.
-const initialPanelState = (topic) => ({
-  frozenLogs: null,
-  frozenTopic: null,
-  logSearchTerm: "",
-  debouncedSearch: "",
-  autoScroll: true,
-  showServerDropdown: false,
-  showPathDropdown: false,
-  showMobileServerDropdown: false,
-  showMobilePathDropdown: false,
-  serverSearchTerm: "",
-  pathSearchTerm: "",
-  pathForTopic: { topic, path: null },
-  isMobileMenuOpen: false,
-  mobileMenuReady: false,
-  keywords: [],
-  keywordInput: "",
-  debouncedKeywordInput: "",
-  keywordMode: "or",
-  timeRange: "all",
-  customRangeMs: 0,
-  atTop: true,
-  atBottom: true,
-  downloadError: null,
-});
-
-function panelReducer(state, action) {
-  switch (action.type) {
-    case 'RESET_TOPIC': return initialPanelState(action.topic);
-    case 'PATCH': return { ...state, ...action.payload };
-    default: return state;
-  }
-}
 
 const LogPanel = ({
   selectedTopic,
@@ -75,7 +39,7 @@ const LogPanel = ({
   sendFilter,
   panelId,
 }) => {
-  const [state, dispatch] = useReducer(panelReducer, undefined, () => initialPanelState(selectedTopic));
+  const { state, dispatch, timestampGen, nowMs, handleTimeRangeChange } = usePanelState(selectedTopic);
   const {
     frozenLogs, frozenTopic, logSearchTerm, debouncedSearch, autoScroll,
     showServerDropdown, showPathDropdown, showMobileServerDropdown, showMobilePathDropdown,
@@ -85,9 +49,27 @@ const LogPanel = ({
     timeRange, customRangeMs,
     atTop, atBottom, downloadError,
   } = state;
+
   const topicMeta = useTopicMeta(selectedTopic);
-  const selectedPathForTopic = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
-  const [timestampGen, setTimestampGen] = useState(0);
+
+  const { filteredLogs, filteredServers, filteredPaths, selectedPath } = useFilteredLogs({
+    selectedTopic,
+    topicLogs,
+    selectedServer,
+    onServerSelect,
+    topicMeta,
+    serverSearchTerm,
+    pathSearchTerm,
+    pathForTopic,
+    logSearchTerm,
+    keywords,
+    debouncedKeywordInput,
+    keywordMode,
+    timeRange,
+    customRangeMs,
+    nowMs,
+    dispatch,
+  });
 
   const scrollRef = useRef(null);
   const virtualizerScrollToBottomRef = useRef(null);
@@ -99,29 +81,6 @@ const LogPanel = ({
 
   const markUserScrollIntent = useCallback(() => {
     userScrollIntentUntilRef.current = Date.now() + 800;
-  }, []);
-
-  useEffect(() => {
-    if (!isMobileMenuOpen) return;
-    const id = setTimeout(() => dispatch({ type: 'PATCH', payload: { mobileMenuReady: true } }), 300);
-    return () => {
-      clearTimeout(id);
-      dispatch({ type: 'PATCH', payload: { mobileMenuReady: false } });
-    };
-  }, [isMobileMenuOpen]);
-
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimestampGen((g) => g + 1);
-      setNowMs(Date.now());
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleTimeRangeChange = useCallback((value, ms = 0) => {
-    dispatch({ type: 'PATCH', payload: { timeRange: value, customRangeMs: ms } });
-    if (value !== 'all') setNowMs(Date.now());
   }, []);
 
   const handleScroll = useCallback(() => {
@@ -137,7 +96,7 @@ const LogPanel = ({
     if (userInitiated && didScrollUp && !isNearBottom) {
       dispatch({ type: 'PATCH', payload: { autoScroll: false } });
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -147,6 +106,7 @@ const LogPanel = ({
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll, selectedTopic]);
 
+  // Reset panel and scroll to bottom on topic switch
   useEffect(() => {
     const previousTopic = previousTopicRef.current;
     previousTopicRef.current = selectedTopic;
@@ -166,67 +126,9 @@ const LogPanel = ({
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
     });
-  }, [selectedTopic]);
+  }, [selectedTopic, dispatch]);
 
-  useEffect(() => {
-    const t = setTimeout(() => dispatch({ type: 'PATCH', payload: { debouncedSearch: logSearchTerm } }), 300);
-    return () => clearTimeout(t);
-  }, [logSearchTerm]);
-
-  useEffect(() => {
-    const t = setTimeout(() => dispatch({ type: 'PATCH', payload: { debouncedKeywordInput: keywordInput } }), 300);
-    return () => clearTimeout(t);
-  }, [keywordInput]);
-
-  const serversForSelectedTopic = useMemo(
-    () => selectedTopic ? [...new Set(topicLogs?.map((l) => l.serverName) || [])].sort() : [],
-    [selectedTopic, topicLogs],
-  );
-
-  const pathsForSelectedServer = useMemo(() => {
-    if (!selectedTopic || !topicLogs) return [];
-    let logs = topicLogs;
-    if (selectedServer) logs = logs.filter((l) => l.serverName === selectedServer);
-    return [...new Set(logs.map((l) => l.path))].sort();
-  }, [selectedTopic, topicLogs, selectedServer]);
-
-  // Merge backend meta (all-time) with buffer (recently seen) — meta order preserved,
-  // buffer-only servers appended at the end for brand-new servers not yet in meta.
-  const mergedServers = useMemo(() => {
-    const metaNames = topicMeta?.servers?.map((s) => s.name) ?? [];
-    const metaSet = new Set(metaNames);
-    const bufferOnly = serversForSelectedTopic.filter((s) => !metaSet.has(s));
-    return [...metaNames, ...bufferOnly];
-  }, [topicMeta, serversForSelectedTopic]);
-
-  const mergedPaths = useMemo(() => {
-    const serverMeta = selectedServer
-      ? topicMeta?.servers?.find((s) => s.name === selectedServer)
-      : null;
-    const metaPaths = serverMeta?.paths?.map((p) => p.path) ?? [];
-    const metaSet = new Set(metaPaths);
-    const bufferOnly = pathsForSelectedServer.filter((p) => !metaSet.has(p));
-    return [...metaPaths, ...bufferOnly];
-  }, [topicMeta, selectedServer, pathsForSelectedServer]);
-
-  const selectedPath = selectedPathForTopic && (
-    mergedPaths.includes(selectedPathForTopic) || pathsForSelectedServer.includes(selectedPathForTopic)
-  ) ? selectedPathForTopic : null;
-
-  // Auto-clear selected server if it's gone from both meta and buffer.
-  // Guard on mergedServers.length so we don't clear before meta has loaded.
-  useEffect(() => {
-    if (selectedServer && mergedServers.length > 0 && !mergedServers.includes(selectedServer)) {
-      onServerSelect(null);
-    }
-  }, [selectedServer, mergedServers, onServerSelect]);
-
-  useEffect(() => {
-    if (selectedPathForTopic && mergedPaths.length > 0 && !mergedPaths.includes(selectedPathForTopic)) {
-      dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } });
-    }
-  }, [selectedPathForTopic, mergedPaths, selectedTopic]);
-
+  // Server-side filter dispatch (bandwidth optimization)
   useEffect(() => {
     if (!sendFilter) return;
 
@@ -247,74 +149,14 @@ const LogPanel = ({
     sendFilter(hasAny ? filters : null, panelId);
   }, [selectedServer, selectedPath, debouncedSearch, keywords, debouncedKeywordInput, keywordMode, timeRange, customRangeMs, sendFilter, panelId]);
 
-  const filteredServers = useMemo(
-    () => mergedServers.filter((s) => s.toLowerCase().includes(serverSearchTerm.toLowerCase())),
-    [mergedServers, serverSearchTerm],
-  );
-
-  const filteredPaths = useMemo(
-    () => mergedPaths.filter((p) => p.toLowerCase().includes(pathSearchTerm.toLowerCase())),
-    [mergedPaths, pathSearchTerm],
-  );
-
-  const renderServerItem = useCallback((serverName) => {
-    return { primary: serverName, secondary: null };
-  }, []);
-
-  const filteredLogs = useMemo(() => {
-    if (!selectedTopic || !topicLogs) return [];
-    let logs = topicLogs;
-
-    if (selectedServer) logs = logs.filter((l) => l.serverName === selectedServer);
-    if (selectedPath) logs = logs.filter((l) => l.path === selectedPath);
-
-    if (logSearchTerm) {
-      const lower = logSearchTerm.toLowerCase();
-      logs = logs.filter((l) =>
-        String(l.message ?? '').toLowerCase().includes(lower)
-      );
-    }
-
-    const pendingKw = debouncedKeywordInput.trim().toLowerCase();
-    const allTerms = [
-      ...keywords.map((k) => k.text.toLowerCase()),
-      ...(pendingKw ? [pendingKw] : []),
-    ];
-    if (allTerms.length > 0) {
-      logs = logs.filter((l) => {
-        const haystack = String(l.message ?? '').toLowerCase();
-        return keywordMode === 'and'
-          ? allTerms.every((t) => haystack.includes(t))
-          : allTerms.some((t) => haystack.includes(t));
-      });
-    }
-
-    if (timeRange !== 'all') {
-      const PRESET_MS = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
-      const rangeMs = timeRange === 'custom' ? customRangeMs : (PRESET_MS[timeRange] || 0);
-      if (rangeMs > 0) {
-        const cutoff = nowMs - rangeMs;
-        logs = logs.filter((l) => {
-          const ts = new Date(l.timestamp).getTime();
-          return Number.isFinite(ts) && ts >= cutoff;
-        });
-      }
-    }
-
-    return [...logs].slice(0, config.ws.maxLogsPerTopic).reverse();
-  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, keywords, debouncedKeywordInput, keywordMode, timeRange, customRangeMs, nowMs]);
-
-  const displayedLogs = frozenLogs != null && frozenTopic === selectedTopic
-    ? frozenLogs
-    : filteredLogs;
+  const displayedLogs = frozenLogs != null && frozenTopic === selectedTopic ? frozenLogs : filteredLogs;
   const bufferedCount = topicLogs?.length || 0;
+
   const displayKeywords = useMemo(() => {
     const pending = debouncedKeywordInput.trim();
     if (!pending) return keywords;
-
     const exists = keywords.some((k) => k.text.toLowerCase() === pending.toLowerCase());
     if (exists) return keywords;
-
     return [...keywords, { text: pending, color: '#888888' }];
   }, [keywords, debouncedKeywordInput]);
 
@@ -331,7 +173,6 @@ const LogPanel = ({
         showClearFilters: true,
       };
     }
-
     if (bufferedCount === 0 && logRate > 0) {
       return {
         title: 'Topic is live. Waiting for local buffer',
@@ -339,7 +180,6 @@ const LogPanel = ({
         showClearFilters: false,
       };
     }
-
     if (bufferedCount === 0) {
       return {
         title: 'No logs received for this topic yet',
@@ -347,7 +187,6 @@ const LogPanel = ({
         showClearFilters: false,
       };
     }
-
     return {
       title: 'No recent logs in the current view',
       description: timeRange !== 'all'
@@ -365,7 +204,6 @@ const LogPanel = ({
     }
     togglePause();
   };
-
 
   const handleServerSelect = (server) => {
     onServerSelect(server);
@@ -426,8 +264,6 @@ const LogPanel = ({
   };
 
   const scrollToBottom = () => {
-    // Prefer virtualizer-based scroll so we land exactly on the last item,
-    // not mid-item when padding spacers are active.
     if (virtualizerScrollToBottomRef.current) {
       virtualizerScrollToBottomRef.current();
     } else if (scrollRef.current) {
@@ -440,6 +276,8 @@ const LogPanel = ({
   };
 
   const btn = getButtonStyles(darkMode);
+  const renderServerItem = useCallback((serverName) => ({ primary: serverName, secondary: null }), []);
+
   const toggleAutoScroll = () => {
     if (autoScroll) {
       dispatch({ type: 'PATCH', payload: { autoScroll: false } });
@@ -657,4 +495,3 @@ const LogPanel = ({
 };
 
 export default React.memo(LogPanel);
-
