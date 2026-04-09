@@ -29,7 +29,7 @@ App.jsx (global)
 │   ├── logRates       — Record<topic, number> (logs/sec, from server stats message)
 │   ├── clearLogs(topic), subscribe(topics), trimTopicBuffer(topic, cap?), sendFilter(filters, panelId)
 │
-LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelReducer)
+usePanelState hook (consumed by LogPanel.jsx) — all resettable state via useReducer (panelReducer)
 ├── frozenLogs / frozenTopic ← snapshot of logs + topic when paused
 ├── logSearchTerm / debouncedSearch     ← text search (300ms debounce for server-side)
 ├── pathForTopic        ← { topic, path } — resets on topic change via RESET_TOPIC action
@@ -53,9 +53,9 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 ### What's memoized
 | Component | `React.memo` | Internal `useMemo` | Notes |
 |---|---|---|---|
-| `LogPanel` | Yes | `filteredLogs`, `serversForSelectedTopic`, `pathsForSelectedServer`, `mergedServers`, `mergedPaths`, `filteredServers`, `filteredPaths`, `displayKeywords`, `emptyState` | Main orchestrator |
+| `LogPanel` | Yes | `displayKeywords`, `emptyState` | Main orchestrator; filtering/server/path derivations delegated to `useFilteredLogs` hook |
 | `VirtualLogList` | Yes | — | Extracted to avoid re-rendering when LogPanel state changes that don't affect the list |
-| `LogEntry` | Yes | `relativeTime` (via timestampGen) | Only re-renders when its specific log object or keywords change |
+| `LogEntry` | Yes | `relativeTime` (via timestampGen) | Re-renders when its log object, keywords, timestampGen, logSearchTerm, or terminalMode changes |
 | `TopicItem` (Sidebar) | Yes | — | Only re-renders when `topic`, `isSelected`, `logRate`, or `darkMode` props change |
 | `Sidebar` | Yes | — | Re-renders on its own props changes; `TopicItem` children are protected by their own memo |
 | Most other sub-components | **No** | — | DesktopHeader, MobileHeader, FilterBar, ActiveFilters, StatusBar, ScrollButtons, EmptyState — purely presentational, re-render with parent |
@@ -94,7 +94,7 @@ WebSocket frame arrives (single or batch JSON)
 
 ## Virtualization Details
 
-`VirtualLogList` (inside `LogPanel.jsx`) uses `@tanstack/react-virtual` in **flow mode** (not positioned mode):
+`VirtualLogList` (`src/components/panel/VirtualLogList.jsx`) uses `@tanstack/react-virtual` in **flow mode** (not positioned mode):
 - `estimateSize`: 114px per row
 - `overscan`: 20 rows (renders 20 extra above/below viewport for smooth scrolling)
 - `getScrollElement`: the `absolute inset-0 overflow-auto` div (scrollRef)
@@ -197,15 +197,21 @@ src/
 │   ├── theme.js                # styles.dark / styles.light token objects
 │   └── keywordColors.js        # KEYWORD_COLORS array, DEFAULT_KEYWORD_COLOR, getColorDef()
 ├── hooks/
-│   └── useWebSocket.js         # WebSocket + reconnect + batching + rate tracking + filter dispatch
+│   ├── useWebSocket.js         # WebSocket + reconnect + batching + rate tracking + filter dispatch
+│   ├── usePanelState.js        # Panel reducer (panelReducer), debounce timers, timestampGen, nowMs, mobile-menu readiness
+│   ├── useFilteredLogs.js      # Merges backend topic metadata with log buffer; applies all local filters
+│   ├── useScrollBehavior.js    # User scroll intent, topic-change RESET_TOPIC dispatch, atTop/atBottom, scroll actions
+│   └── useTopicMeta.js         # Fetches and caches /api/topics/{topic}/meta
 ├── utils/
 │   └── logUtils.js             # getLogLevelColor, getRelativeTime
 └── components/
-    ├── common/HeartbeatLine.jsx, ErrorBoundary.jsx
-    ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, TimeRangeSelector.jsx, index.js
-    ├── log/LogPanel.jsx, VirtualLogList (inside LogPanel), LogEntry.jsx, DesktopHeader.jsx,
-    │   MobileHeader.jsx, FilterBar.jsx, ActiveFilters.jsx, StatusBar.jsx, EmptyState.jsx,
-    │   ScrollButtons.jsx, constants.js (TIME_RANGES, button styles, getShortPath), index.js
+    ├── ui/HeartbeatLine.jsx, ErrorBoundary.jsx, FilterDropdown.jsx, ScrollButtons.jsx, index.js
+    ├── panel/
+    │   ├── LogPanel.jsx, VirtualLogList.jsx, LogEntry.jsx, constants.js, index.js
+    │   ├── header/DesktopHeader.jsx, MobileHeader.jsx
+    │   ├── filters/FilterBar.jsx, ActiveFilters.jsx, ServerDropdown.jsx, PathDropdown.jsx,
+    │   │   KeywordFilter.jsx, TimeRangeSelector.jsx, index.js
+    │   └── status/StatusBar.jsx, EmptyState.jsx
     ├── settings/SettingsModal.jsx, index.js  # themeMode, terminalMode, topicSortMode controls
-    └── sidebar/Sidebar.jsx (contains TopicItem), index.js
+    └── sidebar/Sidebar.jsx, TopicItem.jsx, index.js
 ```

@@ -21,7 +21,7 @@ React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 
 
 **State ownership:**
 - `App.jsx` — selectedTopic/Server (per panel), themeMode (→ darkMode derived), terminalMode, topicSortMode, sidebarOpen/collapsed, splitView, activePanel, isPaused1/2, viewedTopics, isSettingsOpen, systemPrefersDark
-- `LogPanel.jsx` — all panel-local state via `useReducer` (`panelReducer`): path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, frozenTopic, isMobileMenuOpen + separate useState for timestampGen, nowMs
+- `usePanelState` hook (consumed by `LogPanel.jsx`) — all panel-local state via `useReducer` (`panelReducer`): path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, frozenTopic, isMobileMenuOpen + separate useState for timestampGen, nowMs + debounce timers + mobile-menu readiness
 - `useWebSocket` — logsByTopic, topics, isConnected, isReconnecting, logRates, clearLogs, trimTopicBuffer, subscribe, sendFilter
 
 **Component tree:**
@@ -48,7 +48,7 @@ App
 
 - `selectedPath` is local to LogPanel, auto-clears on topic change via `pathForTopic` pattern
 - `selectedServer` / `selectedServer2` are per-panel independent state in App.jsx — each panel has its own server filter, not shared
-- All filters reset on topic change via `dispatch({ type: 'RESET_TOPIC', topic })` in a `useEffect` inside `LogPanel.jsx`. State is owned by a `useReducer` (`panelReducer`) — `initialPanelState(topic)` is the single source of truth for what resets. LogPanel is NOT remounted; it stays alive to avoid flicker.
+- All filters reset on topic change via `dispatch({ type: 'RESET_TOPIC', topic })` in a `useEffect` inside `useScrollBehavior.js` (wired into `LogPanel.jsx` via hook). State is owned by a `useReducer` (`panelReducer`) — `initialPanelState(topic)` is the single source of truth for what resets. LogPanel is NOT remounted; it stays alive to avoid flicker.
 - Active filters resent on WS reconnect. `sendFilter(filters, panelId)` tracks per-panel filters in `panelFiltersRef` — in split view, if both panels have filters, server-side filter is cleared so both panels receive all logs and filter independently client-side
 - Auto-scroll is disabled only by user-initiated upward scrolling (guarded by an 800ms `userScrollIntentUntilRef` window — prevents programmatic `scrollToIndex` from being misidentified as user intent). Re-enabling requires an explicit action: clicking `scrollToBottom()` (scroll-to-bottom button) or toggling the auto-scroll button.
 - Mobile menu: 300ms `pointer-events-none` guard against double-tap

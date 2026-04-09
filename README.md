@@ -247,44 +247,54 @@ log-dashboard-ui/
     │   ├── theme.js           # Dark / light theme token objects
     │   └── keywordColors.js   # Preset keyword highlight colors
     ├── hooks/
-    │   └── useWebSocket.js    # WebSocket connection, auto-reconnect,
-    │                          # log batching, rate tracking,
-    │                          # server-side filter dispatch
+    │   ├── useWebSocket.js    # WebSocket connection, auto-reconnect,
+    │   │                      # log batching, rate tracking,
+    │   │                      # server-side filter dispatch
+    │   ├── usePanelState.js   # Panel reducer, debounce timers,
+    │   │                      # timestampGen, nowMs, mobile-menu readiness
+    │   ├── useFilteredLogs.js # Merges backend topic metadata with log buffer;
+    │   │                      # applies all local filters (server/path/search/keywords/timeRange)
+    │   ├── useScrollBehavior.js # User scroll intent, topic-change resets,
+    │   │                        # atTop/atBottom tracking, scroll actions
+    │   └── useTopicMeta.js    # Fetches and caches /api/topics/{topic}/meta
     ├── utils/
     │   └── logUtils.js        # getLogLevelColor, getRelativeTime
     └── components/
-        ├── common/
+        ├── ui/
         │   ├── HeartbeatLine.jsx   # SVG heartbeat animation reflecting log rate
-        │   └── ErrorBoundary.jsx   # React error boundary wrapper
-        ├── filters/
-        │   ├── index.js            # Re-exports all filter components
+        │   ├── ErrorBoundary.jsx   # React error boundary wrapper
         │   ├── FilterDropdown.jsx  # Shared searchable dropdown base component
-        │   ├── ServerDropdown.jsx  # Server filter (wraps FilterDropdown)
-        │   ├── PathDropdown.jsx    # Path filter (wraps FilterDropdown)
-        │   ├── KeywordFilter.jsx   # Keyword chip input, color picker,
-        │   │                       # AND/OR toggle
-        │   └── TimeRangeSelector.jsx # Time range picker (All/1m/5m/15m/1h/Custom)
-        ├── log/
+        │   └── ScrollButtons.jsx   # Floating scroll-to-top/bottom buttons
+        ├── panel/
         │   ├── index.js            # Re-exports LogPanel
-        │   ├── LogPanel.jsx        # Orchestrator — state, hooks, composition
-        │   ├── DesktopHeader.jsx   # Desktop topic info, toolbar (search is in FilterBar)
-        │   ├── MobileHeader.jsx    # Mobile topic bar, filter icon menu, search
-        │   ├── FilterBar.jsx       # Desktop server/path dropdowns, time range
-        │   ├── ActiveFilters.jsx   # Active filter chip badges
-        │   ├── StatusBar.jsx       # Bottom connection/filter status bar
-        │   ├── EmptyState.jsx      # No-topic-selected placeholder
-        │   ├── ScrollButtons.jsx   # Floating scroll-to-top/bottom buttons
+        │   ├── LogPanel.jsx        # Orchestrator — wires hooks, composes panel
+        │   ├── VirtualLogList.jsx  # Virtualized log list (@tanstack/react-virtual)
         │   ├── LogEntry.jsx        # Single log row with keyword highlighting
         │   │                       # and relative timestamp
-        │   └── constants.js        # TIME_RANGES, button styles, getShortPath
+        │   ├── constants.js        # TIME_RANGES, button styles, getShortPath
+        │   ├── header/
+        │   │   ├── DesktopHeader.jsx  # Desktop topic info, toolbar
+        │   │   └── MobileHeader.jsx   # Mobile topic bar, filter icon menu, search
+        │   ├── filters/
+        │   │   ├── index.js           # Re-exports all filter components
+        │   │   ├── FilterBar.jsx      # Desktop server/path dropdowns, time range
+        │   │   ├── ActiveFilters.jsx  # Active filter chip badges
+        │   │   ├── ServerDropdown.jsx # Server filter (wraps FilterDropdown)
+        │   │   ├── PathDropdown.jsx   # Path filter (wraps FilterDropdown)
+        │   │   ├── KeywordFilter.jsx  # Keyword chip input, color picker, AND/OR toggle
+        │   │   └── TimeRangeSelector.jsx # Time range picker (All/1m/5m/15m/1h/Custom)
+        │   └── status/
+        │       ├── StatusBar.jsx      # Bottom connection/filter status bar
+        │       └── EmptyState.jsx     # No-topic-selected placeholder
         ├── settings/
         │   ├── index.js            # Re-exports SettingsModal
         │   └── SettingsModal.jsx   # Left-side drawer — theme, terminal mode,
         │                           # sidebar collapse, topic sort order
         └── sidebar/
             ├── index.js            # Re-exports Sidebar
-            └── Sidebar.jsx         # Topic list with search, log rate badges,
-                                    # collapsible on desktop
+            ├── Sidebar.jsx         # Topic list with search, log rate badges,
+            │                       # collapsible on desktop
+            └── TopicItem.jsx       # Individual topic row (memo'd)
 ```
 
 ---
