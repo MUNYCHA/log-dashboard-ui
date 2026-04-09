@@ -1,6 +1,7 @@
 const displayCap = Number(import.meta.env.VITE_MAX_LOGS_PER_TOPIC) || 500;
 
-const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws/logs';
+const wsUrl = import.meta.env.VITE_WS_URL;
+if (!wsUrl) throw new Error('[config] VITE_WS_URL is not set — copy .env.example to .env and set your WebSocket server URL');
 const httpBaseUrl = wsUrl.replace(/^ws:\/\//, 'http://').replace(/^wss:\/\//, 'https://').replace(/\/ws\/.*$/, '');
 
 const config = {
