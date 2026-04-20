@@ -6,11 +6,17 @@ services:
         VITE_WS_URL: ${VITE_WS_URL}
         VITE_MAX_LOGS_PER_TOPIC: ${VITE_MAX_LOGS_PER_TOPIC:-500}
         VITE_MAX_MESSAGE_LENGTH: ${VITE_MAX_MESSAGE_LENGTH:-50000}
-    ports:
-      - "5173:80"
+    expose:
+      - "80"
     restart: unless-stopped
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    external: true
