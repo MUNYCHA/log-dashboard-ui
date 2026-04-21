@@ -1,37 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import config from '../config';
+import { normalizeLogEvent } from '../utils/logUtils';
 
 const FLUSH_INTERVAL_MS = 150;  // batch log state updates — reduces re-renders dramatically
 const SIDEBAR_LOG_CAP = 100;
 const isValidTopicList = (topics) =>
   Array.isArray(topics) && topics.every((topic) => typeof topic === 'string' && topic.trim() !== '');
-
-const normalizeLogEvent = (value, nextId) => {
-  if (!value || typeof value !== 'object') return null;
-
-  const topic = typeof value.topic === 'string' ? value.topic.trim() : '';
-  const serverName = typeof value.serverName === 'string' ? value.serverName : null;
-  const path = typeof value.path === 'string' ? value.path : null;
-  const timestamp = typeof value.timestamp === 'string' ? value.timestamp : null;
-  const message = typeof value.message === 'string' ? value.message : null;
-
-  if (!topic || serverName == null || path == null || timestamp == null || message == null) {
-    return null;
-  }
-
-  const safeMessage = message.length > config.ws.maxMessageLength
-    ? `${message.slice(0, config.ws.maxMessageLength)}\n... [truncated]`
-    : message;
-
-  return {
-    _id: nextId,
-    topic,
-    serverName,
-    path,
-    timestamp,
-    message: safeMessage,
-  };
-};
 
 /**
  * Connects to a WebSocket server and manages incoming log data.

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { styles } from './constants/theme';
 import { useWebSocket } from './hooks/useWebSocket';
-import Sidebar from './components/sidebar';
-import LogPanel from './components/log';
-import SettingsModal from './components/settings';
+import Sidebar from './features/sidebar';
+import LogPanel from './features/log-viewer';
+import SettingsModal from './features/settings';
 import config from './config';
 
 const readStoredSetting = (key, fallback, parse = (value) => value) => {

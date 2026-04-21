@@ -1,7 +1,7 @@
 import React from 'react';
-import HeartbeatLine from '../common/HeartbeatLine';
-import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../filters';
-import { getShortPath } from './constants';
+import HeartbeatLine from '../../../../ui/HeartbeatLine';
+import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../../../filters';
+import { getShortPath } from '../../constants';
 
 const MobileHeader = ({
   selectedTopic, displayedLogs, logRate, darkMode, theme,

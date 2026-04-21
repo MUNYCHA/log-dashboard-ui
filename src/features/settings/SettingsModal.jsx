@@ -1,69 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion as Motion } from 'framer-motion';
-
-const SortChip = ({ active, children, onClick, darkMode }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`rounded-full px-3.5 py-2 text-[12px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${
-      active
-        ? darkMode
-          ? 'bg-[#8AB4F8] text-[#071435]'
-          : 'bg-[#1A73E8] text-white'
-        : darkMode
-          ? 'bg-[#2A2B2E] text-[#BDC1C6] hover:bg-[#303134] hover:text-[#E8EAED]'
-          : 'bg-[#F1F3F4] text-[#3C4043] hover:bg-[#E8EAED] hover:text-[#202124]'
-    }`}
-  >
-    {children}
-  </button>
-);
-
-const ToggleSwitch = ({ checked, onChange, darkMode, ariaLabel }) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    aria-label={ariaLabel}
-    onClick={() => onChange(!checked)}
-    className={`relative inline-flex h-[28px] w-[52px] flex-shrink-0 rounded-full transition-all duration-200 ease-out active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-      checked
-        ? darkMode
-          ? 'bg-[#8AB4F8] focus-visible:ring-[#8AB4F8]'
-          : 'bg-[#1A73E8] focus-visible:ring-[#1A73E8]'
-        : darkMode
-          ? 'bg-[#5F6368] focus-visible:ring-[#5F6368]'
-          : 'bg-[#DADCE0] focus-visible:ring-[#BDC1C6]'
-    }`}
-  >
-    <span
-      className={`absolute top-[3px] left-[3px] h-[22px] w-[22px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.3),0_1px_2px_rgba(0,0,0,0.2)] transition-all duration-200 ease-out ${
-        checked ? 'translate-x-[24px]' : 'translate-x-0'
-      }`}
-    />
-  </button>
-);
-
-const SettingRow = ({ icon, title, description, control, darkMode, last }) => (
-  <div className={`flex items-center justify-between gap-4 py-5 ${
-    !last ? `border-b ${darkMode ? 'border-[#2A2B2E]' : 'border-[#F1F3F4]'}` : ''
-  }`}>
-    <div className="flex min-w-0 items-center gap-3.5">
-      <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${
-        darkMode ? 'bg-[#2A2B2E] text-[#9AA0A6]' : 'bg-[#F1F3F4] text-[#5F6368]'
-      }`}>
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <div className="text-[14px] font-semibold leading-snug">{title}</div>
-        {description && (
-          <div className={`mt-0.5 text-[12px] leading-snug ${darkMode ? 'text-[#9AA0A6]' : 'text-[#80868B]'}`}>{description}</div>
-        )}
-      </div>
-    </div>
-    <div className="flex-shrink-0">{control}</div>
-  </div>
-);
+import SortChip from './SortChip';
+import ToggleSwitch from './ToggleSwitch';
+import SettingRow from './SettingRow';
 
 const SettingsModal = ({
   isOpen,

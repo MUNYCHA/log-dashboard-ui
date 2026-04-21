@@ -1,3 +1,32 @@
+import config from '../config';
+
+export const normalizeLogEvent = (value, nextId) => {
+  if (!value || typeof value !== 'object') return null;
+
+  const topic = typeof value.topic === 'string' ? value.topic.trim() : '';
+  const serverName = typeof value.serverName === 'string' ? value.serverName : null;
+  const path = typeof value.path === 'string' ? value.path : null;
+  const timestamp = typeof value.timestamp === 'string' ? value.timestamp : null;
+  const message = typeof value.message === 'string' ? value.message : null;
+
+  if (!topic || serverName == null || path == null || timestamp == null || message == null) {
+    return null;
+  }
+
+  const safeMessage = message.length > config.ws.maxMessageLength
+    ? `${message.slice(0, config.ws.maxMessageLength)}\n... [truncated]`
+    : message;
+
+  return {
+    _id: nextId,
+    topic,
+    serverName,
+    path,
+    timestamp,
+    message: safeMessage,
+  };
+};
+
 export const getLogLevelColor = (level, darkMode) => {
   switch(level?.toLowerCase()) {
     case 'error': return darkMode ? 'text-red-400 bg-red-500/10' : 'text-red-600 bg-red-50';

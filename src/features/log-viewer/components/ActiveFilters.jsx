@@ -1,5 +1,5 @@
 import React from 'react';
-import { getShortPath } from './constants';
+import { getShortPath } from '../constants';
 
 const FilterTag = ({ label, onClear, darkMode, style }) => (
   <span
