@@ -32,7 +32,7 @@ All filtering runs client-side for instant feedback on every keystroke. A deboun
 - **Light / Dark / System theme** — 3-way selector, follows OS preference in System mode
 - **Fully responsive** — sidebar is a slide-in drawer on mobile, fixed panel on tablet/desktop
 - **Collapsible sidebar** — desktop sidebar collapses to a thin strip with an expand button
-- **Split view** — open two independent log panels side by side (desktop only)
+- **Split view** — open two independent log panels side by side (medium breakpoint `md` and up)
 - **Per-panel independent pause** — each split-view panel has its own pause state
 - **Active panel indicator** — active panel in split view is indicated by a dot in the header; empty-state panels show a focus ring
 - **Heartbeat indicator** — SVG line animation reflecting log ingestion rate; shown in DesktopHeader (desktop, `lg` breakpoint) and MobileHeader; animation speed varies with rate
@@ -252,39 +252,47 @@ log-dashboard-ui/
     │                          # server-side filter dispatch
     ├── utils/
     │   └── logUtils.js        # getLogLevelColor, getRelativeTime
-    └── components/
-        ├── common/
-        │   ├── HeartbeatLine.jsx   # SVG heartbeat animation reflecting log rate
-        │   └── ErrorBoundary.jsx   # React error boundary wrapper
+    ├── api/
+    │   ├── endpoints.js       # REST endpoint path constants
+    │   └── logApi.js          # REST client — download logs, fetch topic metadata
+    ├── ui/
+    │   ├── HeartbeatLine.jsx  # SVG heartbeat animation reflecting log rate
+    │   └── ErrorBoundary.jsx  # React error boundary wrapper
+    └── features/
         ├── filters/
         │   ├── index.js            # Re-exports all filter components
         │   ├── FilterDropdown.jsx  # Shared searchable dropdown base component
         │   ├── ServerDropdown.jsx  # Server filter (wraps FilterDropdown)
         │   ├── PathDropdown.jsx    # Path filter (wraps FilterDropdown)
-        │   ├── KeywordFilter.jsx   # Keyword chip input, color picker,
-        │   │                       # AND/OR toggle
+        │   ├── KeywordFilter.jsx   # Keyword chip input, color picker, AND/OR toggle
         │   └── TimeRangeSelector.jsx # Time range picker (All/1m/5m/15m/1h/Custom)
-        ├── log/
+        ├── log-viewer/
         │   ├── index.js            # Re-exports LogPanel
         │   ├── LogPanel.jsx        # Orchestrator — state, hooks, composition
-        │   ├── DesktopHeader.jsx   # Desktop topic info, toolbar (search is in FilterBar)
-        │   ├── MobileHeader.jsx    # Mobile topic bar, filter icon menu, search
-        │   ├── FilterBar.jsx       # Desktop server/path dropdowns, time range
-        │   ├── ActiveFilters.jsx   # Active filter chip badges
-        │   ├── StatusBar.jsx       # Bottom connection/filter status bar
-        │   ├── EmptyState.jsx      # No-topic-selected placeholder
-        │   ├── ScrollButtons.jsx   # Floating scroll-to-top/bottom buttons
-        │   ├── LogEntry.jsx        # Single log row with keyword highlighting
-        │   │                       # and relative timestamp
-        │   └── constants.js        # TIME_RANGES, button styles, getShortPath
+        │   ├── panelReducer.js     # useReducer logic for panel-local state
+        │   ├── constants.js        # TIME_RANGES, button styles, getShortPath
+        │   └── components/
+        │       ├── VirtualLogList.jsx  # Virtualized list (@tanstack/react-virtual, flow mode)
+        │       ├── LogEntry.jsx        # Single log row with keyword highlighting and relative timestamp
+        │       ├── FilterBar.jsx       # Desktop server/path dropdowns, time range
+        │       ├── ActiveFilters.jsx   # Active filter chip badges
+        │       ├── StatusBar.jsx       # Bottom connection/filter status bar
+        │       ├── EmptyState.jsx      # No-topic-selected placeholder
+        │       ├── ScrollButtons.jsx   # Floating scroll-to-top/bottom buttons
+        │       └── headers/
+        │           ├── DesktopHeader.jsx  # Desktop topic info, toolbar
+        │           └── MobileHeader.jsx   # Mobile topic bar, filter icon menu, search
         ├── settings/
         │   ├── index.js            # Re-exports SettingsModal
-        │   └── SettingsModal.jsx   # Left-side drawer — theme, terminal mode,
-        │                           # sidebar collapse, topic sort order
+        │   ├── SettingsModal.jsx   # Left-side drawer — theme, terminal mode,
+        │   │                       # sidebar collapse, topic sort order
+        │   ├── SettingRow.jsx      # Labeled setting row wrapper
+        │   ├── SortChip.jsx        # Topic sort mode chip
+        │   └── ToggleSwitch.jsx    # Reusable toggle switch
         └── sidebar/
             ├── index.js            # Re-exports Sidebar
-            └── Sidebar.jsx         # Topic list with search, log rate badges,
-                                    # collapsible on desktop
+            ├── Sidebar.jsx         # Topic list with search, log rate badges, collapsible on desktop
+            └── TopicItem.jsx       # Individual topic row (memo'd)
 ```
 
 ---

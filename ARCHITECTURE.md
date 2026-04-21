@@ -82,7 +82,7 @@ WebSocket frame arrives (single or batch JSON)
   → Group pending by topic
   → setLogsByTopic(prev => { ...prev, [topic]: newLogs.reverse().concat(existing).slice(0, cap) })  // cap = rawBufferPerTopic (displayCap×4 = 2000) or SIDEBAR_LOG_CAP (100)
   → App re-renders → topicLogs1/2 derived → LogPanel re-renders
-  → filteredLogs = useMemo(reverse + all filters: server/path/search/keywords/timeRange)
+  → filteredLogs = useFilteredLogs()(reverse + all filters: server/path/search/keywords/timeRange)
   → VirtualLogList renders only visible rows (~20-30, overscan 20)
   → Effect 1 useEffect [displayedLogs] + rAF → scrollToIndex(last) — non-blocking, blocked by isPaused
   → Effect 2 useEffect [totalSize] + rAF → re-anchors after remeasurement — not blocked by isPaused
@@ -94,7 +94,7 @@ WebSocket frame arrives (single or batch JSON)
 
 ## Virtualization Details
 
-`VirtualLogList` (inside `LogPanel.jsx`) uses `@tanstack/react-virtual` in **flow mode** (not positioned mode):
+`VirtualLogList` (`features/log-viewer/components/VirtualLogList.jsx`) uses `@tanstack/react-virtual` in **flow mode** (not positioned mode):
 - `estimateSize`: 114px per row
 - `overscan`: 20 rows (renders 20 extra above/below viewport for smooth scrolling)
 - `getScrollElement`: the `absolute inset-0 overflow-auto` div (scrollRef)
@@ -136,7 +136,7 @@ Server-side filter (debounced) is a bandwidth optimization only.
 ```
 User types in search box / changes any filter
   → logSearchTerm / keywords / timeRange / etc. update immediately
-  → filteredLogs useMemo recomputes instantly (client-side, all filters applied)
+  → filteredLogs recomputes instantly via useFilteredLogs() hook (client-side, all filters applied)
   → UI shows matching logs in real time
 
 Server-side bandwidth optimization (parallel, does not block display):
@@ -151,7 +151,7 @@ Server-side bandwidth optimization (parallel, does not block display):
 ```
 
 ### Client-side `filteredLogs` (single source of truth)
-`filteredLogs` in LogPanel applies ALL filters locally: server/path exact match, plain text search (message field only), keywords with `debouncedKeywordInput` (AND/OR mode), and time range (using `nowMs` state for render purity). The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses the debounced value so the filter result and the pending keyword chip in the UI appear in sync.
+`filteredLogs` is computed by the `useFilteredLogs()` hook (`src/hooks/useFilteredLogs.js`) called from `LogPanel`. It applies ALL filters locally: server/path exact match, plain text search (message field only), keywords with `debouncedKeywordInput` (AND/OR mode), and time range (using `nowMs` state for render purity). The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses the debounced value so the filter result and the pending keyword chip in the UI appear in sync.
 
 `mergedServers` and `mergedPaths` are derived by merging backend metadata (`/api/topics/{topic}/meta`) with the local buffer — meta order is preserved, buffer-only entries appended. `filteredServers`/`filteredPaths` then apply the search term on top of the merged lists.
 
@@ -187,15 +187,22 @@ src/
 │   ├── theme.js                # styles.dark / styles.light token objects
 │   └── keywordColors.js        # KEYWORD_COLORS array, DEFAULT_KEYWORD_COLOR, getColorDef()
 ├── hooks/
-│   └── useWebSocket.js         # WebSocket + reconnect + batching + rate tracking + filter dispatch
+│   ├── useWebSocket.js         # WebSocket + reconnect + batching + rate tracking + filter dispatch
+│   └── useFilteredLogs.js      # Client-side filter pipeline (server/path/search/keywords/timeRange)
+├── api/
+│   ├── endpoints.js            # REST endpoint path constants
+│   └── logApi.js               # REST client — download logs, fetch topic metadata
 ├── utils/
 │   └── logUtils.js             # getLogLevelColor, getRelativeTime
-└── components/
-    ├── common/HeartbeatLine.jsx, ErrorBoundary.jsx
+├── ui/
+│   ├── HeartbeatLine.jsx       # SVG heartbeat animation reflecting log rate
+│   └── ErrorBoundary.jsx       # React error boundary wrapper
+└── features/
     ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, TimeRangeSelector.jsx, index.js
-    ├── log/LogPanel.jsx, VirtualLogList (inside LogPanel), LogEntry.jsx, DesktopHeader.jsx,
-    │   MobileHeader.jsx, FilterBar.jsx, ActiveFilters.jsx, StatusBar.jsx, EmptyState.jsx,
-    │   ScrollButtons.jsx, constants.js (TIME_RANGES, button styles, getShortPath), index.js
-    ├── settings/SettingsModal.jsx, index.js  # themeMode, terminalMode, topicSortMode controls
-    └── sidebar/Sidebar.jsx (contains TopicItem), index.js
+    ├── log-viewer/LogPanel.jsx, panelReducer.js, constants.js, index.js
+    │   └── components/VirtualLogList.jsx, LogEntry.jsx, FilterBar.jsx, ActiveFilters.jsx,
+    │       StatusBar.jsx, EmptyState.jsx, ScrollButtons.jsx
+    │       └── headers/DesktopHeader.jsx, MobileHeader.jsx
+    ├── settings/SettingsModal.jsx, SettingRow.jsx, SortChip.jsx, ToggleSwitch.jsx, index.js
+    └── sidebar/Sidebar.jsx, TopicItem.jsx, index.js
 ```
