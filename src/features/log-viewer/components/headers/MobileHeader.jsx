@@ -23,8 +23,8 @@ const MobileHeader = ({
     ? 'rounded-xl border border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C4043] hover:text-[#E8EAED] hover:border-[#80868B]'
     : 'rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#F1F3F4] hover:text-[#202124] hover:border-[#BDC1C6]';
   const btnActive = darkMode
-    ? 'rounded-xl border border-[#8AB4F8]/40 bg-[#1A3A6B]/50 text-[#8AB4F8] hover:bg-[#1A3A6B]/65 hover:border-[#8AB4F8]/55'
-    : 'rounded-xl border border-[#D2E3FC] bg-[#E8F0FE] text-[#1A73E8] hover:bg-[#D2E3FC] hover:border-[#A8C7FA]';
+    ? 'rounded-xl border-[#8AB4F8]/40 bg-[#1A3A6B]/50 text-[#8AB4F8] hover:bg-[#1A3A6B]/65 hover:border-[#8AB4F8]/55'
+    : 'rounded-xl border-[#D2E3FC] bg-[#E8F0FE] text-[#1A73E8] hover:bg-[#D2E3FC] hover:border-[#A8C7FA]';
   const btnDanger = darkMode
     ? 'rounded-xl border border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C1F1F] hover:text-[#F28B82] hover:border-[#8B3C36]'
     : 'rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#FCE8E6] hover:text-[#C5221F] hover:border-[#F5C6C2]';
@@ -41,7 +41,13 @@ const MobileHeader = ({
       <div className="md:hidden">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0 flex flex-1 items-center gap-1.5">
-            <button onClick={onOpenSidebar} className={`${btnBase} ${isSidebarOpen ? btnActive : btnGhost}`} aria-label="Open sidebar">
+            <button
+              onClick={onOpenSidebar}
+              onPointerUp={(e) => e.currentTarget.blur()}
+              className={`${btnBase} ${isSidebarOpen ? btnActive : btnGhost}`}
+              aria-label="Open sidebar"
+              type="button"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
@@ -62,7 +68,12 @@ const MobileHeader = ({
           </div>
 
           <div className="flex items-center gap-0.5 flex-shrink-0">
-            <button onClick={onToggleMobileMenu} className={`${btnBase} ${isMobileMenuOpen ? btnActive : btnGhost}`}>
+            <button
+              onClick={onToggleMobileMenu}
+              onPointerUp={(e) => e.currentTarget.blur()}
+              className={`${btnBase} ${isMobileMenuOpen ? btnActive : btnGhost}`}
+              type="button"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
               </svg>
