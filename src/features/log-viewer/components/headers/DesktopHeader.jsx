@@ -81,8 +81,10 @@ const DesktopHeader = ({
                   <defs>
                     <mask id={`moon-mask-${panelId}-desktop`}>
                       <rect width="24" height="24" fill="black" />
-                      <circle cx="12" cy="12" r="9" fill="white" />
-                      <circle cx="18.5" cy="12" r="9" fill="black" />
+                      <g transform="rotate(20 12 12)">
+                        <circle cx="12" cy="12" r="9" fill="white" />
+                        <circle cx="18.5" cy="12" r="9" fill="black" />
+                      </g>
                     </mask>
                   </defs>
                   <rect
