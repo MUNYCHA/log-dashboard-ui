@@ -37,6 +37,9 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readStoredSetting('logstream:sidebarCollapsed', false, (value) => value === 'true'));
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [terminalMode, setTerminalMode] = useState(() => readStoredSetting('logstream:terminalMode', false, (value) => value === 'true'));
+  const [showSidebarLogRate, setShowSidebarLogRate] = useState(() => readStoredSetting('logstream:showSidebarLogRate', true, (value) => (
+    value === 'true' ? true : value === 'false' ? false : true
+  )));
   const [systemPrefersDark, setSystemPrefersDark] = useState(() => (
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -91,6 +94,10 @@ export default function App() {
   useEffect(() => {
     window.localStorage.setItem('logstream:terminalMode', String(terminalMode));
   }, [terminalMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem('logstream:showSidebarLogRate', String(showSidebarLogRate));
+  }, [showSidebarLogRate]);
 
   useEffect(() => {
     if (splitView && selectedTopic && selectedTopic2) {
@@ -201,6 +208,7 @@ export default function App() {
         isOpen={sidebarOpen}
         onClose={closeSidebar}
         logRates={logRates}
+        showSidebarLogRate={showSidebarLogRate}
         collapsed={sidebarCollapsed}
         onCollapse={toggleSidebarCollapsed}
         onOpenSettings={openSettings}
@@ -277,6 +285,8 @@ export default function App() {
         onSidebarCollapsedChange={setSidebarCollapsed}
         terminalMode={terminalMode}
         onTerminalModeChange={setTerminalMode}
+        showSidebarLogRate={showSidebarLogRate}
+        onShowSidebarLogRateChange={setShowSidebarLogRate}
       />
     </div>
   );

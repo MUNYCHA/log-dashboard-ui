@@ -20,6 +20,7 @@ const Sidebar = ({
   isOpen,
   onClose,
   logRates,
+  showSidebarLogRate,
   collapsed,
   onCollapse,
   onOpenSettings,
@@ -194,6 +195,7 @@ const Sidebar = ({
                 isSelected={selectedTopic === topic}
                 onTopicSelect={onTopicSelect}
                 logRate={logRates?.[topic] || 0}
+                showLogRate={showSidebarLogRate}
                 darkMode={darkMode}
               />
             ))}

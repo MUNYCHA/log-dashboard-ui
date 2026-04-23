@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const MotionSpan = motion.span;
 
-const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkMode }) => {
+const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, showLogRate = true, darkMode }) => {
   const isActive = logRate > 0;
   const itemTone = isSelected
     ? (darkMode
@@ -34,7 +34,7 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkM
         <span className="truncate text-[13.5px] font-medium">
           {topic}
         </span>
-        {isActive && (
+        {showLogRate && isActive && (
           <span className={`ml-auto text-[11px] font-mono tabular-nums flex-shrink-0 ${
             darkMode ? 'text-emerald-400' : 'text-emerald-600'
           }`}>

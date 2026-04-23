@@ -14,6 +14,8 @@ const SettingsModal = ({
   onTopicSortModeChange,
   sidebarCollapsed,
   onSidebarCollapsedChange,
+  showSidebarLogRate,
+  onShowSidebarLogRateChange,
   terminalMode,
   onTerminalModeChange,
 }) => {
@@ -164,6 +166,13 @@ const SettingsModal = ({
                   description="Icons only, hide topic labels"
                   control={<ToggleSwitch checked={sidebarCollapsed} onChange={onSidebarCollapsedChange} darkMode={darkMode} ariaLabel="Toggle collapsed sidebar" />}
                   icon={<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16v14H4z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5v14" /></svg>}
+                />
+                <SettingRow
+                  darkMode={darkMode}
+                  title="Log rate in sidebar"
+                  description="Show /s next to active topics"
+                  control={<ToggleSwitch checked={showSidebarLogRate} onChange={onShowSidebarLogRateChange} darkMode={darkMode} ariaLabel="Toggle log rate in sidebar" />}
+                  icon={<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h4l2-6 4 12 2-6h6" /></svg>}
                 />
                 <SettingRow
                   darkMode={darkMode}
