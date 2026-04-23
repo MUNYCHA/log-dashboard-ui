@@ -78,13 +78,20 @@ const MobileHeader = ({
                 type="button"
               >
                 {darkMode ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 3v2.5m0 13V21m9-9h-2.5M5.5 12H3m15.364 6.364-1.768-1.768M7.404 7.404 5.636 5.636m12.728 0-1.768 1.768M7.404 16.596l-1.768 1.768" />
-                    <circle cx="12" cy="12" r="3.25" strokeWidth={2.5} />
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4.25" />
+                    <rect x="11" y="1.6" width="2" height="4.1" rx="1" />
+                    <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(45 12 12)" />
+                    <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(90 12 12)" />
+                    <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(135 12 12)" />
+                    <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(180 12 12)" />
+                    <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(225 12 12)" />
+                    <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(270 12 12)" />
+                    <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(315 12 12)" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
                   </svg>
                 )}
               </button>
