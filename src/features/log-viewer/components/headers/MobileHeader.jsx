@@ -28,7 +28,10 @@ const MobileHeader = ({
   const btnDanger = darkMode
     ? 'rounded-xl border border-[#5F6368] bg-[#303134] text-[#BDC1C6] hover:bg-[#3C1F1F] hover:text-[#F28B82] hover:border-[#8B3C36]'
     : 'rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] hover:bg-[#FCE8E6] hover:text-[#C5221F] hover:border-[#F5C6C2]';
-  const btnBase = 'inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95';
+  const btnFocus = darkMode
+    ? 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8AB4F8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#202124]'
+    : 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A73E8]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
+  const btnBase = `inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${btnFocus}`;
   const btnGhost = darkMode
     ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
     : 'text-[#3C4043] hover:text-[#202124] hover:bg-[#F1F3F4]';

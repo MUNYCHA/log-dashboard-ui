@@ -23,7 +23,15 @@ const EmptyState = ({
       </div>
     )}
     <div className={`md:hidden flex items-center px-3 py-2.5 ${theme.header}`}>
-      <button onClick={onOpenSidebar} className={`inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${darkMode ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]' : 'text-[#3C4043] hover:text-[#202124] hover:bg-[#F1F3F4]'}`} aria-label="Open sidebar">
+      <button
+        onClick={onOpenSidebar}
+        className={`inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+          darkMode
+            ? 'focus-visible:ring-[#8AB4F8]/35 focus-visible:ring-offset-[#202124] text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
+            : 'focus-visible:ring-[#1A73E8]/25 focus-visible:ring-offset-white text-[#3C4043] hover:text-[#202124] hover:bg-[#F1F3F4]'
+        }`}
+        aria-label="Open sidebar"
+      >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
