@@ -390,6 +390,7 @@ const LogPanel = ({
     >
       <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.card} rounded-2xl flex-shrink-0 relative z-10`}>
         <DesktopHeader
+          panelId={panelId}
           selectedTopic={selectedTopic}
           displayedLogs={displayedLogs}
           logRate={logRate}
@@ -411,6 +412,7 @@ const LogPanel = ({
         />
 
         <MobileHeader
+          panelId={panelId}
           selectedTopic={selectedTopic}
           displayedLogs={displayedLogs}
           logRate={logRate}

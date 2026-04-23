@@ -4,6 +4,7 @@ import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../../../filter
 import { getShortPath } from '../../constants';
 
 const MobileHeader = ({
+  panelId,
   selectedTopic, displayedLogs, logRate, darkMode, theme, onToggleTheme,
   onOpenSidebar, isSidebarOpen,
   isMobileMenuOpen, onToggleMobileMenu, mobileMenuReady,
@@ -92,11 +93,19 @@ const MobileHeader = ({
                     <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(315 12 12)" />
                   </svg>
                 ) : (
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M21 12a9 9 0 1 0 -18 0a9 9 0 1 0 18 0Z M26 11a10 10 0 1 0 -20 0a10 10 0 1 0 20 0Z"
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" aria-hidden="true">
+                    <defs>
+                      <mask id={`moon-mask-${panelId}-mobile`}>
+                        <rect width="24" height="24" fill="black" />
+                        <circle cx="12" cy="12" r="10" fill="white" />
+                        <circle cx="15.5" cy="10.5" r="10" fill="black" />
+                      </mask>
+                    </defs>
+                    <rect
+                      width="24"
+                      height="24"
+                      fill="currentColor"
+                      mask={`url(#moon-mask-${panelId}-mobile)`}
                     />
                   </svg>
                 )}
