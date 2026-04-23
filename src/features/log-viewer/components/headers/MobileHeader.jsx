@@ -81,7 +81,7 @@ const MobileHeader = ({
                 type="button"
               >
                 {darkMode ? (
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <circle cx="12" cy="12" r="4.25" />
                     <rect x="11" y="1.6" width="2" height="4.1" rx="1" />
                     <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(45 12 12)" />
@@ -93,11 +93,11 @@ const MobileHeader = ({
                     <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(315 12 12)" />
                   </svg>
                 ) : (
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
                     <defs>
                       <mask id={`moon-mask-${panelId}-mobile`}>
                         <rect width="24" height="24" fill="black" />
-                        <g transform="rotate(-20 12 12)">
+                        <g transform="rotate(-32 12 12)">
                           <circle cx="12" cy="12" r="9" fill="white" />
                           <circle cx="18.5" cy="12" r="9" fill="black" />
                         </g>

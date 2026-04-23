@@ -16,7 +16,7 @@ const DesktopHeader = ({
   const themeToggleBtn = `inline-flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-150 ease-in-out active:scale-95 ${
     darkMode ? 'text-[#E8EAED] hover:bg-[#303134]' : 'text-[#202124] hover:bg-[#F1F3F4]'
   }`;
-  const themeIconClass = 'w-6 h-6';
+  const themeIconClass = 'w-5 h-5';
 
   return (
     <div className="hidden md:block">
@@ -81,7 +81,7 @@ const DesktopHeader = ({
                   <defs>
                     <mask id={`moon-mask-${panelId}-desktop`}>
                       <rect width="24" height="24" fill="black" />
-                      <g transform="rotate(-20 12 12)">
+                      <g transform="rotate(-32 12 12)">
                         <circle cx="12" cy="12" r="9" fill="white" />
                         <circle cx="18.5" cy="12" r="9" fill="black" />
                       </g>
