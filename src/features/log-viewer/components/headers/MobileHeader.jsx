@@ -93,7 +93,7 @@ const MobileHeader = ({
                   </svg>
                 ) : (
                   <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M21 12.79A9 9 0 1111.21 3a8.5 8.5 0 009.79 9.79z" />
+                    <path d="M21 12.79A9 9 0 1111.21 3a8.85 8.85 0 009.79 9.79z" />
                   </svg>
                 )}
               </button>
