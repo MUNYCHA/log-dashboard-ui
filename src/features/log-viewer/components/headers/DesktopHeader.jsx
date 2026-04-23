@@ -12,6 +12,10 @@ const DesktopHeader = ({
   const toolbarIconClass = 'w-5 h-5';
   const toolbarStrokeWidth = 2.5;
   const pauseIconClass = 'w-6 h-6';
+  const themeToggleBtn = `inline-flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-150 ease-in-out active:scale-95 ${
+    darkMode ? 'text-[#E8EAED] hover:bg-[#303134]' : 'text-[#202124] hover:bg-[#F1F3F4]'
+  }`;
+  const themeIconClass = 'w-6 h-6';
 
   return (
     <div className="hidden md:block">
@@ -54,13 +58,13 @@ const DesktopHeader = ({
           {onToggleTheme && (
             <button
               onClick={onToggleTheme}
-              className={btn.export}
+              className={themeToggleBtn}
               title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               type="button"
             >
               {darkMode ? (
-                <svg className={toolbarIconClass} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg className={themeIconClass} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <circle cx="12" cy="12" r="4.25" />
                   <rect x="11" y="1.6" width="2" height="4.1" rx="1" />
                   <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(45 12 12)" />
@@ -72,8 +76,8 @@ const DesktopHeader = ({
                   <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(315 12 12)" />
                 </svg>
               ) : (
-                <svg className={toolbarIconClass} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+                <svg className={themeIconClass} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1111.21 3a8.5 8.5 0 009.79 9.79z" />
                 </svg>
               )}
             </button>

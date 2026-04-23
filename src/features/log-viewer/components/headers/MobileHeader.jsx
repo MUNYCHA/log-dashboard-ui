@@ -32,9 +32,11 @@ const MobileHeader = ({
     ? 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8AB4F8]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#202124]'
     : 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A73E8]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
   const btnBase = `inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${btnFocus}`;
+  const btnBaseInstant = `inline-flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-150 ease-in-out active:scale-95 ${btnFocus}`;
   const btnGhost = darkMode
     ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
     : 'text-[#3C4043] hover:text-[#202124] hover:bg-[#F1F3F4]';
+  const themeBtnTone = darkMode ? 'text-[#E8EAED] hover:bg-[#303134]' : 'text-[#202124] hover:bg-[#F1F3F4]';
 
   return (
     <>
@@ -72,13 +74,13 @@ const MobileHeader = ({
               <button
                 onClick={onToggleTheme}
                 onPointerUp={(e) => e.currentTarget.blur()}
-                className={`${btnBase} ${btnGhost}`}
+                className={`${btnBaseInstant} ${themeBtnTone}`}
                 title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 type="button"
               >
                 {darkMode ? (
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <circle cx="12" cy="12" r="4.25" />
                     <rect x="11" y="1.6" width="2" height="4.1" rx="1" />
                     <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(45 12 12)" />
@@ -90,8 +92,8 @@ const MobileHeader = ({
                     <rect x="11" y="1.6" width="2" height="4.1" rx="1" transform="rotate(315 12 12)" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1111.21 3a8.5 8.5 0 009.79 9.79z" />
                   </svg>
                 )}
               </button>
