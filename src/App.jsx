@@ -56,6 +56,12 @@ export default function App() {
   const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics);
   const darkMode = themeMode === 'system' ? systemPrefersDark : themeMode === 'dark';
   const theme = darkMode ? styles.dark : styles.light;
+  const toggleThemeMode = useCallback(() => {
+    setThemeMode((currentMode) => {
+      const isDark = currentMode === 'system' ? systemPrefersDark : currentMode === 'dark';
+      return isDark ? 'light' : 'dark';
+    });
+  }, [systemPrefersDark]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
@@ -229,6 +235,7 @@ export default function App() {
           theme={theme}
           darkMode={darkMode}
           terminalMode={terminalMode}
+          onToggleTheme={toggleThemeMode}
           onOpenSidebar={openSidebar}
           isSidebarOpen={sidebarOpen}
           splitView={splitView}
@@ -257,6 +264,7 @@ export default function App() {
               theme={theme}
               darkMode={darkMode}
               terminalMode={terminalMode}
+              onToggleTheme={toggleThemeMode}
               onOpenSidebar={openSidebar}
               isSidebarOpen={sidebarOpen}
               splitView={splitView}

@@ -28,6 +28,7 @@ const LogPanel = ({
   theme,
   darkMode,
   terminalMode,
+  onToggleTheme,
   onOpenSidebar,
   isSidebarOpen,
   splitView,
@@ -394,6 +395,7 @@ const LogPanel = ({
           logRate={logRate}
           darkMode={darkMode}
           theme={theme}
+          onToggleTheme={onToggleTheme}
           splitView={splitView}
           isActivePanel={isActivePanel}
           onSetActive={onSetActive}
@@ -414,6 +416,7 @@ const LogPanel = ({
           logRate={logRate}
           darkMode={darkMode}
           theme={theme}
+          onToggleTheme={onToggleTheme}
           onOpenSidebar={onOpenSidebar}
           isSidebarOpen={isSidebarOpen}
           isMobileMenuOpen={isMobileMenuOpen}

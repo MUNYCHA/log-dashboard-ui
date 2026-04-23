@@ -2,7 +2,7 @@ import React from 'react';
 import HeartbeatLine from '../../../../ui/HeartbeatLine';
 
 const DesktopHeader = ({
-  selectedTopic, displayedLogs, logRate, darkMode, theme,
+  selectedTopic, displayedLogs, logRate, darkMode, theme, onToggleTheme,
   splitView, isActivePanel, onSetActive, onClosePanel, onOpenSplit,
   isPaused, onTogglePause, btn,
   onDownload,
@@ -51,6 +51,27 @@ const DesktopHeader = ({
 
         {/* Toolbar buttons */}
         <div className="flex items-center gap-0.5 flex-shrink-0">
+          {onToggleTheme && (
+            <button
+              onClick={onToggleTheme}
+              className={btn.export}
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              type="button"
+            >
+              {darkMode ? (
+                <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M12 3v2.5m0 13V21m9-9h-2.5M5.5 12H3m15.364 6.364-1.768-1.768M7.404 7.404 5.636 5.636m12.728 0-1.768 1.768M7.404 16.596l-1.768 1.768" />
+                  <circle cx="12" cy="12" r="3.25" strokeWidth={toolbarStrokeWidth} />
+                </svg>
+              ) : (
+                <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+              )}
+            </button>
+          )}
+
           <button onClick={onTogglePause} className={isPaused ? btn.paused : btn.pause} title={isPaused ? "Resume" : "Pause"}>
             {isPaused ? (
               <svg className={pauseIconClass} fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>

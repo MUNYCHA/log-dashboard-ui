@@ -4,7 +4,7 @@ import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../../../filter
 import { getShortPath } from '../../constants';
 
 const MobileHeader = ({
-  selectedTopic, displayedLogs, logRate, darkMode, theme,
+  selectedTopic, displayedLogs, logRate, darkMode, theme, onToggleTheme,
   onOpenSidebar, isSidebarOpen,
   isMobileMenuOpen, onToggleMobileMenu, mobileMenuReady,
   isPaused, onTogglePause,
@@ -68,6 +68,28 @@ const MobileHeader = ({
           </div>
 
           <div className="flex items-center gap-0.5 flex-shrink-0">
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                onPointerUp={(e) => e.currentTarget.blur()}
+                className={`${btnBase} ${btnGhost}`}
+                title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                type="button"
+              >
+                {darkMode ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 3v2.5m0 13V21m9-9h-2.5M5.5 12H3m15.364 6.364-1.768-1.768M7.404 7.404 5.636 5.636m12.728 0-1.768 1.768M7.404 16.596l-1.768 1.768" />
+                    <circle cx="12" cy="12" r="3.25" strokeWidth={2.5} />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                  </svg>
+                )}
+              </button>
+            )}
+
             <button
               onClick={onToggleMobileMenu}
               onPointerUp={(e) => e.currentTarget.blur()}
