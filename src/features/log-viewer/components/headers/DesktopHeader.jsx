@@ -114,16 +114,9 @@ const DesktopHeader = ({
               aria-label={terminalMode ? 'Switch to card view' : 'Switch to terminal view'}
               type="button"
             >
-              {terminalMode ? (
-                <svg className={themeIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <rect x="7" y="7" width="13" height="13" rx="2.5" strokeWidth={toolbarStrokeWidth} />
-                  <rect x="4" y="4" width="13" height="13" rx="2.5" strokeWidth={toolbarStrokeWidth} />
-                </svg>
-              ) : (
-                <svg className={themeIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              )}
+              <svg className={themeIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </button>
           )}
 
