@@ -20,7 +20,7 @@ React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 
 **Data flow:** `useWebSocket(url, viewedTopics)` hook → `App.jsx` (global state) → `Sidebar` + `LogPanel` (via props)
 
 **State ownership:**
-- `App.jsx` — selectedTopic/Server (per panel), themeMode (→ darkMode derived), terminalMode, topicSortMode, sidebarOpen/collapsed, splitView, activePanel, isPaused1/2, viewedTopics, isSettingsOpen, systemPrefersDark
+- `App.jsx` — selectedTopic/Server (per panel), themeMode (→ darkMode derived), terminalMode, topicSortMode, sidebarOpen/collapsed, splitView, activePanel, isPaused1/2, viewedTopics, isSettingsOpen, systemPrefersDark, topicSearchTerm
 - `LogPanel.jsx` — all panel-local state via `useReducer` (`panelReducer`): path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, frozenTopic, isMobileMenuOpen + separate useState for timestampGen, nowMs
 - `useWebSocket` — logsByTopic, topics, isConnected, isReconnecting, logRates, clearLogs, trimTopicBuffer, subscribe, sendFilter
 

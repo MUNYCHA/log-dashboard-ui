@@ -126,36 +126,33 @@ npm run lint
 ## Deploy with Docker
 
 ### Requirements
-- Docker + Docker Compose installed on the server
+- Docker installed on the server
 
 ### 1. Clone and configure
 
 ```bash
 git clone https://github.com/MUNYCHA/log-dashboard-ui.git
 cd log-dashboard-ui
-cp .env.example .env
-```
-
-Edit `.env` and set your WebSocket server URL:
-
-```env
-VITE_WS_URL=ws://YOUR_SERVER_IP:8080/ws/logs
 ```
 
 ### 2. Build and run
 
 ```bash
-docker compose up -d --build
+docker build \
+  --build-arg VITE_WS_URL=ws://YOUR_SERVER_IP:8080/ws/logs \
+  -t log-dashboard-ui .
+
+docker run -d -p 80:80 log-dashboard-ui
 ```
 
-The app will be available at `http://YOUR_SERVER_IP:5173`.
+The app will be available at `http://YOUR_SERVER_IP`.
 
-> **Note:** All `VITE_*` env vars are baked into the build at image build time. If you change `.env`, re-run `docker compose up -d --build` to rebuild.
+> **Note:** All `VITE_*` env vars are baked into the image at build time via `--build-arg`. Rebuild the image if you need to change them.
 
 ### 3. Stop
 
 ```bash
-docker compose down
+docker stop $(docker ps -q --filter ancestor=log-dashboard-ui)
 ```
 
 ---
