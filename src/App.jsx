@@ -56,18 +56,45 @@ export default function App() {
   const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics);
   const darkMode = themeMode === 'system' ? systemPrefersDark : themeMode === 'dark';
   const theme = darkMode ? styles.dark : styles.light;
+  const themeTransitionTimeoutRef = useRef(null);
+  const disableThemeTransitions = useCallback(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    const root = document.documentElement;
+    root.classList.add('disable-theme-transitions');
+
+    if (themeTransitionTimeoutRef.current != null) {
+      window.clearTimeout(themeTransitionTimeoutRef.current);
+    }
+
+    // Force a reflow so the class takes effect immediately.
+    void root.offsetHeight;
+
+    themeTransitionTimeoutRef.current = window.setTimeout(() => {
+      root.classList.remove('disable-theme-transitions');
+      themeTransitionTimeoutRef.current = null;
+    }, 0);
+  }, []);
   const toggleThemeMode = useCallback(() => {
+    disableThemeTransitions();
     setThemeMode((currentMode) => {
       const isDark = currentMode === 'system' ? systemPrefersDark : currentMode === 'dark';
       return isDark ? 'light' : 'dark';
     });
-  }, [systemPrefersDark]);
+  }, [disableThemeTransitions, systemPrefersDark]);
+  const handleThemeModeChange = useCallback((nextMode) => {
+    disableThemeTransitions();
+    setThemeMode(nextMode);
+  }, [disableThemeTransitions]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (event) => setSystemPrefersDark(event.matches);
+    const handleChange = (event) => {
+      disableThemeTransitions();
+      setSystemPrefersDark(event.matches);
+    };
 
     if (typeof mediaQuery.addEventListener === 'function') {
       mediaQuery.addEventListener('change', handleChange);
@@ -76,7 +103,7 @@ export default function App() {
 
     mediaQuery.addListener(handleChange);
     return () => mediaQuery.removeListener(handleChange);
-  }, []);
+  }, [disableThemeTransitions]);
 
   useEffect(() => {
     document.documentElement.style.colorScheme = darkMode ? 'dark' : 'light';
@@ -192,7 +219,7 @@ export default function App() {
   const setActive2 = useCallback(() => setActivePanel(2), []);
 
   return (
-    <div className={`flex h-screen overflow-hidden ${theme.background} ${theme.text} transition-colors duration-200 p-2 gap-2`}>
+    <div className={`flex h-screen overflow-hidden ${theme.background} ${theme.text} p-2 gap-2`}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -286,7 +313,7 @@ export default function App() {
         onClose={closeSettings}
         darkMode={darkMode}
         themeMode={themeMode}
-        onThemeModeChange={setThemeMode}
+        onThemeModeChange={handleThemeModeChange}
         topicSortMode={topicSortMode}
         onTopicSortModeChange={setTopicSortMode}
         sidebarCollapsed={sidebarCollapsed}
