@@ -4,6 +4,7 @@ import HeartbeatLine from '../../../../ui/HeartbeatLine';
 const DesktopHeader = ({
   panelId,
   selectedTopic, displayedLogs, logRate, darkMode, theme, onToggleTheme,
+  terminalMode, onToggleTerminalMode,
   splitView, isActivePanel, onSetActive, onClosePanel, onOpenSplit,
   isPaused, onTogglePause, btn,
   onDownload,
@@ -13,8 +14,15 @@ const DesktopHeader = ({
   const toolbarIconClass = 'w-5 h-5';
   const toolbarStrokeWidth = 2.5;
   const pauseIconClass = 'w-6 h-6';
-  const themeToggleBtn = `inline-flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-150 ease-in-out active:scale-95 ${
-    darkMode ? 'text-[#E8EAED] hover:bg-[#303134]' : 'text-[#202124] hover:bg-[#F1F3F4]'
+  const toolbarToggleBtn = `inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${
+    darkMode
+      ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
+      : 'text-[#5F6368] hover:text-[#202124] hover:bg-[#F1F3F4]'
+  }`;
+  const toolbarToggleBtnActive = `inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ease-in-out active:scale-95 ${
+    darkMode
+      ? 'text-[#8AB4F8] bg-[#1A73E8]/15 hover:bg-[#1A73E8]/25'
+      : 'text-[#1A73E8] bg-[#E8F0FE] hover:bg-[#D2E3FC]'
   }`;
   const themeIconClass = 'w-5 h-5';
 
@@ -59,7 +67,7 @@ const DesktopHeader = ({
           {onToggleTheme && (
             <button
               onClick={onToggleTheme}
-              className={themeToggleBtn}
+              className={toolbarToggleBtn}
               title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               type="button"
@@ -93,6 +101,27 @@ const DesktopHeader = ({
                     fill="currentColor"
                     mask={`url(#moon-mask-${panelId}-desktop)`}
                   />
+                </svg>
+              )}
+            </button>
+          )}
+
+          {onToggleTerminalMode && (
+            <button
+              onClick={onToggleTerminalMode}
+              className={terminalMode ? toolbarToggleBtnActive : toolbarToggleBtn}
+              title={terminalMode ? 'Switch to card view' : 'Switch to terminal view'}
+              aria-label={terminalMode ? 'Switch to card view' : 'Switch to terminal view'}
+              type="button"
+            >
+              {terminalMode ? (
+                <svg className={themeIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="7" y="7" width="13" height="13" rx="2.5" strokeWidth={toolbarStrokeWidth} />
+                  <rect x="4" y="4" width="13" height="13" rx="2.5" strokeWidth={toolbarStrokeWidth} />
+                </svg>
+              ) : (
+                <svg className={themeIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               )}
             </button>

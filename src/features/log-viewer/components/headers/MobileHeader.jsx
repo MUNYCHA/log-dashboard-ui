@@ -6,6 +6,7 @@ import { getShortPath } from '../../constants';
 const MobileHeader = ({
   panelId,
   selectedTopic, displayedLogs, logRate, darkMode, theme, onToggleTheme,
+  terminalMode, onToggleTerminalMode,
   onOpenSidebar, isSidebarOpen,
   isMobileMenuOpen, onToggleMobileMenu, mobileMenuReady,
   isPaused, onTogglePause,
@@ -37,7 +38,6 @@ const MobileHeader = ({
   const btnGhost = darkMode
     ? 'text-[#BDC1C6] hover:text-[#E8EAED] hover:bg-[#303134]'
     : 'text-[#3C4043] hover:text-[#202124] hover:bg-[#F1F3F4]';
-  const themeBtnTone = darkMode ? 'text-[#E8EAED] hover:bg-[#303134]' : 'text-[#202124] hover:bg-[#F1F3F4]';
 
   return (
     <>
@@ -75,7 +75,7 @@ const MobileHeader = ({
               <button
                 onClick={onToggleTheme}
                 onPointerUp={(e) => e.currentTarget.blur()}
-                className={`${btnBaseInstant} ${themeBtnTone}`}
+                className={`${btnBaseInstant} ${btnGhost}`}
                 title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 type="button"
@@ -109,6 +109,28 @@ const MobileHeader = ({
                       fill="currentColor"
                       mask={`url(#moon-mask-${panelId}-mobile)`}
                     />
+                  </svg>
+                )}
+              </button>
+            )}
+
+            {onToggleTerminalMode && (
+              <button
+                onClick={onToggleTerminalMode}
+                onPointerUp={(e) => e.currentTarget.blur()}
+                className={`${btnBaseInstant} ${terminalMode ? btnActive : btnGhost}`}
+                title={terminalMode ? 'Switch to card view' : 'Switch to terminal view'}
+                aria-label={terminalMode ? 'Switch to card view' : 'Switch to terminal view'}
+                type="button"
+              >
+                {terminalMode ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="7" y="7" width="13" height="13" rx="2.5" strokeWidth={2.5} />
+                    <rect x="4" y="4" width="13" height="13" rx="2.5" strokeWidth={2.5} />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 )}
               </button>

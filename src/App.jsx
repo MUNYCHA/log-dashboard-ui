@@ -82,6 +82,9 @@ export default function App() {
       return isDark ? 'light' : 'dark';
     });
   }, [disableThemeTransitions, systemPrefersDark]);
+  const toggleTerminalMode = useCallback(() => {
+    setTerminalMode((current) => !current);
+  }, []);
   const handleThemeModeChange = useCallback((nextMode) => {
     disableThemeTransitions();
     setThemeMode(nextMode);
@@ -263,6 +266,7 @@ export default function App() {
           darkMode={darkMode}
           terminalMode={terminalMode}
           onToggleTheme={toggleThemeMode}
+          onToggleTerminalMode={toggleTerminalMode}
           onOpenSidebar={openSidebar}
           isSidebarOpen={sidebarOpen}
           splitView={splitView}
@@ -292,6 +296,7 @@ export default function App() {
               darkMode={darkMode}
               terminalMode={terminalMode}
               onToggleTheme={toggleThemeMode}
+              onToggleTerminalMode={toggleTerminalMode}
               onOpenSidebar={openSidebar}
               isSidebarOpen={sidebarOpen}
               splitView={splitView}
