@@ -13,7 +13,7 @@ A real-time log monitoring dashboard built with React + Vite. Connects to a WebS
 - **Batched rendering** — log updates are flushed every 150ms to minimize re-renders under high volume
 
 ### Topic & Filtering (Client-Side, Real-Time)
-All filtering runs client-side for instant feedback on every keystroke. A debounced server-side filter (300ms) runs in parallel as a bandwidth optimization to reduce WebSocket traffic.
+All filtering runs client-side for instant feedback. Text search updates on every keystroke; keyword filter uses a 300ms client-side debounce so the filter and the pending keyword chip stay in sync. A debounced server-side filter (300ms) also runs in parallel as a bandwidth optimization to reduce WebSocket traffic.
 
 - **Topic sidebar** — all topics auto-subscribed; live log rate (logs/sec) per topic
 - **Server filter** — searchable dropdown to filter logs by server name
@@ -244,9 +244,10 @@ log-dashboard-ui/
     │   ├── theme.js           # Dark / light theme token objects
     │   └── keywordColors.js   # Preset keyword highlight colors
     ├── hooks/
-    │   └── useWebSocket.js    # WebSocket connection, auto-reconnect,
-    │                          # log batching, rate tracking,
-    │                          # server-side filter dispatch
+    │   ├── useWebSocket.js    # WebSocket connection, auto-reconnect,
+    │   │                      # log batching, rate tracking,
+    │   │                      # server-side filter dispatch
+    │   └── useFilteredLogs.js # Client-side filter pipeline (server/path/search/keywords/timeRange)
     ├── utils/
     │   └── logUtils.js        # getLogLevelColor, getRelativeTime
     ├── api/

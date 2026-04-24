@@ -62,7 +62,7 @@ App
   - Effect 2 `[totalSize]`: re-anchors after remeasurement (text reflow on resize) — NOT blocked by `isPaused`. Guards via `atBottomRef` (scroll to last) or `anchorIndexRef` (restore captured item).
 - **Auto-scroll**: MUST use `useEffect` + `requestAnimationFrame` — NEVER `useLayoutEffect` (blocks main thread)
 - **Scroll position on resize**: ResizeObserver captures the topmost visible item index (`anchorIndexRef`) before `measure()` fires, restores it in Effect 2 after `totalSize` updates. `atBottomRef` used as the single gate for all resize compensation — works whether paused or live.
-- **`scrollToBottom()`**: MUST use `virtualizerScrollToBottomRef` (virtualizer-based `scrollToIndex`) — NEVER raw `scrollTop = scrollHeight` (lands mid-item on spacer boundaries).
+- **`scrollToBottom()`**: prefer `virtualizerScrollToBottomRef` (virtualizer-based `scrollToIndex`) to avoid landing mid-item on spacer boundaries. Falls back to raw `scrollTop = scrollHeight` only when the ref is unavailable (e.g. topic-change scroll before virtualizer mounts).
 - **Paused banner**: rendered OUTSIDE the scroll container as a `flex-shrink-0` element in the flex column. NEVER inside the `overflow-auto` div (would scroll out of view).
 - **Timestamps**: `LogEntry` receives `timestampGen` counter, computes `Date.now()` internally via `useMemo` — NEVER pass a changing `now` prop (breaks memo for all entries)
 - **Flush interval**: 150ms in useWebSocket — balances responsiveness vs re-render frequency
