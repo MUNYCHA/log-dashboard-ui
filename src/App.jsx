@@ -179,7 +179,7 @@ export default function App() {
   const setActive2 = useCallback(() => setActivePanel(2), []);
 
   return (
-    <div className={`flex h-screen overflow-hidden ${theme.background} ${theme.text} transition-colors duration-200 p-2 gap-2`}>
+    <div className={`flex h-screen overflow-hidden ${theme.background} ${theme.text} p-2 gap-2`}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
