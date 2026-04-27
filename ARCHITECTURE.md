@@ -116,6 +116,7 @@ WebSocket frame arrives (single or batch JSON)
 ### Message discrimination
 ```
 JSON.parse(event.data)
+  → parse error?  → frame silently dropped (try/catch in onmessage)
   → { type: "topics", topics: string[] }?  → Topic list (primary format, on connect)
   → { type: "stats", topics: {...}, intervalMs }?  → Per-topic rate stats (~every 2s)
   → { type: "filter-ack" }?  → No explicit branch; non-log objects are discarded by normalization
@@ -123,6 +124,10 @@ JSON.parse(event.data)
   → Array of objects?  → Batched log events (iterate, assign _id each)
   → Single object?  → Single log event (wrap in array, same path)
 ```
+Log events are validated by `normalizeLogEvent` (`src/utils/logUtils.js`) — events missing required fields (`topic`, `serverName`, `path`, `message`) are silently dropped.
+
+### Log-rate decay
+Per-topic log rates are updated from `{ type: "stats" }` messages. A `setInterval` also runs to decay stale rates toward 0: if a topic has received no stats update for more than one interval, its rate is multiplied by a decay factor each tick until it reaches 0. This prevents sidebar rates from showing stale high values after a topic goes quiet.
 
 ### Reconnect
 - Exponential backoff: `min(1000 * 2^attempts, 30000)ms`
@@ -151,7 +156,7 @@ Server-side bandwidth optimization (parallel, does not block display):
 ```
 
 ### Client-side `filteredLogs` (single source of truth)
-`filteredLogs` is computed by the `useFilteredLogs()` hook (`src/hooks/useFilteredLogs.js`) called from `LogPanel`. It applies ALL filters locally: server/path exact match, plain text search (message field only), keywords with `debouncedKeywordInput` (AND/OR mode), and time range (using `nowMs` state for render purity). The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses the debounced value so the filter result and the pending keyword chip in the UI appear in sync.
+`filteredLogs` is computed by the `useFilteredLogs()` hook (`src/hooks/useFilteredLogs.js`) called from `LogPanel`. It applies ALL filters locally: server/path exact match, plain text search (message field only), keywords with `debouncedKeywordInput` (AND/OR mode), and time range (using `nowMs` state for render purity). The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses `debouncedKeywordInput` — the typed term is applied to filtering and highlighting only after the 300ms debounce fires.
 
 `mergedServers` and `mergedPaths` are derived by merging backend metadata (`/api/topics/{topic}/meta`) with the local buffer — meta order is preserved, buffer-only entries appended. `filteredServers`/`filteredPaths` then apply the search term on top of the merged lists.
 
@@ -191,7 +196,7 @@ src/
 │   └── useFilteredLogs.js      # Client-side filter pipeline (server/path/search/keywords/timeRange)
 ├── api/
 │   ├── endpoints.js            # REST endpoint path constants
-│   └── logApi.js               # REST client — download logs, fetch topic metadata
+│   └── logApi.js               # REST client — download logs (parses Content-Disposition for filename, falls back to timestamped `<topic>-<ts>.log`), fetch topic metadata
 ├── utils/
 │   └── logUtils.js             # getLogLevelColor, getRelativeTime
 ├── ui/

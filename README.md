@@ -13,7 +13,7 @@ A real-time log monitoring dashboard built with React + Vite. Connects to a WebS
 - **Batched rendering** — log updates are flushed every 150ms to minimize re-renders under high volume
 
 ### Topic & Filtering (Client-Side, Real-Time)
-All filtering runs client-side for instant feedback. Text search updates on every keystroke; keyword filter uses a 300ms client-side debounce so the filter and the pending keyword chip stay in sync. A debounced server-side filter (300ms) also runs in parallel as a bandwidth optimization to reduce WebSocket traffic.
+All filtering runs client-side for instant feedback. Text search updates on every keystroke; keyword filter uses a 300ms client-side debounce (the typed term is applied to filtering and highlighting after the debounce fires). A debounced server-side filter (300ms) also runs in parallel as a bandwidth optimization to reduce WebSocket traffic.
 
 - **Topic sidebar** — all topics auto-subscribed; live log rate (logs/sec) per topic
 - **Server filter** — searchable dropdown to filter logs by server name
@@ -165,7 +165,7 @@ docker stop $(docker ps -q --filter ancestor=log-dashboard-ui)
 |---|---|---|
 | Topic list | `{ type: "topics", topics: string[] }` (primary), legacy `string[]` fallback | Once on connect — list of all topic names |
 | Stats | `{ type: "stats", topics: { [topic]: { rate, servers } }, intervalMs }` | Periodic (~every 2s) — per-topic log rate and server info |
-| Log event | `{ topic, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events (already filtered server-side); single object or batched array |
+| Log event | `{ topic, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events; single object or batched array. Client always filters locally — server-side filter is a bandwidth optimization only (may be cleared in split-view or no-filter cases) |
 
 ### Client → Server
 
