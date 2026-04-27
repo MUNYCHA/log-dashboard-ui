@@ -41,4 +41,4 @@ rm D:/log-dashboard-ui/.codex-audit-tmp.md
 Notes:
 - Codex runs with -s read-only so it cannot modify any files
 - The temp file is always cleaned up — never commit it
-- If Codex fails or times out, fall back to reading src/ files manually with Read + Grep
+- NEVER fall back to manual Read + Grep — always wait for Codex no matter how long it takes
