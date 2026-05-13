@@ -5,6 +5,8 @@ import Sidebar from './features/sidebar';
 import LogPanel from './features/log-viewer';
 import SettingsModal from './features/settings';
 import config from './config';
+import { useAuth } from './auth/useAuth';
+import LoginPage from './pages/LoginPage';
 
 const readStoredSetting = (key, fallback, parse = (value) => value) => {
   if (typeof window === 'undefined') return fallback;
@@ -18,6 +20,10 @@ const readStoredSetting = (key, fallback, parse = (value) => value) => {
 };
 
 export default function App() {
+  const { isAuthenticated, isLoading, getToken, logout } = useAuth();
+
+  if (isLoading) return null;
+  if (!isAuthenticated) return <LoginPage />;
   const [topicSortMode, setTopicSortMode] = useState(() => readStoredSetting('logstream:topicSortMode', 'asc', (value) => (
     ['activity', 'asc', 'desc'].includes(value) ? value : 'asc'
   )));
@@ -50,7 +56,7 @@ export default function App() {
     [selectedTopic, selectedTopic2],
   );
 
-  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics);
+  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics, getToken);
   const darkMode = themeMode === 'system' ? systemPrefersDark : themeMode === 'dark';
   const theme = darkMode ? styles.dark : styles.light;
 

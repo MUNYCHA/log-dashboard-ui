@@ -3,6 +3,7 @@ import { AnimatePresence, motion as Motion } from "framer-motion";
 import { KeywordFilter } from "../filters";
 import { getButtonStyles } from "./constants";
 import { fetchTopicMeta, downloadLogs as apiDownloadLogs } from '../../api/logApi';
+import { useAuth } from '../../auth/useAuth';
 import { initialPanelState, panelReducer } from './panelReducer';
 import { useFilteredLogs } from '../../hooks/useFilteredLogs';
 import VirtualLogList from './components/VirtualLogList';
@@ -38,6 +39,7 @@ const LogPanel = ({
   sendFilter,
   panelId,
 }) => {
+  const { getToken } = useAuth();
   const [state, dispatch] = useReducer(panelReducer, undefined, () => initialPanelState(selectedTopic));
   const {
     frozenLogs, frozenTopic, logSearchTerm, debouncedSearch, autoScroll,
@@ -133,7 +135,7 @@ const LogPanel = ({
   useEffect(() => {
     if (!selectedTopic) return;
     const controller = new AbortController();
-    fetchTopicMeta(selectedTopic, controller.signal)
+    fetchTopicMeta(selectedTopic, controller.signal, getToken)
       .then((data) => { if (data) dispatch({ type: 'PATCH', payload: { topicMeta: data } }); })
       .catch(() => {});
     return () => controller.abort();
@@ -324,7 +326,7 @@ const LogPanel = ({
 
   const downloadLogs = async () => {
     try {
-      const { blob, filename } = await apiDownloadLogs(selectedTopic);
+      const { blob, filename } = await apiDownloadLogs(selectedTopic, getToken);
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = objectUrl;

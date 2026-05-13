@@ -23,7 +23,7 @@ const isValidTopicList = (topics) =>
  *   logRates      - Record<topic, number> — logs/sec per topic (from server stats)
  *   clearLogs     - (topic: string) => void
  */
-export const useWebSocket = (url, viewedTopics) => {
+export const useWebSocket = (url, viewedTopics, getToken) => {
   const [logsByTopic, setLogsByTopic] = useState({});
   const [topics, setTopics] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -35,6 +35,7 @@ export const useWebSocket = (url, viewedTopics) => {
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef(null);
   const socketRef = useRef(null);
+  const getTokenRef = useRef(getToken); // stable ref so connect() always uses latest getToken
   const subscribedTopicsRef = useRef(new Set());
   const activeFilterRef = useRef(null); // last filter sent — resend on reconnect
   const viewedTopicsRef = useRef(new Set());
@@ -43,10 +44,14 @@ export const useWebSocket = (url, viewedTopics) => {
   const statsIntervalMsRef = useRef(2000);
   const lastRateAtRef = useRef({});
 
-  // Keep viewed topics ref in sync (avoids stale closures in flush)
+  // Keep refs in sync so closures inside connect() always see the latest values
   useEffect(() => {
     viewedTopicsRef.current = new Set(viewedTopics.filter(Boolean));
   }, [viewedTopics]);
+
+  useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
 
   // Flush pending logs to state in batches — one React re-render per interval.
   // Groups by topic first so we create ONE new array per topic per flush
@@ -109,9 +114,11 @@ export const useWebSocket = (url, viewedTopics) => {
   useEffect(() => {
     let cancelled = false;
 
-    function connect() {
+    async function connect() {
       if (cancelled) return;
-      const socket = new WebSocket(url);
+      const token = getTokenRef.current ? await getTokenRef.current() : null;
+      const wsUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
+      const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
 
       socket.onopen = () => {
