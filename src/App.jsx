@@ -6,7 +6,6 @@ import LogPanel from './features/log-viewer';
 import SettingsModal from './features/settings';
 import config from './config';
 import { useAuth } from './auth/useAuth';
-import LoginPage from './pages/LoginPage';
 
 const readStoredSetting = (key, fallback, parse = (value) => value) => {
   if (typeof window === 'undefined') return fallback;
@@ -22,8 +21,7 @@ const readStoredSetting = (key, fallback, parse = (value) => value) => {
 export default function App() {
   const { isAuthenticated, isLoading, getToken, logout } = useAuth();
 
-  if (isLoading) return null;
-  if (!isAuthenticated) return <LoginPage />;
+  if (isLoading || !isAuthenticated) return null;
   const [topicSortMode, setTopicSortMode] = useState(() => readStoredSetting('logstream:topicSortMode', 'asc', (value) => (
     ['activity', 'asc', 'desc'].includes(value) ? value : 'asc'
   )));

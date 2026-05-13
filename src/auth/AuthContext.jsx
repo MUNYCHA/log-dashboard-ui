@@ -27,6 +27,10 @@ export function AuthProvider({ children }) {
           const existingUser = await userManager.getUser();
           if (existingUser && !existingUser.expired) {
             setUser(existingUser);
+          } else {
+            // No valid session — auto-redirect to Keycloak
+            await userManager.signinRedirect();
+            return;
           }
         }
       } catch (err) {
