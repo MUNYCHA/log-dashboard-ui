@@ -139,7 +139,7 @@ const LogPanel = ({
       .then((data) => { if (data) dispatch({ type: 'PATCH', payload: { topicMeta: data } }); })
       .catch(() => {});
     return () => controller.abort();
-  }, [selectedTopic]);
+  }, [selectedTopic, getToken]);
 
   useEffect(() => {
     const t = setTimeout(() => dispatch({ type: 'PATCH', payload: { debouncedSearch: logSearchTerm } }), 300);

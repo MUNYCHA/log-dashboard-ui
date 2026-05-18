@@ -19,9 +19,8 @@ const readStoredSetting = (key, fallback, parse = (value) => value) => {
 };
 
 export default function App() {
-  const { isAuthenticated, isLoading, getToken, logout } = useAuth();
+  const { isAuthenticated, isLoading, getToken } = useAuth();
 
-  if (isLoading || !isAuthenticated) return null;
   const [topicSortMode, setTopicSortMode] = useState(() => readStoredSetting('logstream:topicSortMode', 'asc', (value) => (
     ['activity', 'asc', 'desc'].includes(value) ? value : 'asc'
   )));
@@ -181,6 +180,8 @@ export default function App() {
 
   const setActive1 = useCallback(() => setActivePanel(1), []);
   const setActive2 = useCallback(() => setActivePanel(2), []);
+
+  if (isLoading || !isAuthenticated) return null;
 
   return (
     <div className={`flex h-screen overflow-hidden ${theme.background} ${theme.text} p-2 gap-2`}>
