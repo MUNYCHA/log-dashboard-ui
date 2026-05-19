@@ -23,7 +23,7 @@ const isValidTopicList = (topics) =>
  *   logRates      - Record<topic, number> — logs/sec per topic (from server stats)
  *   clearLogs     - (topic: string) => void
  */
-export const useWebSocket = (url, viewedTopics, getToken) => {
+export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true) => {
   const [logsByTopic, setLogsByTopic] = useState({});
   const [topics, setTopics] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -110,8 +110,12 @@ export const useWebSocket = (url, viewedTopics, getToken) => {
     return () => clearInterval(interval);
   }, []);
 
-  // WebSocket with auto-reconnect (exponential backoff, max 30s)
+  // WebSocket with auto-reconnect (exponential backoff, max 30s).
+  // Skip until the caller is authenticated — otherwise we'd connect with a
+  // null token on the first render (before SSO finishes) and the server
+  // would reject auth, leaving a dead socket until a manual page reload.
   useEffect(() => {
+    if (!isAuthenticated) return undefined;
     let cancelled = false;
 
     async function connect() {
@@ -250,7 +254,7 @@ export const useWebSocket = (url, viewedTopics, getToken) => {
         reconnectTimerRef.current = null;
       }
     };
-  }, [url]);
+  }, [url, isAuthenticated]);
 
   const clearLogs = useCallback((topic) => {
     // Drain any queued logs for this topic so they don't reappear on the next flush
