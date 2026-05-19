@@ -121,8 +121,11 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
     async function connect() {
       if (cancelled) return;
       const token = getTokenRef.current ? await getTokenRef.current() : null;
-      const wsUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
-      const socket = new WebSocket(wsUrl);
+      // Send the JWT via the Sec-WebSocket-Protocol header (subprotocol negotiation)
+      // instead of a URL query string — keeps the token out of nginx/proxy access
+      // logs, browser history, and HAR exports. Server echoes back 'logstream.v1'.
+      const protocols = token ? ['logstream.v1', `bearer.${token}`] : ['logstream.v1'];
+      const socket = new WebSocket(url, protocols);
       socketRef.current = socket;
 
       socket.onopen = () => {
