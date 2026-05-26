@@ -6,7 +6,7 @@ import ScrollButtons from './ScrollButtons';
 const ESTIMATED_LOG_HEIGHT = 114;
 
 const VirtualLogList = React.memo(({
-  displayedLogs, isPaused, autoScroll, theme, darkMode, keywords, timestampGen,
+  displayedLogs, isPaused, autoScroll, theme, darkMode, keywords, nowMs,
   logSearchTerm,
   selectedServer, selectedPath,
   emptyState, onClearFilters, onResumeLive,
@@ -15,7 +15,6 @@ const VirtualLogList = React.memo(({
   virtualizerScrollToBottomRef,
   terminalMode,
 }) => {
-  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual is designed this way
   const virtualizer = useVirtualizer({
     count: displayedLogs.length,
     getScrollElement: () => scrollRef.current,
@@ -193,7 +192,7 @@ const VirtualLogList = React.memo(({
                       log={log}
                       darkMode={darkMode}
                       keywords={keywords}
-                      timestampGen={timestampGen}
+                      nowMs={nowMs}
                       logSearchTerm={logSearchTerm}
                       terminalMode={terminalMode}
                     />

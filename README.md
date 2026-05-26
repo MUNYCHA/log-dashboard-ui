@@ -123,37 +123,14 @@ npm run lint
 
 ---
 
-## Deploy with Docker
+## Docker Deployment
 
-### Requirements
-- Docker installed on the server
+The office-server deployment is owned by the sibling `log-infra` repository.
+That Compose stack builds this UI into nginx alongside Keycloak and the
+`logstream` API, with one deployment `.env` file.
 
-### 1. Clone and configure
-
-```bash
-git clone https://github.com/MUNYCHA/log-dashboard-ui.git
-cd log-dashboard-ui
-```
-
-### 2. Build and run
-
-```bash
-docker build \
-  --build-arg VITE_WS_URL=ws://YOUR_SERVER_IP:8080/ws/logs \
-  -t log-dashboard-ui .
-
-docker run -d -p 80:80 log-dashboard-ui
-```
-
-The app will be available at `http://YOUR_SERVER_IP`.
-
-> **Note:** All `VITE_*` env vars are baked into the image at build time via `--build-arg`. Rebuild the image if you need to change them.
-
-### 3. Stop
-
-```bash
-docker stop $(docker ps -q --filter ancestor=log-dashboard-ui)
-```
+This repository's Dockerfile and `.env.example` remain useful for standalone UI
+development and build testing, but are not the deployment entry point.
 
 ---
 
@@ -297,10 +274,14 @@ log-dashboard-ui/
 
 ## Configuration
 
-All values are baked at build time via Vite's `import.meta.env`. Changing them requires a rebuild (`npm run build`).
+Override values are baked at build time via Vite's `import.meta.env`. In the
+standard nginx deployment, endpoint URLs are derived at runtime from the page
+origin, while client ID and display tuning are provided by `log-infra/.env`.
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL |
+| `VITE_WS_URL` | blank | Optional WebSocket/API origin override; blank uses same-origin `/ws/logs`. |
+| `VITE_SSO_LOGIN_URL` | blank | Optional Keycloak authority override; blank uses same-origin `/auth/realms/logstream`. |
+| `VITE_SSO_CLIENT_ID` | `logstream-ui` | Keycloak OIDC client ID; required when SSO is enabled. |
 | `VITE_MAX_LOGS_PER_TOPIC` | `500` | Display cap per viewed topic (internal buffer stores 4× this for filter headroom; non-viewed topics: 100) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate log messages longer than this (chars) to prevent DOM bloat |

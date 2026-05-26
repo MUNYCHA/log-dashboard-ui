@@ -85,9 +85,8 @@ const highlightMessage = (message, keywords, darkMode, logSearchTerm) => {
   return combined.length === 1 ? combined[0] : combined;
 };
 
-const LogEntry = ({ log, darkMode, keywords, timestampGen, logSearchTerm, terminalMode }) => {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const relativeTime = useMemo(() => getRelativeTime(log.timestamp, Date.now()), [log.timestamp, timestampGen]);
+const LogEntry = ({ log, darkMode, keywords, nowMs, logSearchTerm, terminalMode }) => {
+  const relativeTime = useMemo(() => getRelativeTime(log.timestamp, nowMs), [log.timestamp, nowMs]);
   const serverName = typeof log.serverName === 'string' ? log.serverName : String(log.serverName ?? 'unknown');
   const message = typeof log.message === 'string' ? log.message : String(log.message ?? '');
   const localTimestamp = useMemo(() => {

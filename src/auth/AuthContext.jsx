@@ -5,13 +5,10 @@ import { AuthContext } from './authContext';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => config.sso.enabled);
 
   useEffect(() => {
-    if (!config.sso.enabled) {
-      setIsLoading(false);
-      return;
-    }
+    if (!config.sso.enabled) return;
 
     const init = async () => {
       try {

@@ -51,8 +51,6 @@ const LogPanel = ({
     atTop, atBottom, downloadError, topicMeta,
   } = state;
   const selectedPathForTopic = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
-  const [timestampGen, setTimestampGen] = useState(0);
-
   const scrollRef = useRef(null);
   const virtualizerScrollToBottomRef = useRef(null);
   const serverButtonRef = useRef(null);
@@ -77,7 +75,6 @@ const LogPanel = ({
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimestampGen((g) => g + 1);
       setNowMs(Date.now());
     }, 5000);
     return () => clearInterval(interval);
@@ -540,7 +537,7 @@ const LogPanel = ({
         theme={theme}
         darkMode={darkMode}
         keywords={displayKeywords}
-        timestampGen={timestampGen}
+        nowMs={nowMs}
         logSearchTerm={logSearchTerm}
         selectedServer={selectedServer}
         selectedPath={selectedPath}
@@ -579,4 +576,3 @@ const LogPanel = ({
 };
 
 export default React.memo(LogPanel);
-

@@ -64,17 +64,19 @@ App
 - **Scroll position on resize**: ResizeObserver captures the topmost visible item index (`anchorIndexRef`) before `measure()` fires, restores it in Effect 2 after `totalSize` updates. `atBottomRef` used as the single gate for all resize compensation — works whether paused or live.
 - **`scrollToBottom()`**: prefer `virtualizerScrollToBottomRef` (virtualizer-based `scrollToIndex`) to avoid landing mid-item on spacer boundaries. Falls back to raw `scrollTop = scrollHeight` only when the ref is unavailable (e.g. topic-change scroll before virtualizer mounts).
 - **Paused banner**: rendered OUTSIDE the scroll container as a `flex-shrink-0` element in the flex column. NEVER inside the `overflow-auto` div (would scroll out of view).
-- **Timestamps**: `LogEntry` receives `timestampGen` counter, computes `Date.now()` internally via `useMemo` — NEVER pass a changing `now` prop (breaks memo for all entries)
+- **Timestamps**: `LogPanel` refreshes `nowMs` every 5s and passes it to visible `LogEntry` rows so relative timestamps update without impure render-time clock reads.
 - **Flush interval**: 150ms in useWebSocket — balances responsiveness vs re-render frequency
 - Sub-components (DesktopHeader, MobileHeader, etc.) are intentionally NOT memo'd — they're cheap renders, memo overhead isn't worth it
 
 ## Environment
 
-`.env` is gitignored. Copy `.env.example` and configure. All values baked at build time.
+`.env` is gitignored. Copy `.env.example` for standalone UI development. Office deployment values are owned by `../log-infra/.env`.
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_WS_URL` | `ws://localhost:8080/ws/logs` | WebSocket server URL. Also used to derive `httpBaseUrl` for REST API calls (`ws://` → `http://`, `wss://` → `https://`) |
+| `VITE_WS_URL` | blank | Optional WebSocket/API origin override; blank derives same-origin `/ws/logs`. |
+| `VITE_SSO_LOGIN_URL` | blank | Optional Keycloak authority override; blank derives same-origin `/auth/realms/logstream`. |
+| `VITE_SSO_CLIENT_ID` | `logstream-ui` | Keycloak OIDC client ID for authenticated deployment. |
 | `VITE_MAX_LOGS_PER_TOPIC` | `500` | Display cap per viewed topic; internal raw buffer stores 4× this for filter headroom (non-viewed: 100) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate messages longer than this (chars) |
 
