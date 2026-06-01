@@ -2,10 +2,11 @@ import React, { useState, useReducer, useRef, useEffect, useMemo, useCallback } 
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { KeywordFilter } from "../filters";
 import { getButtonStyles } from "./constants";
-import { fetchTopicMeta, downloadLogs as apiDownloadLogs } from '../../api/logApi';
+import { downloadLogs as apiDownloadLogs } from '../../api/logApi';
 import { useAuth } from '../../auth/useAuth';
 import { initialPanelState, panelReducer } from './panelReducer';
 import { useFilteredLogs } from '../../hooks/useFilteredLogs';
+import { useTopicMeta } from './hooks/useTopicMeta';
 import VirtualLogList from './components/VirtualLogList';
 import DesktopHeader from "./components/headers/DesktopHeader";
 import MobileHeader from "./components/headers/MobileHeader";
@@ -130,15 +131,6 @@ const LogPanel = ({
   }, [selectedTopic]);
 
   useEffect(() => {
-    if (!selectedTopic) return;
-    const controller = new AbortController();
-    fetchTopicMeta(selectedTopic, controller.signal, getToken)
-      .then((data) => { if (data) dispatch({ type: 'PATCH', payload: { topicMeta: data } }); })
-      .catch(() => {});
-    return () => controller.abort();
-  }, [selectedTopic, getToken]);
-
-  useEffect(() => {
     const t = setTimeout(() => dispatch({ type: 'PATCH', payload: { debouncedSearch: logSearchTerm } }), 300);
     return () => clearTimeout(t);
   }, [logSearchTerm]);
@@ -148,54 +140,10 @@ const LogPanel = ({
     return () => clearTimeout(t);
   }, [keywordInput]);
 
-  const serversForSelectedTopic = useMemo(
-    () => selectedTopic ? [...new Set(topicLogs?.map((l) => l.serverName) || [])].sort() : [],
-    [selectedTopic, topicLogs],
-  );
-
-  const pathsForSelectedServer = useMemo(() => {
-    if (!selectedTopic || !topicLogs) return [];
-    let logs = topicLogs;
-    if (selectedServer) logs = logs.filter((l) => l.serverName === selectedServer);
-    return [...new Set(logs.map((l) => l.path))].sort();
-  }, [selectedTopic, topicLogs, selectedServer]);
-
-  // Merge backend meta (all-time) with buffer (recently seen) — meta order preserved,
-  // buffer-only servers appended at the end for brand-new servers not yet in meta.
-  const mergedServers = useMemo(() => {
-    const metaNames = topicMeta?.servers?.map((s) => s.name) ?? [];
-    const metaSet = new Set(metaNames);
-    const bufferOnly = serversForSelectedTopic.filter((s) => !metaSet.has(s));
-    return [...metaNames, ...bufferOnly];
-  }, [topicMeta, serversForSelectedTopic]);
-
-  const mergedPaths = useMemo(() => {
-    const serverMeta = selectedServer
-      ? topicMeta?.servers?.find((s) => s.name === selectedServer)
-      : null;
-    const metaPaths = serverMeta?.paths?.map((p) => p.path) ?? [];
-    const metaSet = new Set(metaPaths);
-    const bufferOnly = pathsForSelectedServer.filter((p) => !metaSet.has(p));
-    return [...metaPaths, ...bufferOnly];
-  }, [topicMeta, selectedServer, pathsForSelectedServer]);
-
-  const selectedPath = selectedPathForTopic && (
-    mergedPaths.includes(selectedPathForTopic) || pathsForSelectedServer.includes(selectedPathForTopic)
-  ) ? selectedPathForTopic : null;
-
-  // Auto-clear selected server if it's gone from both meta and buffer.
-  // Guard on mergedServers.length so we don't clear before meta has loaded.
-  useEffect(() => {
-    if (selectedServer && mergedServers.length > 0 && !mergedServers.includes(selectedServer)) {
-      onServerSelect(null);
-    }
-  }, [selectedServer, mergedServers, onServerSelect]);
-
-  useEffect(() => {
-    if (selectedPathForTopic && mergedPaths.length > 0 && !mergedPaths.includes(selectedPathForTopic)) {
-      dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } });
-    }
-  }, [selectedPathForTopic, mergedPaths, selectedTopic]);
+  const { mergedServers, mergedPaths, selectedPath } = useTopicMeta({
+    selectedTopic, topicLogs, selectedServer, selectedPathForTopic,
+    topicMeta, onServerSelect, getToken, dispatch,
+  });
 
   useEffect(() => {
     if (!sendFilter) return;
