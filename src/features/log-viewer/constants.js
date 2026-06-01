@@ -33,8 +33,3 @@ export const getButtonStyles = (darkMode) => {
     clear:    `${base} ${ghostDanger}`,
   };
 };
-
-export const getAccentStyles = (darkMode) => ({
-  active: darkMode ? "border border-[#8AB4F8]/40 bg-[#1A3A6B]/50 text-[#8AB4F8]" : "border border-[#D2E3FC] bg-[#E8F0FE] text-[#1A73E8]",
-  paused: darkMode ? "border border-[#8AB4F8]/40 bg-[#1A3A6B]/50 text-[#8AB4F8]" : "border border-[#D2E3FC] bg-[#E8F0FE] text-[#1A73E8]",
-});
