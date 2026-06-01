@@ -96,6 +96,14 @@ const LogEntry = ({ log, darkMode, keywords, nowMs, logSearchTerm, terminalMode 
   }, [log.timestamp]);
   const [copied, setCopied] = useState(false);
 
+  // Highlighting builds regexes and splits the message — expensive. Memoize on
+  // the inputs that actually affect it so the 5s `nowMs` tick (which only moves
+  // the relative timestamp) doesn't re-run it for every visible row.
+  const highlightedMessage = useMemo(
+    () => highlightMessage(message, keywords, darkMode, logSearchTerm),
+    [message, keywords, darkMode, logSearchTerm],
+  );
+
   const handleCopy = useCallback((e) => {
     e.stopPropagation();
     const text = JSON.stringify({ timestamp: log.timestamp, localTime: localTimestamp, serverName: log.serverName, path: log.path, message: log.message }, null, 2);
@@ -123,7 +131,7 @@ const LogEntry = ({ log, darkMode, keywords, nowMs, logSearchTerm, terminalMode 
   if (terminalMode) {
     return (
       <div className={`px-4 font-mono text-[13px] leading-5 whitespace-pre-wrap break-words ${darkMode ? 'text-white' : 'text-black'}`}>
-        {highlightMessage(message, keywords, darkMode, logSearchTerm)}
+        {highlightedMessage}
       </div>
     );
   }
@@ -161,7 +169,7 @@ const LogEntry = ({ log, darkMode, keywords, nowMs, logSearchTerm, terminalMode 
         <div className={`whitespace-pre-wrap break-words text-[13.5px] leading-[1.65] font-mono ${
           darkMode ? 'text-[#E8EAED]' : 'text-[#202124]'
         }`}>
-          {highlightMessage(message, keywords, darkMode, logSearchTerm)}
+          {highlightedMessage}
         </div>
 
         {/* Copy button */}

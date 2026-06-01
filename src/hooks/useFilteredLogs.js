@@ -6,6 +6,10 @@ export function useFilteredLogs({
   logSearchTerm, keywords, debouncedKeywordInput, keywordMode,
   timeRange, customRangeMs, nowMs,
 }) {
+  // nowMs ticks every 5s, but it only affects the result when a time filter is
+  // active. Collapse it to a constant otherwise so the default ('all') view
+  // doesn't re-filter the whole buffer on every tick.
+  const effectiveNow = timeRange === 'all' ? 0 : nowMs;
   return useMemo(() => {
     if (!selectedTopic || !topicLogs) return [];
     let logs = topicLogs;
@@ -38,11 +42,11 @@ export function useFilteredLogs({
       const PRESET_MS = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
       const rangeMs = timeRange === 'custom' ? customRangeMs : (PRESET_MS[timeRange] || 0);
       if (rangeMs > 0) {
-        const cutoff = nowMs - rangeMs;
+        const cutoff = effectiveNow - rangeMs;
         logs = logs.filter((l) => Number.isFinite(l._ts) && l._ts >= cutoff);
       }
     }
 
     return [...logs].slice(0, config.ws.maxLogsPerTopic).reverse();
-  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, keywords, debouncedKeywordInput, keywordMode, timeRange, customRangeMs, nowMs]);
+  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, keywords, debouncedKeywordInput, keywordMode, timeRange, customRangeMs, effectiveNow]);
 }
