@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { formatDurationMs } from '../log-viewer/constants';
+import { formatDurationMs } from './timeRange';
 
 const PRESETS = [
   { label: 'All time', value: 'all' },

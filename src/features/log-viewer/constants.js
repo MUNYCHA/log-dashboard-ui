@@ -1,23 +1,3 @@
-export const TIME_RANGES = [
-  { label: 'All', value: 'all' },
-  { label: '1m', value: '1m' },
-  { label: '5m', value: '5m' },
-  { label: '15m', value: '15m' },
-  { label: '1h', value: '1h' },
-];
-
-export const TIME_RANGE_MS = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
-
-export const formatDurationMs = (ms) => {
-  if (!ms) return '';
-  if (ms % 3600000 === 0) return `${ms / 3600000}h`;
-  if (ms % 60000  === 0) return `${ms / 60000}m`;
-  if (ms % 1000   === 0) return `${ms / 1000}s`;
-  if (ms >= 3600000) return `${(ms / 3600000).toFixed(1)}h`;
-  if (ms >= 60000)   return `${(ms / 60000).toFixed(1)}m`;
-  return `${(ms / 1000).toFixed(1)}s`;
-};
-
 export const getShortPath = (path) => {
   if (!path) return path;
   const parts = path.split("/").filter(Boolean);

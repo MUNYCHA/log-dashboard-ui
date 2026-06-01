@@ -47,7 +47,7 @@ export default function App() {
   ));
 
   // Which topics are currently displayed in log panels — these get full 500-log cap.
-  // Non-viewed topics get a smaller cap (50) for sidebar info only.
+  // Non-viewed topics get a smaller cap (100) for sidebar info only.
   const viewedTopics = useMemo(
     () => [selectedTopic, selectedTopic2].filter(Boolean),
     [selectedTopic, selectedTopic2],
