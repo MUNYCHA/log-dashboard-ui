@@ -74,9 +74,11 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
         const viewed = viewedTopicsRef.current;
         for (const [topic, newLogs] of Object.entries(byTopic)) {
           const existing = updated[topic] || [];
-          // Viewed topics get the full cap (500) for the log panel.
-          // Non-viewed topics keep a small cap (100) — enough for sidebar
-          // (last log, server badges, count) without wasting memory.
+          // Viewed topics get the large raw buffer (rawBufferPerTopic, 2000 at
+          // default) so filtered views can still fill the 500 display cap.
+          // Non-viewed topics keep a small cap (100): just enough to show instant
+          // backlog when the topic is opened, without wasting memory. (The sidebar
+          // reads only `topics` + `logRates` — it does not use these buffers.)
           const cap = viewed.has(topic) ? config.ws.rawBufferPerTopic : SIDEBAR_LOG_CAP;
           // Build the capped, newest-first array in a single pass. The old
           // reverse().concat().slice() allocated two intermediate arrays of up

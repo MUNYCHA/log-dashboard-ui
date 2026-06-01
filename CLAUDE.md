@@ -17,12 +17,12 @@ React 19 + Vite 7 + Tailwind CSS 4 + Framer Motion 12 + @tanstack/react-virtual 
 
 ## Architecture (Summary)
 
-**Data flow:** `useWebSocket(url, viewedTopics)` hook → `App.jsx` (global state) → `Sidebar` + `LogPanel` (via props)
+**Data flow:** `useWebSocket(url, viewedTopics, getToken, isAuthenticated)` hook → `App.jsx` (global state) → `Sidebar` + `LogPanel` (via props)
 
 **State ownership:**
 - `App.jsx` — selectedTopic/Server (per panel), themeMode (→ darkMode derived), terminalMode, topicSortMode, sidebarOpen/collapsed, splitView, activePanel, isPaused1/2, viewedTopics, isSettingsOpen, systemPrefersDark, topicSearchTerm
-- `LogPanel.jsx` — all panel-local state via `useReducer` (`panelReducer`): path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, frozenTopic, isMobileMenuOpen + separate useState for timestampGen, nowMs
-- `useWebSocket` — logsByTopic, topics, isConnected, isReconnecting, logRates, clearLogs, trimTopicBuffer, subscribe, sendFilter
+- `LogPanel.jsx` — all panel-local state via `useReducer` (`panelReducer`): path, search, keywords, timeRange, autoScroll, dropdowns, frozenLogs, frozenTopic, isMobileMenuOpen + a separate `nowMs` useState (Date.now(), refreshed every 5s + on timeRange change)
+- `useWebSocket` — logsByTopic, topics, isConnected, isReconnecting, logRates, clearLogs, trimTopicBuffer (returned but currently unused by App), subscribe, sendFilter
 
 **Component tree:**
 ```
@@ -32,7 +32,7 @@ App
 │   ├── DesktopHeader / MobileHeader / FilterBar / ActiveFilters (presentational, no memo)
 │   ├── KeywordFilter (has local state: selectedColor)
 │   ├── VirtualLogList (memo'd — @tanstack/react-virtual, ~20-30 visible rows)
-│   │   └── LogEntry (memo'd — key=log._id, useMemo for relativeTime)
+│   │   └── LogEntry (memo'd — key=log._id, useMemo for relativeTime AND highlightedMessage)
 │   ├── ScrollButtons
 │   └── StatusBar
 └── LogPanel #2 (split view only, same structure)
@@ -40,9 +40,9 @@ App
 
 **WS protocol:** Server sends `{ type: "topics", topics: string[] }` on connect (legacy bare `string[]` also accepted), then `LogEvent` objects or **batched JSON arrays**, plus `{ type: "stats" }` rate updates. Each log gets `_id` (monotonic counter) for stable React keys.
 
-**Client-side filtering:** All filtering (server, path, search, keywords, timeRange) runs client-side in `filteredLogs` useMemo for instant real-time feedback. Keyword input uses `debouncedKeywordInput` (300ms) so the filter and the pending keyword chip appear in sync. Server-side filter (debounced 300ms) is a bandwidth optimization only — UI does not depend on it for display.
+**Client-side filtering:** All filtering (server, path, search, keywords, timeRange) runs client-side in the `useFilteredLogs` hook (a `useMemo`) for instant real-time feedback. It is a **single pass** over the newest-first buffer: applies every predicate inline, lowercases each message at most once, and stops once the display cap (500) is reached — so it often scans far fewer than all buffered logs. Keyword input uses `debouncedKeywordInput` (300ms) so the filter and the pending keyword chip appear in sync. Server-side filter (debounced 300ms) is a bandwidth optimization only — UI does not depend on it for display.
 
-**Topic subscription:** All topics auto-subscribed on connect. Viewed topics get a raw buffer of `displayCap × 4` (2000 at default) so filtered views can fill the display cap (500). Non-viewed topics capped at 100 (sidebar info only). The 500 display cap is applied in `filteredLogs.slice(0, config.ws.maxLogsPerTopic)`.
+**Topic subscription:** All topics auto-subscribed on connect. Viewed topics get a raw buffer of `displayCap × 4` (2000 at default) so filtered views can fill the display cap (500). Non-viewed topics capped at 100 — this is **topic-switch backlog**, not sidebar data: when a topic is selected it becomes "viewed" and `logsByTopic[topic]` instantly yields the buffered history instead of a blank panel. (The sidebar itself reads only `topics` + `logRates`, never per-topic logs.) The 500 display cap is enforced by the early-exit in `useFilteredLogs`.
 
 ## Key Rules
 
@@ -67,6 +67,10 @@ App
 - **Timestamps**: `LogPanel` refreshes `nowMs` every 5s and passes it to visible `LogEntry` rows so relative timestamps update without impure render-time clock reads.
 - **Flush interval**: 150ms in useWebSocket — balances responsiveness vs re-render frequency
 - Sub-components (DesktopHeader, MobileHeader, etc.) are intentionally NOT memo'd — they're cheap renders, memo overhead isn't worth it
+- **Filtering**: `useFilteredLogs` is a single pass with early-exit at the display cap and one lowercase per message. Do NOT reintroduce chained `.filter()`/`.slice()`/`.reverse()` — that re-allocated several arrays and double-lowercased messages on the 150ms hot path.
+- **Log object shape**: `normalizeLogEvent` precomputes `_ts` (parsed timestamp) and interns `topic`/`serverName`/`path` (shared string refs to cut RAM). Reuse `log._ts` — never re-parse `log.timestamp` in filters or relative-time.
+- **`nowMs` gating**: `useFilteredLogs` collapses `nowMs` to a constant when `timeRange === 'all'`, so the 5s tick doesn't re-filter the buffer in the default view. Keep that gate. `LogEntry` memoizes `highlightedMessage` on `[message, keywords, darkMode, logSearchTerm]` (NOT `nowMs`) so the tick doesn't re-run regex highlighting.
+- **VirtualLogList memo**: `VirtualLogList` is `React.memo`. Every callback `LogPanel` passes it (`scrollToTop`/`scrollToBottom`, `handleClearPath`/`handleClearServer`, `clearAllFilters`, `onResumeLive`) MUST stay `useCallback`-stable or the memo is defeated. `handleTogglePause` reads `filteredLogs` via a ref so its identity doesn't churn every flush.
 
 ## Environment
 

@@ -22,12 +22,12 @@ App.jsx (global)
 ├── isSettingsOpen                      ← settings modal visibility
 ├── viewedTopics                       ← useMemo([selectedTopic, selectedTopic2]) for tiered log caps
 │
-├── useWebSocket(url, viewedTopics) → shared across all components
+├── useWebSocket(url, viewedTopics, getToken, isAuthenticated) → shared across all components
 │   ├── logsByTopic    — Record<topic, LogEntry[]> (newest-first after flush, rawBufferPerTopic cap viewed (2000 at default) / 100 non-viewed)
 │   ├── topics         — string[]
 │   ├── isConnected / isReconnecting
 │   ├── logRates       — Record<topic, number> (logs/sec, from server stats message)
-│   ├── clearLogs(topic), subscribe(topics), trimTopicBuffer(topic, cap?), sendFilter(filters, panelId)
+│   ├── clearLogs(topic), subscribe(topics), trimTopicBuffer(topic, cap?) [returned but currently unused], sendFilter(filters, panelId)
 │
 LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelReducer)
 ├── frozenLogs / frozenTopic ← snapshot of logs + topic when paused
@@ -44,8 +44,7 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 ├── downloadError       ← transient download error message (auto-clears after 5s)
 ├── topicMeta           ← backend-provided metadata for current topic (servers/paths)
 │
-├── timestampGen        ← separate useState, counter bumped every 5s for relative time refresh
-└── nowMs               ← separate useState, Date.now() updated every 5s + on timeRange change
+└── nowMs               ← separate useState (NOT in the reducer), Date.now() updated every 5s + on timeRange change; drives relative timestamps. There is no `timestampGen` — `nowMs` is the only clock state.
 ```
 
 ## Render Optimization Strategy
@@ -53,9 +52,10 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 ### What's memoized
 | Component | `React.memo` | Internal `useMemo` | Notes |
 |---|---|---|---|
-| `LogPanel` | Yes | `filteredLogs`, `serversForSelectedTopic`, `pathsForSelectedServer`, `mergedServers`, `mergedPaths`, `filteredServers`, `filteredPaths`, `displayKeywords`, `emptyState` | Main orchestrator |
-| `VirtualLogList` | Yes | — | Extracted to avoid re-rendering when LogPanel state changes that don't affect the list |
-| `LogEntry` | Yes | `relativeTime` (via timestampGen) | Only re-renders when its specific log object or keywords change |
+| `LogPanel` | Yes | `filteredLogs` (via `useFilteredLogs`), `filteredServers`, `filteredPaths`, `displayKeywords`, `emptyState` | Main orchestrator |
+| `useTopicMeta` (hook) | — | `serversForSelectedTopic`, `pathsForSelectedServer`, `mergedServers`, `mergedPaths` | Extracted from LogPanel (`features/log-viewer/hooks/useTopicMeta.js`) — owns server/path discovery + backend meta merge |
+| `VirtualLogList` | Yes | — | Extracted to skip re-render when LogPanel state changes that don't affect the list. Relies on `LogPanel` passing it `useCallback`-stable handlers — otherwise the memo is defeated |
+| `LogEntry` | Yes | `relativeTime` (keyed on `[log._ts, nowMs]`), `highlightedMessage` (keyed on `[message, keywords, darkMode, logSearchTerm]` — deliberately NOT `nowMs`) | Only re-renders when its specific log object or keywords change |
 | `TopicItem` (Sidebar) | Yes | — | Only re-renders when `topic`, `isSelected`, `logRate`, or `darkMode` props change |
 | `Sidebar` | Yes | — | Re-renders on its own props changes; `TopicItem` children are protected by their own memo |
 | Most other sub-components | **No** | — | DesktopHeader, MobileHeader, FilterBar, ActiveFilters, StatusBar, ScrollButtons, EmptyState — purely presentational, re-render with parent |
@@ -65,8 +65,8 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 ### What triggers re-renders and why it's OK
 | Trigger | Frequency | What re-renders | Why it's OK |
 |---|---|---|---|
-| Log flush (150ms) | ~6.6x/sec | `useWebSocket` → `App` → `LogPanel` → `VirtualLogList` | Only ~20-30 visible `LogEntry` via virtualization |
-| `timestampGen` bump | Every 5s | `VirtualLogList` → visible `LogEntry`s | Only visible rows, `useMemo` recalculates relative time |
+| Log flush (150ms) | ~6.6x/sec | `useWebSocket` → `App` → `LogPanel` → `VirtualLogList` | Only ~20-30 visible `LogEntry` via virtualization; `useFilteredLogs` is a single early-exit pass |
+| `nowMs` tick | Every 5s | `LogPanel` → `VirtualLogList` → visible `LogEntry`s | Only visible rows; `relativeTime` recomputes but `highlightedMessage` is memoized off `nowMs`, and `useFilteredLogs` ignores `nowMs` unless a time filter is active |
 | Filter change | On user action | `LogPanel` + children | One-shot, not continuous |
 | Theme toggle | On user action | Everything | One-shot |
 
@@ -74,15 +74,18 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 ```
 WebSocket frame arrives (single or batch JSON)
   → JSON.parse
-  → Normalize to array (single event or batch)
-  → Assign _id (monotonic counter) to each log
-  → Truncate oversized messages (>50KB)
-  → Push to pendingRef (per-topic capped at rawBufferPerTopic viewed / 100 non-viewed)
+  → Normalize via normalizeLogEvent: assign _id (monotonic counter), precompute _ts (Date.parse),
+    intern topic/serverName/path (shared refs), truncate oversized messages (>50KB)
+  → Push to pendingRef (per-topic enqueue capped at rawBufferPerTopic via pendingCountRef)
   ...150ms later (setInterval flush)...
   → Group pending by topic
-  → setLogsByTopic(prev => { ...prev, [topic]: newLogs.reverse().concat(existing).slice(0, cap) })  // cap = rawBufferPerTopic (displayCap×4 = 2000) or SIDEBAR_LOG_CAP (100)
+  → setLogsByTopic: build the capped newest-first array in a SINGLE pass (walk new batch
+    newest-first, then existing, stop at cap) — no reverse()/concat()/slice() intermediates.
+    cap = rawBufferPerTopic (displayCap×4 = 2000) viewed, or SIDEBAR_LOG_CAP (100) non-viewed
   → App re-renders → topicLogs1/2 derived → LogPanel re-renders
-  → filteredLogs = useFilteredLogs()(reverse + all filters: server/path/search/keywords/timeRange)
+  → filteredLogs = useFilteredLogs(): SINGLE pass over newest-first buffer applying all filters
+    (server/path/search/keywords/timeRange), lowercasing each message at most once, early-exit
+    at the display cap, result reversed in place to oldest-first
   → VirtualLogList renders only visible rows (~20-30, overscan 20)
   → Effect 1 useEffect [displayedLogs] + rAF → scrollToIndex(last) — non-blocking, blocked by isPaused
   → Effect 2 useEffect [totalSize] + rAF → re-anchors after remeasurement — not blocked by isPaused
@@ -124,10 +127,10 @@ JSON.parse(event.data)
   → Array of objects?  → Batched log events (iterate, assign _id each)
   → Single object?  → Single log event (wrap in array, same path)
 ```
-Log events are validated by `normalizeLogEvent` (`src/utils/logUtils.js`) — events missing required fields (`topic`, `serverName`, `path`, `message`) are silently dropped.
+Log events are validated by `normalizeLogEvent` (`src/utils/logUtils.js`) — events missing any required field (`topic`, `serverName`, `path`, `timestamp`, `message`) are silently dropped. Valid events get `_id`, a precomputed `_ts` (`Date.parse(timestamp)`), and interned `topic`/`serverName`/`path` (shared string references to reduce buffer memory).
 
 ### Log-rate decay
-Per-topic log rates are updated from `{ type: "stats" }` messages. A `setInterval` also runs to decay stale rates toward 0: if a topic has received no stats update for more than one interval, its rate is multiplied by a decay factor each tick until it reaches 0. This prevents sidebar rates from showing stale high values after a topic goes quiet.
+Per-topic log rates are updated from `{ type: "stats" }` messages. A 1s `setInterval` also runs to zero out stale rates: if a topic has received no stats update for at least 2× the stats interval (`statsIntervalMsRef`, default 2000ms), its rate is set straight to `0` (a hard cutoff, not a gradual multiplier). On socket close, all rates are reset to 0. This prevents sidebar rates from showing stale high values after a topic goes quiet.
 
 ### Reconnect
 - Exponential backoff: `min(1000 * 2^attempts, 30000)ms`
@@ -156,7 +159,7 @@ Server-side bandwidth optimization (parallel, does not block display):
 ```
 
 ### Client-side `filteredLogs` (single source of truth)
-`filteredLogs` is computed by the `useFilteredLogs()` hook (`src/hooks/useFilteredLogs.js`) called from `LogPanel`. It applies ALL filters locally: server/path exact match, plain text search (message field only), keywords with `debouncedKeywordInput` (AND/OR mode), and time range (using `nowMs` state for render purity). The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses `debouncedKeywordInput` — the typed term is applied to filtering and highlighting only after the 300ms debounce fires.
+`filteredLogs` is computed by the `useFilteredLogs()` hook (`src/hooks/useFilteredLogs.js`) called from `LogPanel`. It applies ALL filters locally in a **single pass** over the newest-first buffer: server/path exact match, plain text search (message field only), keywords with `debouncedKeywordInput` (AND/OR mode), and time range (comparing the precomputed `log._ts` against `nowMs − rangeMs`). Each message is lowercased at most once (search + keywords share it), the loop early-exits once the display cap is reached, and the result is reversed in place to oldest-first. `nowMs` is collapsed to a constant when `timeRange === 'all'`, so the 5s clock tick does not re-run the filter in the default view. The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses `debouncedKeywordInput` — the typed term is applied to filtering and highlighting only after the 300ms debounce fires.
 
 `mergedServers` and `mergedPaths` are derived by merging backend metadata (`/api/topics/{topic}/meta`) with the local buffer — meta order is preserved, buffer-only entries appended. `filteredServers`/`filteredPaths` then apply the search term on top of the merged lists.
 
@@ -187,24 +190,29 @@ Key tokens: `background`, `sidebar`, `header`, `logArea`, `text`, `textSecondary
 src/
 ├── main.jsx                    # Entry point — wraps <App /> in ErrorBoundary (fallback: recovery screen + reload button)
 ├── App.jsx                     # Global state, split view, theme resolution, settings modal; updates document.title to track selected topic(s)
-├── config.js                   # VITE_WS_URL, VITE_MAX_LOGS_PER_TOPIC, VITE_MAX_MESSAGE_LENGTH + derives httpBaseUrl for REST API
+├── config.js                   # VITE_WS_URL, VITE_SSO_*, VITE_MAX_LOGS_PER_TOPIC, VITE_MAX_MESSAGE_LENGTH; derives same-origin ws/http/sso endpoints
 ├── constants/
-│   ├── theme.js                # styles.dark / styles.light token objects
-│   └── keywordColors.js        # KEYWORD_COLORS array, DEFAULT_KEYWORD_COLOR, getColorDef()
+│   └── theme.js                # styles.dark / styles.light token objects (24 keys each)
 ├── hooks/
 │   ├── useWebSocket.js         # WebSocket + reconnect + batching + rate tracking + filter dispatch
-│   └── useFilteredLogs.js      # Client-side filter pipeline (server/path/search/keywords/timeRange)
+│   └── useFilteredLogs.js      # Client-side single-pass filter (server/path/search/keywords/timeRange)
 ├── api/
 │   ├── endpoints.js            # REST endpoint path constants
-│   └── logApi.js               # REST client — download logs (parses Content-Disposition for filename, falls back to timestamped `<topic>-<ts>.log`), fetch topic metadata
+│   └── logApi.js               # REST client — download logs (parses Content-Disposition for filename, falls back to timestamped `<topic>_<ts>.log`), fetch topic metadata
 ├── utils/
-│   └── logUtils.js             # getLogLevelColor, getRelativeTime
+│   └── logUtils.js             # normalizeLogEvent (interns topic/server/path, precomputes _ts, truncates), getRelativeTime
+├── auth/
+│   ├── AuthContext.jsx         # Provider — bootstraps SSO, exposes auth state
+│   ├── authContext.js          # React context object
+│   ├── useAuth.js              # Hook — { isAuthenticated, isLoading, getToken }
+│   └── authService.js          # oidc-client-ts UserManager wrapper (token in in-memory store)
 ├── ui/
-│   ├── HeartbeatLine.jsx       # SVG heartbeat animation reflecting log rate
+│   ├── HeartbeatLine.jsx       # SVG heartbeat animation; speed varies with log rate
 │   └── ErrorBoundary.jsx       # React error boundary wrapper
 └── features/
-    ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, TimeRangeSelector.jsx, index.js
-    ├── log-viewer/LogPanel.jsx, panelReducer.js, constants.js, index.js
+    ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, TimeRangeSelector.jsx, timeRange.js (formatDurationMs), index.js
+    ├── log-viewer/LogPanel.jsx, panelReducer.js, constants.js (getShortPath, getButtonStyles), index.js
+    │   ├── hooks/useTopicMeta.js   # server/path discovery + backend meta merge (extracted from LogPanel)
     │   └── components/VirtualLogList.jsx, LogEntry.jsx, FilterBar.jsx, ActiveFilters.jsx,
     │       StatusBar.jsx, EmptyState.jsx, ScrollButtons.jsx
     │       └── headers/DesktopHeader.jsx, MobileHeader.jsx

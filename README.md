@@ -62,6 +62,7 @@ All filtering runs client-side for instant feedback. Text search updates on ever
 | **Linting** | ESLint 9 + eslint-plugin-react-hooks |
 | **Language** | JavaScript / JSX (no TypeScript) |
 | **Real-time** | WebSocket (native browser API) |
+| **Auth** | Keycloak (OIDC) via oidc-client-ts — optional, enabled when `VITE_SSO_CLIENT_ID` is set |
 
 ---
 
@@ -194,7 +195,7 @@ development and build testing, but are not the deployment entry point.
 
 ## REST API
 
-The base URL is derived automatically from `VITE_WS_URL` (`ws://` → `http://`, `wss://` → `https://`).
+The base URL is the page origin by default (same-origin deployment). If `VITE_WS_URL` is set, the REST base is derived from it instead (`ws://` → `http://`, `wss://` → `https://`, with the `/ws/...` path stripped).
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -214,22 +215,26 @@ log-dashboard-ui/
 └── src/
     ├── main.jsx               # React entry point
     ├── App.jsx                # Root layout, split view, global state
-    ├── config.js              # Reads VITE_WS_URL, VITE_MAX_LOGS_PER_TOPIC,
+    ├── config.js              # Reads VITE_WS_URL, VITE_SSO_*, VITE_MAX_LOGS_PER_TOPIC,
     │                          # VITE_MAX_MESSAGE_LENGTH from env with fallbacks.
-    │                          # Derives httpBaseUrl (http/https) from VITE_WS_URL for REST API calls
+    │                          # Derives same-origin ws/http/sso endpoints when overrides are blank
     ├── constants/
-    │   ├── theme.js           # Dark / light theme token objects
-    │   └── keywordColors.js   # Preset keyword highlight colors
+    │   └── theme.js           # Dark / light theme token objects
     ├── hooks/
     │   ├── useWebSocket.js    # WebSocket connection, auto-reconnect,
     │   │                      # log batching, rate tracking,
     │   │                      # server-side filter dispatch
-    │   └── useFilteredLogs.js # Client-side filter pipeline (server/path/search/keywords/timeRange)
+    │   └── useFilteredLogs.js # Client-side single-pass filter (server/path/search/keywords/timeRange)
     ├── utils/
-    │   └── logUtils.js        # getLogLevelColor, getRelativeTime
+    │   └── logUtils.js        # normalizeLogEvent (interns + _ts + truncation), getRelativeTime
     ├── api/
     │   ├── endpoints.js       # REST endpoint path constants
     │   └── logApi.js          # REST client — download logs, fetch topic metadata
+    ├── auth/
+    │   ├── AuthContext.jsx    # SSO provider (Keycloak via oidc-client-ts)
+    │   ├── authContext.js     # React context object
+    │   ├── useAuth.js         # { isAuthenticated, isLoading, getToken }
+    │   └── authService.js     # oidc-client-ts UserManager wrapper
     ├── ui/
     │   ├── HeartbeatLine.jsx  # SVG heartbeat animation reflecting log rate
     │   └── ErrorBoundary.jsx  # React error boundary wrapper
@@ -239,13 +244,16 @@ log-dashboard-ui/
         │   ├── FilterDropdown.jsx  # Shared searchable dropdown base component
         │   ├── ServerDropdown.jsx  # Server filter (wraps FilterDropdown)
         │   ├── PathDropdown.jsx    # Path filter (wraps FilterDropdown)
-        │   ├── KeywordFilter.jsx   # Keyword chip input, color picker, AND/OR toggle
-        │   └── TimeRangeSelector.jsx # Time range picker (All/1m/5m/15m/1h/Custom)
+        │   ├── KeywordFilter.jsx   # Keyword chip input, native color picker, AND/OR toggle
+        │   ├── TimeRangeSelector.jsx # Time range picker (All/1m/5m/15m/1h/Custom)
+        │   └── timeRange.js        # formatDurationMs helper
         ├── log-viewer/
         │   ├── index.js            # Re-exports LogPanel
         │   ├── LogPanel.jsx        # Orchestrator — state, hooks, composition
         │   ├── panelReducer.js     # useReducer logic for panel-local state
-        │   ├── constants.js        # TIME_RANGES, button styles, getShortPath
+        │   ├── constants.js        # getShortPath, getButtonStyles
+        │   ├── hooks/
+        │   │   └── useTopicMeta.js # Server/path discovery + backend meta merge
         │   └── components/
         │       ├── VirtualLogList.jsx  # Virtualized list (@tanstack/react-virtual, flow mode)
         │       ├── LogEntry.jsx        # Single log row with keyword highlighting and relative timestamp

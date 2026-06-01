@@ -46,8 +46,10 @@ export default function App() {
       : true
   ));
 
-  // Which topics are currently displayed in log panels — these get full 500-log cap.
-  // Non-viewed topics get a smaller cap (100) for sidebar info only.
+  // Which topics are currently displayed in log panels — these get the large
+  // raw buffer (rawBufferPerTopic, 2000 at default). Non-viewed topics keep a
+  // small cap (100) so opening a topic shows instant backlog instead of a blank
+  // panel; the sidebar itself uses only `topics` + `logRates`, not these logs.
   const viewedTopics = useMemo(
     () => [selectedTopic, selectedTopic2].filter(Boolean),
     [selectedTopic, selectedTopic2],
