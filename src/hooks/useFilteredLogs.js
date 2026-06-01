@@ -12,41 +12,53 @@ export function useFilteredLogs({
   const effectiveNow = timeRange === 'all' ? 0 : nowMs;
   return useMemo(() => {
     if (!selectedTopic || !topicLogs) return [];
-    let logs = topicLogs;
 
-    if (selectedServer) logs = logs.filter((l) => l.serverName === selectedServer);
-    if (selectedPath) logs = logs.filter((l) => l.path === selectedPath);
-
-    if (logSearchTerm) {
-      const lower = logSearchTerm.toLowerCase();
-      logs = logs.filter((l) =>
-        String(l.message ?? '').toLowerCase().includes(lower)
-      );
-    }
-
+    // Precompute predicate inputs once, outside the loop.
+    const lowerSearch = logSearchTerm ? logSearchTerm.toLowerCase() : null;
     const pendingKw = debouncedKeywordInput.trim().toLowerCase();
     const allTerms = [
       ...keywords.map((k) => k.text.toLowerCase()),
       ...(pendingKw ? [pendingKw] : []),
     ];
-    if (allTerms.length > 0) {
-      logs = logs.filter((l) => {
-        const haystack = String(l.message ?? '').toLowerCase();
-        return keywordMode === 'and'
-          ? allTerms.every((t) => haystack.includes(t))
-          : allTerms.some((t) => haystack.includes(t));
-      });
-    }
+    const hasTerms = allTerms.length > 0;
+    const isAndMode = keywordMode === 'and';
+    const needsMessage = lowerSearch !== null || hasTerms;
 
+    let cutoff = -Infinity;
     if (timeRange !== 'all') {
       const PRESET_MS = { '1m': 60000, '5m': 300000, '15m': 900000, '1h': 3600000 };
       const rangeMs = timeRange === 'custom' ? customRangeMs : (PRESET_MS[timeRange] || 0);
-      if (rangeMs > 0) {
-        const cutoff = effectiveNow - rangeMs;
-        logs = logs.filter((l) => Number.isFinite(l._ts) && l._ts >= cutoff);
-      }
+      if (rangeMs > 0) cutoff = effectiveNow - rangeMs;
     }
 
-    return [...logs].slice(0, config.ws.maxLogsPerTopic).reverse();
+    // Single pass over the newest-first buffer. We collect the newest matches
+    // and stop at the display cap, so this often scans far fewer than all logs.
+    // Each message is lowercased at most once (search + keywords share it), and
+    // no intermediate arrays are allocated — both matter on the 150ms hot path.
+    const cap = config.ws.maxLogsPerTopic;
+    const result = [];
+    for (let i = 0; i < topicLogs.length && result.length < cap; i++) {
+      const l = topicLogs[i];
+      if (selectedServer && l.serverName !== selectedServer) continue;
+      if (selectedPath && l.path !== selectedPath) continue;
+      if (cutoff !== -Infinity && !(Number.isFinite(l._ts) && l._ts >= cutoff)) continue;
+
+      if (needsMessage) {
+        const haystack = String(l.message ?? '').toLowerCase();
+        if (lowerSearch !== null && !haystack.includes(lowerSearch)) continue;
+        if (hasTerms) {
+          const ok = isAndMode
+            ? allTerms.every((t) => haystack.includes(t))
+            : allTerms.some((t) => haystack.includes(t));
+          if (!ok) continue;
+        }
+      }
+
+      result.push(l);
+    }
+
+    // Collected newest-first; reverse in place to oldest-first for display.
+    result.reverse();
+    return result;
   }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, keywords, debouncedKeywordInput, keywordMode, timeRange, customRangeMs, effectiveNow]);
 }
