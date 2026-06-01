@@ -39,10 +39,7 @@ export function useFilteredLogs({
       const rangeMs = timeRange === 'custom' ? customRangeMs : (PRESET_MS[timeRange] || 0);
       if (rangeMs > 0) {
         const cutoff = nowMs - rangeMs;
-        logs = logs.filter((l) => {
-          const ts = new Date(l.timestamp).getTime();
-          return Number.isFinite(ts) && ts >= cutoff;
-        });
+        logs = logs.filter((l) => Number.isFinite(l._ts) && l._ts >= cutoff);
       }
     }
 

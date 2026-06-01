@@ -1,5 +1,19 @@
 import config from '../config';
 
+// Intern low-cardinality strings (topic, serverName, path). JSON.parse mints a
+// fresh string copy per log, so thousands of logs hold thousands of duplicate
+// copies of the same handful of values. Returning a shared reference for each
+// distinct value collapses those duplicates to one allocation apiece. These
+// fields have tiny, bounded cardinality so the cache itself stays small.
+// message/timestamp are NOT interned — they are effectively unique per log.
+const internCache = new Map();
+const intern = (value) => {
+  const cached = internCache.get(value);
+  if (cached !== undefined) return cached;
+  internCache.set(value, value);
+  return value;
+};
+
 export const normalizeLogEvent = (value, nextId) => {
   if (!value || typeof value !== 'object') return null;
 
@@ -19,17 +33,19 @@ export const normalizeLogEvent = (value, nextId) => {
 
   return {
     _id: nextId,
-    topic,
-    serverName,
-    path,
+    topic: intern(topic),
+    serverName: intern(serverName),
+    path: intern(path),
     timestamp,
+    // Parse once at ingestion so filtering and relative-time rendering reuse
+    // this number instead of allocating a throwaway Date on every pass.
+    _ts: Date.parse(timestamp),
     message: safeMessage,
   };
 };
 
-export const getRelativeTime = (timestamp, now) => {
+export const getRelativeTime = (ts, now) => {
   try {
-    const ts = new Date(timestamp).getTime();
     if (!Number.isFinite(ts)) return '';
     const diff = Math.max(0, now - ts);
     if (diff < 10000) return 'just now';

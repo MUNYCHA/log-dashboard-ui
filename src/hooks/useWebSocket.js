@@ -78,7 +78,17 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
           // Non-viewed topics keep a small cap (100) — enough for sidebar
           // (last log, server badges, count) without wasting memory.
           const cap = viewed.has(topic) ? config.ws.rawBufferPerTopic : SIDEBAR_LOG_CAP;
-          updated[topic] = newLogs.reverse().concat(existing).slice(0, cap);
+          // Build the capped, newest-first array in a single pass. The old
+          // reverse().concat().slice() allocated two intermediate arrays of up
+          // to `cap` elements per active topic every flush (150ms) — pure GC
+          // churn. newLogs is oldest-first, so walk it backwards (newest first),
+          // then append the existing buffer, stopping once we hit the cap.
+          const size = Math.min(newLogs.length + existing.length, cap);
+          const merged = new Array(size);
+          let i = 0;
+          for (let j = newLogs.length - 1; j >= 0 && i < size; j--) merged[i++] = newLogs[j];
+          for (let j = 0; j < existing.length && i < size; j++) merged[i++] = existing[j];
+          updated[topic] = merged;
         }
         return updated;
       });
