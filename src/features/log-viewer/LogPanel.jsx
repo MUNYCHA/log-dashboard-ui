@@ -185,6 +185,13 @@ const LogPanel = ({
     timeRange, customRangeMs, nowMs,
   });
 
+  // Latest filtered logs in a ref so handleTogglePause can snapshot them on
+  // pause without depending on the array — that array changes every flush
+  // (~6x/sec), and a dep on it would re-create the callback that often and
+  // defeat VirtualLogList's React.memo.
+  const filteredLogsRef = useRef(filteredLogs);
+  useEffect(() => { filteredLogsRef.current = filteredLogs; }, [filteredLogs]);
+
   const displayedLogs = frozenLogs != null && frozenTopic === selectedTopic
     ? frozenLogs
     : filteredLogs;
@@ -238,14 +245,14 @@ const LogPanel = ({
     };
   }, [bufferedCount, hasActiveFilters, logRate, timeRange]);
 
-  const handleTogglePause = () => {
+  const handleTogglePause = useCallback(() => {
     if (!isPaused) {
-      dispatch({ type: 'PATCH', payload: { frozenTopic: selectedTopic, frozenLogs: filteredLogs } });
+      dispatch({ type: 'PATCH', payload: { frozenTopic: selectedTopic, frozenLogs: filteredLogsRef.current } });
     } else {
       dispatch({ type: 'PATCH', payload: { frozenTopic: null, frozenLogs: null } });
     }
     togglePause();
-  };
+  }, [isPaused, selectedTopic, togglePause]);
 
 
   const handleServerSelect = (server) => {
@@ -257,17 +264,20 @@ const LogPanel = ({
     dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path }, showPathDropdown: false, showMobilePathDropdown: false, pathSearchTerm: "" } });
   };
 
-  const handleClearServer = () => {
+  const handleClearServer = useCallback(() => {
     onClearServer();
     dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } });
-  };
+  }, [onClearServer, selectedTopic]);
 
-  const handleClearPath = () => dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } });
+  const handleClearPath = useCallback(
+    () => dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } }),
+    [selectedTopic],
+  );
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     handleClearServer();
     dispatch({ type: 'PATCH', payload: { logSearchTerm: "", keywords: [], keywordInput: "", timeRange: "all" } });
-  };
+  }, [handleClearServer]);
 
   const downloadLogs = async () => {
     try {
@@ -284,15 +294,15 @@ const LogPanel = ({
     }
   };
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0;
       previousScrollTopRef.current = 0;
     }
     dispatch({ type: 'PATCH', payload: { atTop: true, atBottom: false, autoScroll: false } });
-  };
+  }, []);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     // Prefer virtualizer-based scroll so we land exactly on the last item,
     // not mid-item when padding spacers are active.
     if (virtualizerScrollToBottomRef.current) {
@@ -304,7 +314,12 @@ const LogPanel = ({
       previousScrollTopRef.current = scrollRef.current.scrollTop;
     }
     dispatch({ type: 'PATCH', payload: { atTop: false, atBottom: true, autoScroll: true } });
-  };
+  }, []);
+
+  const handleResumeLive = useCallback(() => {
+    if (isPaused) handleTogglePause();
+    scrollToBottom();
+  }, [isPaused, handleTogglePause, scrollToBottom]);
 
   const btn = getButtonStyles(darkMode);
   const toggleAutoScroll = () => {
@@ -491,10 +506,7 @@ const LogPanel = ({
         selectedPath={selectedPath}
         emptyState={emptyState}
         onClearFilters={clearAllFilters}
-        onResumeLive={() => {
-          if (isPaused) handleTogglePause();
-          scrollToBottom();
-        }}
+        onResumeLive={handleResumeLive}
         scrollRef={scrollRef}
         atTop={atTop}
         atBottom={atBottom}
