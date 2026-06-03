@@ -39,7 +39,7 @@ export default function App() {
   const [isPaused2, setIsPaused2] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readStoredSetting('logstream:sidebarCollapsed', false, (value) => value === 'true'));
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [terminalMode, setTerminalMode] = useState(() => readStoredSetting('logstream:terminalMode', false, (value) => value === 'true'));
+  const [terminalMode, setTerminalMode] = useState(() => readStoredSetting('logstream:terminalMode', true, (value) => value === 'true'));
   const [systemPrefersDark, setSystemPrefersDark] = useState(() => (
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
