@@ -38,7 +38,7 @@ App
 └── LogPanel #2 (split view only, same structure)
 ```
 
-**WS protocol:** Server sends `{ type: "topics", topics: string[] }` on connect (legacy bare `string[]` also accepted), then `LogEvent` objects or **batched JSON arrays**, plus `{ type: "stats" }` rate updates. Each log gets `_id` (monotonic counter) for stable React keys.
+**WS protocol:** Server sends `{ type: "topics", topics: string[] }` on connect (legacy bare `string[]` also accepted), then `LogEvent` objects or **batched JSON arrays**, plus `{ type: "stats" }` rate updates. Each log gets `_id` (monotonic counter) for stable React keys. The server closes sessions whose JWT has expired (`1008 Token expired`); `useWebSocket` prevents that by checking every 30s whether silent renew produced a new token and pushing it via `{ action: "refresh", token }` — the auto-reconnect path covers the rare miss.
 
 **Client-side filtering:** All filtering (server, path, search, keywords, timeRange) runs client-side in the `useFilteredLogs` hook (a `useMemo`) for instant real-time feedback. It is a **single pass** over the newest-first buffer: applies every predicate inline, lowercases each message at most once, and stops once the display cap (500) is reached — so it often scans far fewer than all buffered logs. Keyword input uses `debouncedKeywordInput` (300ms) so the filter and the pending keyword chip appear in sync. Server-side filter (debounced 300ms) is a bandwidth optimization only — UI does not depend on it for display.
 

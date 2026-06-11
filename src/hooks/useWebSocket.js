@@ -4,6 +4,7 @@ import { normalizeLogEvent } from '../utils/logUtils';
 
 const FLUSH_INTERVAL_MS = 150;  // batch log state updates — reduces re-renders dramatically
 const SIDEBAR_LOG_CAP = 100;
+const TOKEN_REFRESH_CHECK_MS = 30000; // how often to push a silently-renewed token to the server
 const isValidTopicList = (topics) =>
   Array.isArray(topics) && topics.every((topic) => typeof topic === 'string' && topic.trim() !== '');
 
@@ -36,6 +37,7 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
   const reconnectTimerRef = useRef(null);
   const socketRef = useRef(null);
   const getTokenRef = useRef(getToken); // stable ref so connect() always uses latest getToken
+  const lastSentTokenRef = useRef(null); // last token the server has seen (handshake or refresh)
   const subscribedTopicsRef = useRef(new Set());
   const activeFilterRef = useRef(null); // last filter sent — resend on reconnect
   const viewedTopicsRef = useRef(new Set());
@@ -137,6 +139,7 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
       // instead of a URL query string — keeps the token out of nginx/proxy access
       // logs, browser history, and HAR exports. Server echoes back 'logstream.v1'.
       const protocols = token ? ['logstream.v1', `bearer.${token}`] : ['logstream.v1'];
+      lastSentTokenRef.current = token;
       const socket = new WebSocket(url, protocols);
       socketRef.current = socket;
 
@@ -256,8 +259,23 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
 
     connect();
 
+    // The server validates the JWT at handshake and closes sessions whose token
+    // has lapsed (access tokens only live ~5 min). Whenever silent renew yields a
+    // new token, push it over the socket via the `refresh` action so a healthy
+    // connection is never cut. getToken() is cached until oidc-client-ts renews,
+    // so this sends roughly one tiny message per token lifespan.
+    const refreshInterval = setInterval(async () => {
+      const socket = socketRef.current;
+      if (!socket || socket.readyState !== WebSocket.OPEN) return;
+      const token = getTokenRef.current ? await getTokenRef.current() : null;
+      if (cancelled || !token || token === lastSentTokenRef.current) return;
+      lastSentTokenRef.current = token;
+      socket.send(JSON.stringify({ action: 'refresh', token }));
+    }, TOKEN_REFRESH_CHECK_MS);
+
     return () => {
       cancelled = true;
+      clearInterval(refreshInterval);
       // Close the socket so StrictMode re-mount doesn't leave a stale
       // connection that still receives (and duplicates) server messages.
       if (socketRef.current) {
