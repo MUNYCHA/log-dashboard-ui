@@ -5,42 +5,42 @@ import { normalizeLogEvent } from '../utils/logUtils';
 const FLUSH_INTERVAL_MS = 150;  // batch log state updates — reduces re-renders dramatically
 const SIDEBAR_LOG_CAP = 100;
 const TOKEN_REFRESH_CHECK_MS = 30000; // how often to push a silently-renewed token to the server
-const isValidTopicList = (topics) =>
-  Array.isArray(topics) && topics.every((topic) => typeof topic === 'string' && topic.trim() !== '');
+const isValidChannelList = (channels) =>
+  Array.isArray(channels) && channels.every((channel) => typeof channel === 'string' && channel.trim() !== '');
 
 /**
  * Connects to a WebSocket server and manages incoming log data.
  *
  * The server sends typed messages:
- *   - { type: "topics", topics: string[] }                    — available topics (on connect)
- *   - { type: "stats", topics: { [t]: { rate, servers } } }  — periodic stats (every ~2s)
- *   - LogEntry or LogEntry[]                                  — log events (after subscribe)
+ *   - { type: "channels", channels: string[] }                   — available channels (on connect)
+ *   - { type: "stats", channels: { [c]: { rate, servers } } }   — periodic stats (every ~2s)
+ *   - LogEntry or LogEntry[]                                     — log events (after subscribe)
  *
  * Returns:
- *   logsByTopic   - Record<topic, LogEntry[]> — most recent log first
- *   topics        - string[] — known topic names
- *   isConnected   - boolean — live connection status
+ *   logsByChannel  - Record<channel, LogEntry[]> — most recent log first
+ *   channels       - string[] — known channel names
+ *   isConnected    - boolean — live connection status
  *   isReconnecting - boolean — true while waiting to reconnect
- *   logRates      - Record<topic, number> — logs/sec per topic (from server stats)
- *   clearLogs     - (topic: string) => void
+ *   logRates       - Record<channel, number> — logs/sec per channel (from server stats)
+ *   clearLogs      - (channel: string) => void
  */
-export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true) => {
-  const [logsByTopic, setLogsByTopic] = useState({});
-  const [topics, setTopics] = useState([]);
+export const useWebSocket = (url, viewedChannels, getToken, isAuthenticated = true) => {
+  const [logsByChannel, setLogsByChannel] = useState({});
+  const [channels, setChannels] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [logRates, setLogRates] = useState({});
 
   const pendingRef = useRef([]);        // logs waiting for next flush
-  const pendingCountRef = useRef({});   // per-topic count in pendingRef — enforces cap
+  const pendingCountRef = useRef({});   // per-channel count in pendingRef — enforces cap
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef(null);
   const socketRef = useRef(null);
   const getTokenRef = useRef(getToken); // stable ref so connect() always uses latest getToken
   const lastSentTokenRef = useRef(null); // last token the server has seen (handshake or refresh)
-  const subscribedTopicsRef = useRef(new Set());
+  const subscribedChannelsRef = useRef(new Set());
   const activeFilterRef = useRef(null); // last filter sent — resend on reconnect
-  const viewedTopicsRef = useRef(new Set());
+  const viewedChannelsRef = useRef(new Set());
   const nextLogIdRef = useRef(1);
   const lastLogAtRef = useRef({});
   const statsIntervalMsRef = useRef(2000);
@@ -48,43 +48,43 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
 
   // Keep refs in sync so closures inside connect() always see the latest values
   useEffect(() => {
-    viewedTopicsRef.current = new Set(viewedTopics.filter(Boolean));
-  }, [viewedTopics]);
+    viewedChannelsRef.current = new Set(viewedChannels.filter(Boolean));
+  }, [viewedChannels]);
 
   useEffect(() => {
     getTokenRef.current = getToken;
   }, [getToken]);
 
   // Flush pending logs to state in batches — one React re-render per interval.
-  // Groups by topic first so we create ONE new array per topic per flush
+  // Groups by channel first so we create ONE new array per channel per flush
   // instead of one array per individual log message.
   useEffect(() => {
     const interval = setInterval(() => {
       if (pendingRef.current.length === 0) return;
       const batch = pendingRef.current.splice(0);
-      pendingCountRef.current = {}; // reset per-topic counts after flush
+      pendingCountRef.current = {}; // reset per-channel counts after flush
 
-      // Group by topic — avoids N intermediate array allocations per topic
-      const byTopic = {};
+      // Group by channel — avoids N intermediate array allocations per channel
+      const byChannel = {};
       for (const log of batch) {
-        if (!byTopic[log.topic]) byTopic[log.topic] = [];
-        byTopic[log.topic].push(log); // oldest first
+        if (!byChannel[log.channel]) byChannel[log.channel] = [];
+        byChannel[log.channel].push(log); // oldest first
       }
 
-      setLogsByTopic((prev) => {
+      setLogsByChannel((prev) => {
         const updated = { ...prev };
-        const viewed = viewedTopicsRef.current;
-        for (const [topic, newLogs] of Object.entries(byTopic)) {
-          const existing = updated[topic] || [];
-          // Viewed topics get the large raw buffer (rawBufferPerTopic, 2000 at
+        const viewed = viewedChannelsRef.current;
+        for (const [channel, newLogs] of Object.entries(byChannel)) {
+          const existing = updated[channel] || [];
+          // Viewed channels get the large raw buffer (rawBufferPerChannel, 2000 at
           // default) so filtered views can still fill the 500 display cap.
-          // Non-viewed topics keep a small cap (100): just enough to show instant
-          // backlog when the topic is opened, without wasting memory. (The sidebar
-          // reads only `topics` + `logRates` — it does not use these buffers.)
-          const cap = viewed.has(topic) ? config.ws.rawBufferPerTopic : SIDEBAR_LOG_CAP;
+          // Non-viewed channels keep a small cap (100): just enough to show instant
+          // backlog when the channel is opened, without wasting memory. (The sidebar
+          // reads only `channels` + `logRates` — it does not use these buffers.)
+          const cap = viewed.has(channel) ? config.ws.rawBufferPerChannel : SIDEBAR_LOG_CAP;
           // Build the capped, newest-first array in a single pass. The old
           // reverse().concat().slice() allocated two intermediate arrays of up
-          // to `cap` elements per active topic every flush (150ms) — pure GC
+          // to `cap` elements per active channel every flush (150ms) — pure GC
           // churn. newLogs is oldest-first, so walk it backwards (newest first),
           // then append the existing buffer, stopping once we hit the cap.
           const size = Math.min(newLogs.length + existing.length, cap);
@@ -92,7 +92,7 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
           let i = 0;
           for (let j = newLogs.length - 1; j >= 0 && i < size; j--) merged[i++] = newLogs[j];
           for (let j = 0; j < existing.length && i < size; j++) merged[i++] = existing[j];
-          updated[topic] = merged;
+          updated[channel] = merged;
         }
         return updated;
       });
@@ -108,11 +108,11 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
         let changed = false;
         const next = { ...prev };
 
-        for (const [topic, rate] of Object.entries(prev)) {
+        for (const [channel, rate] of Object.entries(prev)) {
           if (rate <= 0) continue;
-          const lastRateAt = lastRateAtRef.current[topic];
+          const lastRateAt = lastRateAtRef.current[channel];
           if (!lastRateAt || now - lastRateAt >= statsIntervalMsRef.current * 2) {
-            next[topic] = 0;
+            next[channel] = 0;
             changed = true;
           }
         }
@@ -149,8 +149,8 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
         setIsReconnecting(false);
         reconnectAttemptsRef.current = 0;
         // Re-send subscriptions on reconnect
-        if (subscribedTopicsRef.current.size > 0) {
-          socket.send(JSON.stringify({ action: 'subscribe', topics: [...subscribedTopicsRef.current] }));
+        if (subscribedChannelsRef.current.size > 0) {
+          socket.send(JSON.stringify({ action: 'subscribe', channels: [...subscribedChannelsRef.current] }));
         }
         // Re-send active filter on reconnect
         if (activeFilterRef.current) {
@@ -165,8 +165,8 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
           let changed = false;
           const next = {};
 
-          for (const [topic, rate] of Object.entries(prev)) {
-            next[topic] = 0;
+          for (const [channel, rate] of Object.entries(prev)) {
+            next[channel] = 0;
             if (rate !== 0) changed = true;
           }
 
@@ -198,13 +198,13 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
         }
 
         // Typed messages from server
-        if (data.type === 'topics') {
-          const topicList = isValidTopicList(data.topics) ? data.topics : [];
-          setTopics(topicList);
-          setLogsByTopic((prev) => {
+        if (data.type === 'channels') {
+          const channelList = isValidChannelList(data.channels) ? data.channels : [];
+          setChannels(channelList);
+          setLogsByChannel((prev) => {
             const updated = { ...prev };
-            topicList.forEach((topic) => {
-              if (!updated[topic]) updated[topic] = [];
+            channelList.forEach((channel) => {
+              if (!updated[channel]) updated[channel] = [];
             });
             return updated;
           });
@@ -212,28 +212,28 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
         }
 
         if (data.type === 'stats') {
-          if (!data.topics || typeof data.topics !== 'object') return;
+          if (!data.channels || typeof data.channels !== 'object') return;
           statsIntervalMsRef.current = Number(data.intervalMs) > 0 ? Number(data.intervalMs) : 2000;
           const intervalSec = statsIntervalMsRef.current / 1000;
           const rates = {};
           const now = Date.now();
-          for (const [topic, info] of Object.entries(data.topics)) {
+          for (const [channel, info] of Object.entries(data.channels)) {
             if (!info || typeof info !== 'object') continue;
             const rate = Number(info.rate);
-            rates[topic] = Number.isFinite(rate) ? +(rate / intervalSec).toFixed(1) : 0;
-            lastRateAtRef.current[topic] = now;
+            rates[channel] = Number.isFinite(rate) ? +(rate / intervalSec).toFixed(1) : 0;
+            lastRateAtRef.current[channel] = now;
           }
           setLogRates((prev) => ({ ...prev, ...rates }));
           return;
         }
 
-        // Legacy: bare topic array (backwards compat during rollout)
-        if (isValidTopicList(data)) {
-          setTopics(data);
-          setLogsByTopic((prev) => {
+        // Legacy: bare channel array (backwards compat during rollout)
+        if (isValidChannelList(data)) {
+          setChannels(data);
+          setLogsByChannel((prev) => {
             const updated = { ...prev };
-            data.forEach((topic) => {
-              if (!updated[topic]) updated[topic] = [];
+            data.forEach((channel) => {
+              if (!updated[channel]) updated[channel] = [];
             });
             return updated;
           });
@@ -246,12 +246,12 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
         for (const rawEvent of events) {
           const log = normalizeLogEvent(rawEvent, nextLogIdRef.current++);
           if (!log) continue;
-          lastLogAtRef.current[log.topic] = Date.now();
+          lastLogAtRef.current[log.channel] = Date.now();
 
-          const topicCount = pendingCountRef.current[log.topic] || 0;
-          if (topicCount < config.ws.rawBufferPerTopic) {
+          const channelCount = pendingCountRef.current[log.channel] || 0;
+          if (channelCount < config.ws.rawBufferPerChannel) {
             pendingRef.current.push(log);
-            pendingCountRef.current[log.topic] = topicCount + 1;
+            pendingCountRef.current[log.channel] = channelCount + 1;
           }
         }
       };
@@ -289,29 +289,29 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
     };
   }, [url, isAuthenticated]);
 
-  const clearLogs = useCallback((topic) => {
-    // Drain any queued logs for this topic so they don't reappear on the next flush
-    pendingRef.current = pendingRef.current.filter((log) => log.topic !== topic);
-    pendingCountRef.current[topic] = 0;
-    delete lastLogAtRef.current[topic];
-    setLogsByTopic((prev) => ({ ...prev, [topic]: [] }));
+  const clearLogs = useCallback((channel) => {
+    // Drain any queued logs for this channel so they don't reappear on the next flush
+    pendingRef.current = pendingRef.current.filter((log) => log.channel !== channel);
+    pendingCountRef.current[channel] = 0;
+    delete lastLogAtRef.current[channel];
+    setLogsByChannel((prev) => ({ ...prev, [channel]: [] }));
   }, []);
 
-  const trimTopicBuffer = useCallback((topic, cap = SIDEBAR_LOG_CAP) => {
-    if (!topic || cap < 0) return;
-    setLogsByTopic((prev) => {
-      const existing = prev[topic];
+  const trimChannelBuffer = useCallback((channel, cap = SIDEBAR_LOG_CAP) => {
+    if (!channel || cap < 0) return;
+    setLogsByChannel((prev) => {
+      const existing = prev[channel];
       if (!Array.isArray(existing) || existing.length <= cap) return prev;
-      return { ...prev, [topic]: existing.slice(0, cap) };
+      return { ...prev, [channel]: existing.slice(0, cap) };
     });
   }, []);
 
-  const subscribe = useCallback((topicList) => {
-    const viewed = new Set(topicList.filter((topic) => typeof topic === 'string' && topic.trim() !== ''));
-    subscribedTopicsRef.current = viewed;
+  const subscribe = useCallback((channelList) => {
+    const viewed = new Set(channelList.filter((channel) => typeof channel === 'string' && channel.trim() !== ''));
+    subscribedChannelsRef.current = viewed;
     const socket = socketRef.current;
     if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ action: 'subscribe', topics: [...viewed] }));
+      socket.send(JSON.stringify({ action: 'subscribe', channels: [...viewed] }));
     }
   }, []);
 
@@ -361,5 +361,5 @@ export const useWebSocket = (url, viewedTopics, getToken, isAuthenticated = true
     }
   }, []);
 
-  return { logsByTopic, topics, isConnected, isReconnecting, clearLogs, trimTopicBuffer, logRates, subscribe, sendFilter };
+  return { logsByChannel, channels, isConnected, isReconnecting, clearLogs, trimChannelBuffer, logRates, subscribe, sendFilter };
 };

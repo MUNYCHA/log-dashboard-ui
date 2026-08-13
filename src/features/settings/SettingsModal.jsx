@@ -10,8 +10,8 @@ const SettingsModal = ({
   darkMode,
   themeMode,
   onThemeModeChange,
-  topicSortMode,
-  onTopicSortModeChange,
+  channelSortMode,
+  onChannelSortModeChange,
   sidebarCollapsed,
   onSidebarCollapsedChange,
   terminalMode,
@@ -161,20 +161,20 @@ const SettingsModal = ({
                 <SettingRow
                   darkMode={darkMode}
                   title="Collapsed sidebar"
-                  description="Icons only, hide topic labels"
+                  description="Icons only, hide channel labels"
                   control={<ToggleSwitch checked={sidebarCollapsed} onChange={onSidebarCollapsedChange} darkMode={darkMode} ariaLabel="Toggle collapsed sidebar" />}
                   icon={<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16v14H4z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5v14" /></svg>}
                 />
                 <SettingRow
                   darkMode={darkMode}
                   last
-                  title="Topic order"
-                  description="How topics are sorted in the sidebar"
+                  title="Channel order"
+                  description="How channels are sorted in the sidebar"
                   control={
                     <div className="flex gap-1.5">
-                      <SortChip active={topicSortMode === 'activity'} onClick={() => onTopicSortModeChange('activity')} darkMode={darkMode}>Active</SortChip>
-                      <SortChip active={topicSortMode === 'asc'} onClick={() => onTopicSortModeChange('asc')} darkMode={darkMode}>A–Z</SortChip>
-                      <SortChip active={topicSortMode === 'desc'} onClick={() => onTopicSortModeChange('desc')} darkMode={darkMode}>Z–A</SortChip>
+                      <SortChip active={channelSortMode === 'activity'} onClick={() => onChannelSortModeChange('activity')} darkMode={darkMode}>Active</SortChip>
+                      <SortChip active={channelSortMode === 'asc'} onClick={() => onChannelSortModeChange('asc')} darkMode={darkMode}>A–Z</SortChip>
+                      <SortChip active={channelSortMode === 'desc'} onClick={() => onChannelSortModeChange('desc')} darkMode={darkMode}>Z–A</SortChip>
                     </div>
                   }
                   icon={<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M7 12h10M9 17h6" /></svg>}

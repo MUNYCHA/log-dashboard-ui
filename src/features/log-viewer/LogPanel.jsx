@@ -6,7 +6,7 @@ import { downloadLogs as apiDownloadLogs } from '../../api/logApi';
 import { useAuth } from '../../auth/useAuth';
 import { initialPanelState, panelReducer } from './panelReducer';
 import { useFilteredLogs } from '../../hooks/useFilteredLogs';
-import { useTopicMeta } from './hooks/useTopicMeta';
+import { useChannelMeta } from './hooks/useChannelMeta';
 import VirtualLogList from './components/VirtualLogList';
 import DesktopHeader from "./components/headers/DesktopHeader";
 import MobileHeader from "./components/headers/MobileHeader";
@@ -16,8 +16,8 @@ import StatusBar from "./components/StatusBar";
 import EmptyState from "./components/EmptyState";
 
 const LogPanel = ({
-  selectedTopic,
-  topicLogs,
+  selectedChannel,
+  channelLogs,
   selectedServer,
   onServerSelect,
   onClearServer,
@@ -41,24 +41,24 @@ const LogPanel = ({
   panelId,
 }) => {
   const { getToken } = useAuth();
-  const [state, dispatch] = useReducer(panelReducer, undefined, () => initialPanelState(selectedTopic));
+  const [state, dispatch] = useReducer(panelReducer, undefined, () => initialPanelState(selectedChannel));
   const {
-    frozenLogs, frozenTopic, logSearchTerm, debouncedSearch, autoScroll,
+    frozenLogs, frozenChannel, logSearchTerm, debouncedSearch, autoScroll,
     showServerDropdown, showPathDropdown, showMobileServerDropdown, showMobilePathDropdown,
-    serverSearchTerm, pathSearchTerm, pathForTopic,
+    serverSearchTerm, pathSearchTerm, pathForChannel,
     isMobileMenuOpen, mobileMenuReady,
     keywords, keywordInput, debouncedKeywordInput, keywordMode,
     timeRange, customRangeMs,
-    atTop, atBottom, downloadError, topicMeta,
+    atTop, atBottom, downloadError, channelMeta,
   } = state;
-  const selectedPathForTopic = pathForTopic.topic === selectedTopic ? pathForTopic.path : null;
+  const selectedPathForChannel = pathForChannel.channel === selectedChannel ? pathForChannel.path : null;
   const scrollRef = useRef(null);
   const virtualizerScrollToBottomRef = useRef(null);
   const serverButtonRef = useRef(null);
   const pathButtonRef = useRef(null);
   const previousScrollTopRef = useRef(0);
   const userScrollIntentUntilRef = useRef(0);
-  const previousTopicRef = useRef(selectedTopic);
+  const previousChannelRef = useRef(selectedChannel);
 
   const markUserScrollIntent = useCallback(() => {
     userScrollIntentUntilRef.current = Date.now() + 800;
@@ -107,15 +107,15 @@ const LogPanel = ({
     previousScrollTopRef.current = el.scrollTop;
     el.addEventListener('scroll', handleScroll, { passive: true });
     return () => el.removeEventListener('scroll', handleScroll);
-  }, [handleScroll, selectedTopic]);
+  }, [handleScroll, selectedChannel]);
 
   useEffect(() => {
-    const previousTopic = previousTopicRef.current;
-    previousTopicRef.current = selectedTopic;
+    const previousChannel = previousChannelRef.current;
+    previousChannelRef.current = selectedChannel;
 
-    if (!selectedTopic || previousTopic === selectedTopic) return;
+    if (!selectedChannel || previousChannel === selectedChannel) return;
 
-    dispatch({ type: 'RESET_TOPIC', topic: selectedTopic });
+    dispatch({ type: 'RESET_CHANNEL', channel: selectedChannel });
     userScrollIntentUntilRef.current = 0;
     previousScrollTopRef.current = 0;
 
@@ -128,7 +128,7 @@ const LogPanel = ({
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
     });
-  }, [selectedTopic]);
+  }, [selectedChannel]);
 
   useEffect(() => {
     const t = setTimeout(() => dispatch({ type: 'PATCH', payload: { debouncedSearch: logSearchTerm } }), 300);
@@ -140,9 +140,9 @@ const LogPanel = ({
     return () => clearTimeout(t);
   }, [keywordInput]);
 
-  const { mergedServers, mergedPaths, selectedPath } = useTopicMeta({
-    selectedTopic, topicLogs, selectedServer, selectedPathForTopic,
-    topicMeta, onServerSelect, getToken, dispatch,
+  const { mergedServers, mergedPaths, selectedPath } = useChannelMeta({
+    selectedChannel, channelLogs, selectedServer, selectedPathForChannel,
+    channelMeta, onServerSelect, getToken, dispatch,
   });
 
   useEffect(() => {
@@ -180,7 +180,7 @@ const LogPanel = ({
   }, []);
 
   const filteredLogs = useFilteredLogs({
-    selectedTopic, topicLogs, selectedServer, selectedPath,
+    selectedChannel, channelLogs, selectedServer, selectedPath,
     logSearchTerm, keywords, debouncedKeywordInput, keywordMode,
     timeRange, customRangeMs, nowMs,
   });
@@ -192,10 +192,10 @@ const LogPanel = ({
   const filteredLogsRef = useRef(filteredLogs);
   useEffect(() => { filteredLogsRef.current = filteredLogs; }, [filteredLogs]);
 
-  const displayedLogs = frozenLogs != null && frozenTopic === selectedTopic
+  const displayedLogs = frozenLogs != null && frozenChannel === selectedChannel
     ? frozenLogs
     : filteredLogs;
-  const bufferedCount = topicLogs?.length || 0;
+  const bufferedCount = channelLogs?.length || 0;
   const displayKeywords = useMemo(() => {
     const pending = debouncedKeywordInput.trim();
     if (!pending) return keywords;
@@ -215,23 +215,23 @@ const LogPanel = ({
     if (hasActiveFilters) {
       return {
         title: 'No logs match the current filters',
-        description: 'Adjust or clear filters to return to the live stream for this topic.',
+        description: 'Adjust or clear filters to return to the live stream for this channel.',
         showClearFilters: true,
       };
     }
 
     if (bufferedCount === 0 && logRate > 0) {
       return {
-        title: 'Topic is live. Waiting for local buffer',
-        description: 'The topic is receiving traffic now. The panel will fill as soon as recent entries arrive in the local stream buffer.',
+        title: 'Channel is live. Waiting for local buffer',
+        description: 'The channel is receiving traffic now. The panel will fill as soon as recent entries arrive in the local stream buffer.',
         showClearFilters: false,
       };
     }
 
     if (bufferedCount === 0) {
       return {
-        title: 'No logs received for this topic yet',
-        description: 'This topic is known to the dashboard, but no log entries have reached the client buffer yet.',
+        title: 'No logs received for this channel yet',
+        description: 'This channel is known to the dashboard, but no log entries have reached the client buffer yet.',
         showClearFilters: false,
       };
     }
@@ -239,39 +239,39 @@ const LogPanel = ({
     return {
       title: 'No recent logs in the current view',
       description: timeRange !== 'all'
-        ? `There are buffered logs for this topic, but none fall inside the last ${timeRange}.`
-        : 'There are buffered logs for this topic, but none are visible in the current view.',
+        ? `There are buffered logs for this channel, but none fall inside the last ${timeRange}.`
+        : 'There are buffered logs for this channel, but none are visible in the current view.',
       showClearFilters: false,
     };
   }, [bufferedCount, hasActiveFilters, logRate, timeRange]);
 
   const handleTogglePause = useCallback(() => {
     if (!isPaused) {
-      dispatch({ type: 'PATCH', payload: { frozenTopic: selectedTopic, frozenLogs: filteredLogsRef.current } });
+      dispatch({ type: 'PATCH', payload: { frozenChannel: selectedChannel, frozenLogs: filteredLogsRef.current } });
     } else {
-      dispatch({ type: 'PATCH', payload: { frozenTopic: null, frozenLogs: null } });
+      dispatch({ type: 'PATCH', payload: { frozenChannel: null, frozenLogs: null } });
     }
     togglePause();
-  }, [isPaused, selectedTopic, togglePause]);
+  }, [isPaused, selectedChannel, togglePause]);
 
 
   const handleServerSelect = (server) => {
     onServerSelect(server);
-    dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null }, showServerDropdown: false, showMobileServerDropdown: false, serverSearchTerm: "" } });
+    dispatch({ type: 'PATCH', payload: { pathForChannel: { channel: selectedChannel, path: null }, showServerDropdown: false, showMobileServerDropdown: false, serverSearchTerm: "" } });
   };
 
   const handlePathSelect = (path) => {
-    dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path }, showPathDropdown: false, showMobilePathDropdown: false, pathSearchTerm: "" } });
+    dispatch({ type: 'PATCH', payload: { pathForChannel: { channel: selectedChannel, path }, showPathDropdown: false, showMobilePathDropdown: false, pathSearchTerm: "" } });
   };
 
   const handleClearServer = useCallback(() => {
     onClearServer();
-    dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } });
-  }, [onClearServer, selectedTopic]);
+    dispatch({ type: 'PATCH', payload: { pathForChannel: { channel: selectedChannel, path: null } } });
+  }, [onClearServer, selectedChannel]);
 
   const handleClearPath = useCallback(
-    () => dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } }),
-    [selectedTopic],
+    () => dispatch({ type: 'PATCH', payload: { pathForChannel: { channel: selectedChannel, path: null } } }),
+    [selectedChannel],
   );
 
   const clearAllFilters = useCallback(() => {
@@ -281,7 +281,7 @@ const LogPanel = ({
 
   const downloadLogs = async () => {
     try {
-      const { blob, filename } = await apiDownloadLogs(selectedTopic, getToken);
+      const { blob, filename } = await apiDownloadLogs(selectedChannel, getToken);
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = objectUrl;
@@ -330,7 +330,7 @@ const LogPanel = ({
     scrollToBottom();
   };
 
-  if (!selectedTopic) {
+  if (!selectedChannel) {
     return (
       <EmptyState
         theme={theme}
@@ -351,7 +351,7 @@ const LogPanel = ({
     >
       <div className={`px-3 sm:px-4 md:px-4 py-2 ${theme.card} rounded-2xl flex-shrink-0 relative z-10`}>
         <DesktopHeader
-          selectedTopic={selectedTopic}
+          selectedChannel={selectedChannel}
           displayedLogs={displayedLogs}
           logRate={logRate}
           darkMode={darkMode}
@@ -371,7 +371,7 @@ const LogPanel = ({
         />
 
         <MobileHeader
-          selectedTopic={selectedTopic}
+          selectedChannel={selectedChannel}
           displayedLogs={displayedLogs}
           logRate={logRate}
           darkMode={darkMode}

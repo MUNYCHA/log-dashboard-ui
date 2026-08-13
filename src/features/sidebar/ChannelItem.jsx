@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const MotionSpan = motion.span;
 
-const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkMode }) => {
+const ChannelItem = React.memo(({ channel, isSelected, onChannelSelect, logRate, darkMode }) => {
   const isActive = logRate > 0;
   const itemTone = isSelected
     ? (darkMode
@@ -15,12 +15,12 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkM
 
   return (
     <button
-      onClick={() => onTopicSelect(topic)}
+      onClick={() => onChannelSelect(channel)}
       className={`relative w-full overflow-hidden rounded-xl px-4 py-2.5 text-left transition-all duration-150 ease-in-out active:scale-[0.98] hover:translate-x-0.5 ${itemTone}`}
     >
       {isSelected && (
         <MotionSpan
-          layoutId="topic-selection-indicator"
+          layoutId="channel-selection-indicator"
           className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-full ${darkMode ? 'bg-[#8AB4F8]' : 'bg-[#1A73E8]'}`}
           transition={{ type: 'spring', stiffness: 500, damping: 36 }}
         />
@@ -32,7 +32,7 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkM
             : darkMode ? 'bg-[#5F6368]' : 'bg-[#DADCE0]'
         }`} />
         <span className="truncate text-[13.5px] font-medium">
-          {topic}
+          {channel}
         </span>
         {isActive && (
           <span className={`ml-auto text-[11px] font-mono tabular-nums flex-shrink-0 ${
@@ -46,4 +46,4 @@ const TopicItem = React.memo(({ topic, isSelected, onTopicSelect, logRate, darkM
   );
 });
 
-export default TopicItem;
+export default ChannelItem;

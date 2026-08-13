@@ -1,6 +1,6 @@
 # LogStream
 
-A real-time log monitoring dashboard built with React + Vite. Connects to a WebSocket server and streams live logs grouped by topic, server, and file path. Fully responsive from desktop monitor to smartphone.
+A real-time log monitoring dashboard built with React + Vite. Connects to a WebSocket server and streams live logs grouped by channel, server, and file path. Fully responsive from desktop monitor to smartphone.
 
 ---
 
@@ -12,10 +12,10 @@ A real-time log monitoring dashboard built with React + Vite. Connects to a WebS
 - **Pause / resume** stream — display freezes on the current snapshot while paused; underlying buffer continues accumulating; live view resumes on unpause
 - **Batched rendering** — log updates are flushed every 150ms to minimize re-renders under high volume
 
-### Topic & Filtering (Client-Side, Real-Time)
+### Channel & Filtering (Client-Side, Real-Time)
 All filtering runs client-side for instant feedback. Text search updates on every keystroke; keyword filter uses a 300ms client-side debounce (the typed term is applied to filtering and highlighting after the debounce fires). A debounced server-side filter (300ms) also runs in parallel as a bandwidth optimization to reduce WebSocket traffic.
 
-- **Topic sidebar** — all topics auto-subscribed; live log rate (logs/sec) per topic
+- **Channel sidebar** — all channels auto-subscribed; live log rate (logs/sec) per channel
 - **Server filter** — searchable dropdown to filter logs by server name
 - **Path filter** — searchable dropdown to filter logs by file path (depends on server selection)
 - **Text search** — instant client-side search across log message content
@@ -36,15 +36,15 @@ All filtering runs client-side for instant feedback. Text search updates on ever
 - **Per-panel independent pause** — each split-view panel has its own pause state
 - **Active panel indicator** — active panel in split view is indicated by a dot in the header; empty-state panels show a focus ring
 - **Heartbeat indicator** — SVG line animation reflecting log ingestion rate; shown in DesktopHeader (desktop, `lg` breakpoint) and MobileHeader; animation speed varies with rate
-- **Log rate indicator** — logs/sec shown per topic in the sidebar; sidebar header shows an active-topic counter (active / total)
+- **Log rate indicator** — logs/sec shown per channel in the sidebar; sidebar header shows an active-channel counter (active / total)
 - **Status bar counts** — shows "shown" vs "buffered" log counts; a `Filtered` badge appears when any filter is active
-- **Dynamic tab title** — browser tab tracks the selected topic (or both topics in split view)
-- **Settings drawer** — left-side drawer with theme selector, terminal mode, sidebar collapse, and topic sort order
+- **Dynamic tab title** — browser tab tracks the selected channel (or both channels in split view)
+- **Settings drawer** — left-side drawer with theme selector, terminal mode, sidebar collapse, and channel sort order
 - **Terminal mode** — compact monospace log view without cards
 
 ### Actions
-- **Download logs** — download the full log file for the selected topic directly from the server
-- **Clear logs** per topic
+- **Download logs** — download the full log file for the selected channel directly from the server
+- **Clear logs** per channel
 - **Auto-scroll** to latest logs — disabled only by user-initiated upward scrolling; re-enables via the scroll-to-bottom button or the auto-scroll toggle button
 - **Scroll to top / bottom** floating buttons appear when needed
 
@@ -141,15 +141,15 @@ development and build testing, but are not the deployment entry point.
 
 | Type | Shape | When |
 |---|---|---|
-| Topic list | `{ type: "topics", topics: string[] }` (primary), legacy `string[]` fallback | Once on connect — list of all topic names |
-| Stats | `{ type: "stats", topics: { [topic]: { rate, servers } }, intervalMs }` | Periodic (~every 2s) — per-topic log rate and server info |
-| Log event | `{ topic, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events; single object or batched array. Client always filters locally — server-side filter is a bandwidth optimization only (may be cleared in split-view or no-filter cases) |
+| Channel list | `{ type: "channels", channels: string[] }` (primary), legacy `string[]` fallback | Once on connect — list of all channel names |
+| Stats | `{ type: "stats", channels: { [channel]: { rate, servers } }, intervalMs }` | Periodic (~every 2s) — per-channel log rate and server info |
+| Log event | `{ channel, serverName, path, message, timestamp }` or `[{...}, {...}]` (batched array) | Live log events; single object or batched array. Client always filters locally — server-side filter is a bandwidth optimization only (may be cleared in split-view or no-filter cases) |
 
 ### Client → Server
 
 | Action | Shape | Description |
 |---|---|---|
-| Subscribe | `{ action: "subscribe", topics: [...] }` | Subscribe to topics (all topics on connect) |
+| Subscribe | `{ action: "subscribe", channels: [...] }` | Subscribe to channels (all channels on connect) |
 | Filter | `{ action: "filter", filters: { server, path, search, keywords: { terms, mode }, timeRange, timeRangeMs? } }` | Set server-side filter (bandwidth optimization — client filters locally for display) |
 | Clear filters | `{ action: "clear-filters" }` | Remove all filters for this session |
 
@@ -157,7 +157,7 @@ development and build testing, but are not the deployment entry point.
 
 | Field | Type | Description |
 |---|---|---|
-| `topic` | `string` | Topic/category name (e.g. `"api-service"`) |
+| `channel` | `string` | Channel/category name (e.g. `"api-service"`) |
 | `serverName` | `string` | Originating server hostname or label |
 | `path` | `string` | File path or log source path |
 | `message` | `string` | The log message body |
@@ -166,12 +166,12 @@ development and build testing, but are not the deployment entry point.
 ### Example messages
 
 ```json
-{ "type": "topics", "topics": ["api-service", "worker", "auth"] }
+{ "type": "channels", "channels": ["api-service", "worker", "auth"] }
 ```
 
 ```json
 {
-  "topic": "api-service",
+  "channel": "api-service",
   "serverName": "prod-01",
   "path": "/var/log/api/app.log",
   "message": "GET /health 200 OK - 3ms",
@@ -199,8 +199,8 @@ The base URL is the page origin by default (same-origin deployment). If `VITE_WS
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/logs/download?topic=<topic>` | Download the raw log file for the given topic |
-| `GET` | `/api/topics/{topic}/meta` | Topic metadata: all-time server names and file paths for the given topic |
+| `GET` | `/api/logs/download?channel=<channel>` | Download the raw log file for the given channel |
+| `GET` | `/api/channels/{channel}/meta` | Channel metadata: all-time server names and file paths for the given channel |
 
 ---
 
@@ -215,7 +215,7 @@ log-dashboard-ui/
 └── src/
     ├── main.jsx               # React entry point
     ├── App.jsx                # Root layout, split view, global state
-    ├── config.js              # Reads VITE_WS_URL, VITE_SSO_*, VITE_MAX_LOGS_PER_TOPIC,
+    ├── config.js              # Reads VITE_WS_URL, VITE_SSO_*, VITE_MAX_LOGS_PER_CHANNEL,
     │                          # VITE_MAX_MESSAGE_LENGTH from env with fallbacks.
     │                          # Derives same-origin ws/http/sso endpoints when overrides are blank
     ├── constants/
@@ -229,7 +229,7 @@ log-dashboard-ui/
     │   └── logUtils.js        # normalizeLogEvent (interns + _ts + truncation), getRelativeTime
     ├── api/
     │   ├── endpoints.js       # REST endpoint path constants
-    │   └── logApi.js          # REST client — download logs, fetch topic metadata
+    │   └── logApi.js          # REST client — download logs, fetch channel metadata
     ├── auth/
     │   ├── AuthContext.jsx    # SSO provider (Keycloak via oidc-client-ts)
     │   ├── authContext.js     # React context object
@@ -253,29 +253,29 @@ log-dashboard-ui/
         │   ├── panelReducer.js     # useReducer logic for panel-local state
         │   ├── constants.js        # getShortPath, getButtonStyles
         │   ├── hooks/
-        │   │   └── useTopicMeta.js # Server/path discovery + backend meta merge
+        │   │   └── useChannelMeta.js # Server/path discovery + backend meta merge
         │   └── components/
         │       ├── VirtualLogList.jsx  # Virtualized list (@tanstack/react-virtual, flow mode)
         │       ├── LogEntry.jsx        # Single log row with keyword highlighting and relative timestamp
         │       ├── FilterBar.jsx       # Desktop server/path dropdowns, time range
         │       ├── ActiveFilters.jsx   # Active filter chip badges
         │       ├── StatusBar.jsx       # Bottom connection/filter status bar
-        │       ├── EmptyState.jsx      # No-topic-selected placeholder
+        │       ├── EmptyState.jsx      # No-channel-selected placeholder
         │       ├── ScrollButtons.jsx   # Floating scroll-to-top/bottom buttons
         │       └── headers/
-        │           ├── DesktopHeader.jsx  # Desktop topic info, toolbar
-        │           └── MobileHeader.jsx   # Mobile topic bar, filter icon menu, search
+        │           ├── DesktopHeader.jsx  # Desktop channel info, toolbar
+        │           └── MobileHeader.jsx   # Mobile channel bar, filter icon menu, search
         ├── settings/
         │   ├── index.js            # Re-exports SettingsModal
         │   ├── SettingsModal.jsx   # Left-side drawer — theme, terminal mode,
-        │   │                       # sidebar collapse, topic sort order
+        │   │                       # sidebar collapse, channel sort order
         │   ├── SettingRow.jsx      # Labeled setting row wrapper
-        │   ├── SortChip.jsx        # Topic sort mode chip
+        │   ├── SortChip.jsx        # Channel sort mode chip
         │   └── ToggleSwitch.jsx    # Reusable toggle switch
         └── sidebar/
             ├── index.js            # Re-exports Sidebar
-            ├── Sidebar.jsx         # Topic list with search, log rate badges, collapsible on desktop
-            └── TopicItem.jsx       # Individual topic row (memo'd)
+            ├── Sidebar.jsx         # Channel list with search, log rate badges, collapsible on desktop
+            └── ChannelItem.jsx     # Individual channel row (memo'd)
 ```
 
 ---
@@ -291,5 +291,5 @@ origin, while client ID and display tuning are provided by `log-infra/.env`.
 | `VITE_WS_URL` | blank | Optional WebSocket/API origin override; blank uses same-origin `/ws/logs`. |
 | `VITE_SSO_LOGIN_URL` | blank | Optional Keycloak authority override; blank uses same-origin `/auth/realms/logstream`. |
 | `VITE_SSO_CLIENT_ID` | `logstream-ui` | Keycloak OIDC client ID; required when SSO is enabled. |
-| `VITE_MAX_LOGS_PER_TOPIC` | `500` | Display cap per viewed topic (internal buffer stores 4× this for filter headroom; non-viewed topics: 100) |
+| `VITE_MAX_LOGS_PER_CHANNEL` | `500` | Display cap per viewed channel (internal buffer stores 4× this for filter headroom; non-viewed channels: 100) |
 | `VITE_MAX_MESSAGE_LENGTH` | `50000` | Truncate log messages longer than this (chars) to prevent DOM bloat |

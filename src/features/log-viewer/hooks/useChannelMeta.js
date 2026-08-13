@@ -1,67 +1,67 @@
 import { useEffect, useMemo } from 'react';
-import { fetchTopicMeta } from '../../../api/logApi';
+import { fetchChannelMeta } from '../../../api/logApi';
 
 /**
- * Owns "what servers/paths exist for the selected topic" — fetches all-time
+ * Owns "what servers/paths exist for the selected channel" — fetches all-time
  * metadata from the backend, merges it with the live buffer, derives the
  * effective selectedPath, and auto-clears selections that have disappeared.
  *
- * topicMeta stays in LogPanel's reducer (so RESET_TOPIC clears it on topic
+ * channelMeta stays in LogPanel's reducer (so RESET_CHANNEL clears it on channel
  * change); this hook reads it and dispatches updates through `dispatch`.
  */
-export const useTopicMeta = ({
-  selectedTopic,
-  topicLogs,
+export const useChannelMeta = ({
+  selectedChannel,
+  channelLogs,
   selectedServer,
-  selectedPathForTopic,
-  topicMeta,
+  selectedPathForChannel,
+  channelMeta,
   onServerSelect,
   getToken,
   dispatch,
 }) => {
   useEffect(() => {
-    if (!selectedTopic) return;
+    if (!selectedChannel) return;
     const controller = new AbortController();
-    fetchTopicMeta(selectedTopic, controller.signal, getToken)
-      .then((data) => { if (data) dispatch({ type: 'PATCH', payload: { topicMeta: data } }); })
+    fetchChannelMeta(selectedChannel, controller.signal, getToken)
+      .then((data) => { if (data) dispatch({ type: 'PATCH', payload: { channelMeta: data } }); })
       .catch(() => {});
     return () => controller.abort();
-  }, [selectedTopic, getToken, dispatch]);
+  }, [selectedChannel, getToken, dispatch]);
 
-  const serversForSelectedTopic = useMemo(
-    () => selectedTopic ? [...new Set(topicLogs?.map((l) => l.serverName) || [])].sort() : [],
-    [selectedTopic, topicLogs],
+  const serversForSelectedChannel = useMemo(
+    () => selectedChannel ? [...new Set(channelLogs?.map((l) => l.serverName) || [])].sort() : [],
+    [selectedChannel, channelLogs],
   );
 
   const pathsForSelectedServer = useMemo(() => {
-    if (!selectedTopic || !topicLogs) return [];
-    let logs = topicLogs;
+    if (!selectedChannel || !channelLogs) return [];
+    let logs = channelLogs;
     if (selectedServer) logs = logs.filter((l) => l.serverName === selectedServer);
     return [...new Set(logs.map((l) => l.path))].sort();
-  }, [selectedTopic, topicLogs, selectedServer]);
+  }, [selectedChannel, channelLogs, selectedServer]);
 
   // Merge backend meta (all-time) with buffer (recently seen) — meta order preserved,
   // buffer-only servers appended at the end for brand-new servers not yet in meta.
   const mergedServers = useMemo(() => {
-    const metaNames = topicMeta?.servers?.map((s) => s.name) ?? [];
+    const metaNames = channelMeta?.servers?.map((s) => s.name) ?? [];
     const metaSet = new Set(metaNames);
-    const bufferOnly = serversForSelectedTopic.filter((s) => !metaSet.has(s));
+    const bufferOnly = serversForSelectedChannel.filter((s) => !metaSet.has(s));
     return [...metaNames, ...bufferOnly];
-  }, [topicMeta, serversForSelectedTopic]);
+  }, [channelMeta, serversForSelectedChannel]);
 
   const mergedPaths = useMemo(() => {
     const serverMeta = selectedServer
-      ? topicMeta?.servers?.find((s) => s.name === selectedServer)
+      ? channelMeta?.servers?.find((s) => s.name === selectedServer)
       : null;
     const metaPaths = serverMeta?.paths?.map((p) => p.path) ?? [];
     const metaSet = new Set(metaPaths);
     const bufferOnly = pathsForSelectedServer.filter((p) => !metaSet.has(p));
     return [...metaPaths, ...bufferOnly];
-  }, [topicMeta, selectedServer, pathsForSelectedServer]);
+  }, [channelMeta, selectedServer, pathsForSelectedServer]);
 
-  const selectedPath = selectedPathForTopic && (
-    mergedPaths.includes(selectedPathForTopic) || pathsForSelectedServer.includes(selectedPathForTopic)
-  ) ? selectedPathForTopic : null;
+  const selectedPath = selectedPathForChannel && (
+    mergedPaths.includes(selectedPathForChannel) || pathsForSelectedServer.includes(selectedPathForChannel)
+  ) ? selectedPathForChannel : null;
 
   // Auto-clear selected server if it's gone from both meta and buffer.
   // Guard on mergedServers.length so we don't clear before meta has loaded.
@@ -72,10 +72,10 @@ export const useTopicMeta = ({
   }, [selectedServer, mergedServers, onServerSelect]);
 
   useEffect(() => {
-    if (selectedPathForTopic && mergedPaths.length > 0 && !mergedPaths.includes(selectedPathForTopic)) {
-      dispatch({ type: 'PATCH', payload: { pathForTopic: { topic: selectedTopic, path: null } } });
+    if (selectedPathForChannel && mergedPaths.length > 0 && !mergedPaths.includes(selectedPathForChannel)) {
+      dispatch({ type: 'PATCH', payload: { pathForChannel: { channel: selectedChannel, path: null } } });
     }
-  }, [selectedPathForTopic, mergedPaths, selectedTopic, dispatch]);
+  }, [selectedPathForChannel, mergedPaths, selectedChannel, dispatch]);
 
   return { mergedServers, mergedPaths, selectedPath };
 };

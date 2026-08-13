@@ -10,7 +10,7 @@ const EmptyState = ({
   >
     {onClosePanel && (
       <div className={`hidden md:flex items-center justify-between px-3 py-2.5 ${theme.header}`}>
-        <span className={`text-xs ${theme.textMuted}`}>Select a topic</span>
+        <span className={`text-xs ${theme.textMuted}`}>Select a channel</span>
         <button
           onClick={(e) => { e.stopPropagation(); onClosePanel(); }}
           className={`p-1 rounded-lg transition-colors ${darkMode ? 'text-[#80868B] hover:text-[#F28B82]' : 'text-[#5F6368] hover:text-[#C5221F]'}`}
@@ -28,7 +28,7 @@ const EmptyState = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
-      <span className={`ml-3 text-xs ${theme.textMuted}`}>Select a topic</span>
+      <span className={`ml-3 text-xs ${theme.textMuted}`}>Select a channel</span>
     </div>
     <div className={`flex-1 flex items-center justify-center ${theme.textMuted}`}>
       <div className="max-w-sm text-center px-4">
@@ -36,12 +36,12 @@ const EmptyState = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <p className="text-sm font-medium">Select a topic to start monitoring</p>
-        <p className="text-xs mt-1 opacity-60">Topics update live in the sidebar.</p>
+        <p className="text-sm font-medium">Select a channel to start monitoring</p>
+        <p className="text-xs mt-1 opacity-60">Channels update live in the sidebar.</p>
         <button onClick={onOpenSidebar} className={`md:hidden mt-3 px-3 py-1.5 rounded-lg text-xs border transition-all duration-150 ease-in-out ${
           darkMode ? 'bg-[#303134] text-[#BDC1C6] border-[#5F6368]' : 'bg-[#F1F3F4] text-[#3C4043] border-[#DADCE0]'
         }`}>
-          Open Topics
+          Open Channels
         </button>
       </div>
     </div>

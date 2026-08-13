@@ -21,14 +21,14 @@ const readStoredSetting = (key, fallback, parse = (value) => value) => {
 export default function App() {
   const { isAuthenticated, isLoading, getToken } = useAuth();
 
-  const [topicSortMode, setTopicSortMode] = useState(() => readStoredSetting('logstream:topicSortMode', 'asc', (value) => (
+  const [channelSortMode, setChannelSortMode] = useState(() => readStoredSetting('logstream:channelSortMode', 'asc', (value) => (
     ['activity', 'asc', 'desc'].includes(value) ? value : 'asc'
   )));
-  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [selectedChannel, setSelectedChannel] = useState(null);
   const [selectedServer, setSelectedServer] = useState(null);
-  const [selectedTopic2, setSelectedTopic2] = useState(null);
+  const [selectedChannel2, setSelectedChannel2] = useState(null);
   const [selectedServer2, setSelectedServer2] = useState(null);
-  const [topicSearchTerm, setTopicSearchTerm] = useState('');
+  const [channelSearchTerm, setChannelSearchTerm] = useState('');
   const [themeMode, setThemeMode] = useState(() => readStoredSetting('logstream:themeMode', 'system', (value) => (
     ['light', 'dark', 'system'].includes(value) ? value : 'system'
   )));
@@ -46,16 +46,16 @@ export default function App() {
       : true
   ));
 
-  // Which topics are currently displayed in log panels — these get the large
-  // raw buffer (rawBufferPerTopic, 2000 at default). Non-viewed topics keep a
-  // small cap (100) so opening a topic shows instant backlog instead of a blank
-  // panel; the sidebar itself uses only `topics` + `logRates`, not these logs.
-  const viewedTopics = useMemo(
-    () => [selectedTopic, selectedTopic2].filter(Boolean),
-    [selectedTopic, selectedTopic2],
+  // Which channels are currently displayed in log panels — these get the large
+  // raw buffer (rawBufferPerChannel, 2000 at default). Non-viewed channels keep a
+  // small cap (100) so opening a channel shows instant backlog instead of a blank
+  // panel; the sidebar itself uses only `channels` + `logRates`, not these logs.
+  const viewedChannels = useMemo(
+    () => [selectedChannel, selectedChannel2].filter(Boolean),
+    [selectedChannel, selectedChannel2],
   );
 
-  const { logsByTopic, topics, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedTopics, getToken, isAuthenticated);
+  const { logsByChannel, channels, isConnected, isReconnecting, clearLogs, logRates, subscribe, sendFilter } = useWebSocket(config.ws.url, viewedChannels, getToken, isAuthenticated);
   const darkMode = themeMode === 'system' ? systemPrefersDark : themeMode === 'dark';
   const theme = darkMode ? styles.dark : styles.light;
 
@@ -86,8 +86,8 @@ export default function App() {
   }, [themeMode]);
 
   useEffect(() => {
-    window.localStorage.setItem('logstream:topicSortMode', topicSortMode);
-  }, [topicSortMode]);
+    window.localStorage.setItem('logstream:channelSortMode', channelSortMode);
+  }, [channelSortMode]);
 
   useEffect(() => {
     window.localStorage.setItem('logstream:sidebarCollapsed', String(sidebarCollapsed));
@@ -98,19 +98,19 @@ export default function App() {
   }, [terminalMode]);
 
   useEffect(() => {
-    if (splitView && selectedTopic && selectedTopic2) {
-      document.title = `${selectedTopic} | ${selectedTopic2} — LogStream`;
-    } else if (selectedTopic) {
-      document.title = `${selectedTopic} — LogStream`;
+    if (splitView && selectedChannel && selectedChannel2) {
+      document.title = `${selectedChannel} | ${selectedChannel2} — LogStream`;
+    } else if (selectedChannel) {
+      document.title = `${selectedChannel} — LogStream`;
     } else {
       document.title = 'LogStream';
     }
-  }, [selectedTopic, selectedTopic2, splitView]);
+  }, [selectedChannel, selectedChannel2, splitView]);
 
-  // Extract topic-specific log arrays — these keep the same reference
-  // unless that specific topic received new logs in the last flush.
-  const topicLogs1 = logsByTopic[selectedTopic];
-  const topicLogs2 = logsByTopic[selectedTopic2];
+  // Extract channel-specific log arrays — these keep the same reference
+  // unless that specific channel received new logs in the last flush.
+  const channelLogs1 = logsByChannel[selectedChannel];
+  const channelLogs2 = logsByChannel[selectedChannel2];
 
   // Refs to read current values in stable callbacks without re-creating them
   const splitViewRef = useRef(splitView);
@@ -118,39 +118,39 @@ export default function App() {
   useEffect(() => { splitViewRef.current = splitView; }, [splitView]);
   useEffect(() => { activePanelRef.current = activePanel; }, [activePanel]);
 
-  // Auto-select the most active topic on first load (only if it has traffic).
-  // If no topic has logs, leave unselected — user picks manually.
+  // Auto-select the most active channel on first load (only if it has traffic).
+  // If no channel has logs, leave unselected — user picks manually.
   // Uses a ref to avoid re-running once a pick has been made, and
   // queueMicrotask to fire immediately without being cancelled by effect cleanup.
-  // Keep a light buffer for every topic so the sidebar's live activity matches
-  // what the user can open in the panel. Viewed topics already get a larger cap.
+  // Keep a light buffer for every channel so the sidebar's live activity matches
+  // what the user can open in the panel. Viewed channels already get a larger cap.
   useEffect(() => {
-    if (topics.length > 0) {
-      subscribe(topics);
+    if (channels.length > 0) {
+      subscribe(channels);
     }
-  }, [topics, subscribe]);
+  }, [channels, subscribe]);
 
   // ── Stable callbacks (useCallback prevents new refs every render) ──────
-  const handleTopicSelect = useCallback((topic) => {
+  const handleChannelSelect = useCallback((channel) => {
     setIsPaused1(false);
     setIsPaused2(false);
 
     if (splitViewRef.current && activePanelRef.current === 2) {
-      setSelectedTopic2(topic);
+      setSelectedChannel2(channel);
       setSelectedServer2(null);
     } else {
-      setSelectedTopic(topic);
+      setSelectedChannel(channel);
       setSelectedServer(null);
     }
     // Clear server-side filters for the active panel (start fresh)
     const pid = splitViewRef.current && activePanelRef.current === 2 ? 2 : 1;
     sendFilter(null, pid);
-    setTopicSearchTerm('');
+    setChannelSearchTerm('');
     setSidebarOpen(false);
   }, [sendFilter]);
 
   const handleOpenSplit = useCallback(() => {
-    setSelectedTopic2(null);
+    setSelectedChannel2(null);
     setSelectedServer2(null);
     setSplitView(true);
     setActivePanel(2);
@@ -158,7 +158,7 @@ export default function App() {
 
   const handleClosePanel2 = useCallback(() => {
     setSplitView(false);
-    setSelectedTopic2(null);
+    setSelectedChannel2(null);
     setSelectedServer2(null);
     setActivePanel(1);
     setIsPaused2(false);
@@ -196,13 +196,13 @@ export default function App() {
       )}
 
       <Sidebar
-        topics={topics}
-        selectedTopic={activePanel === 2 && splitView ? selectedTopic2 : selectedTopic}
-        onTopicSelect={handleTopicSelect}
-        topicSearchTerm={topicSearchTerm}
-        onTopicSearchChange={setTopicSearchTerm}
-        topicSortMode={topicSortMode}
-        onTopicSortModeChange={setTopicSortMode}
+        channels={channels}
+        selectedChannel={activePanel === 2 && splitView ? selectedChannel2 : selectedChannel}
+        onChannelSelect={handleChannelSelect}
+        channelSearchTerm={channelSearchTerm}
+        onChannelSearchChange={setChannelSearchTerm}
+        channelSortMode={channelSortMode}
+        onChannelSortModeChange={setChannelSortMode}
         theme={theme}
         darkMode={darkMode}
         isOpen={sidebarOpen}
@@ -216,15 +216,15 @@ export default function App() {
       <div className={`flex flex-1 min-w-0 gap-2 ${theme.background}`}>
         {/* Panel 1 */}
         <LogPanel
-          topicLogs={topicLogs1}
-          selectedTopic={selectedTopic}
+          channelLogs={channelLogs1}
+          selectedChannel={selectedChannel}
           selectedServer={selectedServer}
           onServerSelect={setSelectedServer}
           onClearServer={clearServer1}
           onClearLogs={clearLogs}
           isConnected={isConnected}
           isReconnecting={isReconnecting}
-          logRate={logRates[selectedTopic] || 0}
+          logRate={logRates[selectedChannel] || 0}
           theme={theme}
           darkMode={darkMode}
           terminalMode={terminalMode}
@@ -244,15 +244,15 @@ export default function App() {
         {splitView && (
           <>
             <LogPanel
-              topicLogs={topicLogs2}
-              selectedTopic={selectedTopic2}
+              channelLogs={channelLogs2}
+              selectedChannel={selectedChannel2}
               selectedServer={selectedServer2}
               onServerSelect={setSelectedServer2}
               onClearServer={clearServer2}
               onClearLogs={clearLogs}
               isConnected={isConnected}
               isReconnecting={isReconnecting}
-              logRate={logRates[selectedTopic2] || 0}
+              logRate={logRates[selectedChannel2] || 0}
               theme={theme}
               darkMode={darkMode}
               terminalMode={terminalMode}
@@ -278,8 +278,8 @@ export default function App() {
         darkMode={darkMode}
         themeMode={themeMode}
         onThemeModeChange={setThemeMode}
-        topicSortMode={topicSortMode}
-        onTopicSortModeChange={setTopicSortMode}
+        channelSortMode={channelSortMode}
+        onChannelSortModeChange={setChannelSortMode}
         sidebarCollapsed={sidebarCollapsed}
         onSidebarCollapsedChange={setSidebarCollapsed}
         terminalMode={terminalMode}
@@ -288,4 +288,3 @@ export default function App() {
     </div>
   );
 }
-

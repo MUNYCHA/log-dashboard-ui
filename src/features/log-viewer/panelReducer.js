@@ -1,9 +1,9 @@
 // ── Panel-local state ────────────────────────────────────────────────────────
-// All fields here reset automatically on topic switch via RESET_TOPIC.
+// All fields here reset automatically on channel switch via RESET_CHANNEL.
 // Adding a new field here is sufficient — no separate reset list to maintain.
-export const initialPanelState = (topic) => ({
+export const initialPanelState = (channel) => ({
   frozenLogs: null,
-  frozenTopic: null,
+  frozenChannel: null,
   logSearchTerm: "",
   debouncedSearch: "",
   autoScroll: true,
@@ -13,7 +13,7 @@ export const initialPanelState = (topic) => ({
   showMobilePathDropdown: false,
   serverSearchTerm: "",
   pathSearchTerm: "",
-  pathForTopic: { topic, path: null },
+  pathForChannel: { channel, path: null },
   isMobileMenuOpen: false,
   mobileMenuReady: false,
   keywords: [],
@@ -25,12 +25,12 @@ export const initialPanelState = (topic) => ({
   atTop: true,
   atBottom: true,
   downloadError: null,
-  topicMeta: null,
+  channelMeta: null,
 });
 
 export function panelReducer(state, action) {
   switch (action.type) {
-    case 'RESET_TOPIC': return initialPanelState(action.topic);
+    case 'RESET_CHANNEL': return initialPanelState(action.channel);
     case 'PATCH': return { ...state, ...action.payload };
     default: return state;
   }

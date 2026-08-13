@@ -8,31 +8,31 @@ Deep implementation reference. CLAUDE.md links here for details.
 
 ```
 App.jsx (global)
-├── selectedTopic / selectedTopic2      ← which topic each panel shows
+├── selectedChannel / selectedChannel2  ← which channel each panel shows
 ├── selectedServer / selectedServer2    ← server filter (per-panel independent state — each panel has its own server filter)
 ├── themeMode                           ← 'light' | 'dark' | 'system' (persisted to localStorage)
 │   └── darkMode                        ← derived: themeMode === 'dark' || (system && systemPrefersDark)
 ├── systemPrefersDark                   ← mirrors window.matchMedia prefers-color-scheme
 ├── terminalMode                        ← compact monospace log display (persisted to localStorage)
-├── topicSortMode                       ← 'asc' | 'desc' | 'activity' (persisted to localStorage)
+├── channelSortMode                     ← 'asc' | 'desc' | 'activity' (persisted to localStorage)
 ├── sidebarOpen / sidebarCollapsed      ← sidebar visibility (collapsed persisted)
 ├── splitView / activePanel             ← split view mode + which panel is focused
 ├── isPaused1 / isPaused2              ← per-panel pause (frozen snapshot)
-├── topicSearchTerm                     ← sidebar topic search
+├── channelSearchTerm                   ← sidebar channel search
 ├── isSettingsOpen                      ← settings modal visibility
-├── viewedTopics                       ← useMemo([selectedTopic, selectedTopic2]) for tiered log caps
+├── viewedChannels                     ← useMemo([selectedChannel, selectedChannel2]) for tiered log caps
 │
-├── useWebSocket(url, viewedTopics, getToken, isAuthenticated) → shared across all components
-│   ├── logsByTopic    — Record<topic, LogEntry[]> (newest-first after flush, rawBufferPerTopic cap viewed (2000 at default) / 100 non-viewed)
-│   ├── topics         — string[]
+├── useWebSocket(url, viewedChannels, getToken, isAuthenticated) → shared across all components
+│   ├── logsByChannel — Record<channel, LogEntry[]> (newest-first after flush, rawBufferPerChannel cap viewed (2000 at default) / 100 non-viewed)
+│   ├── channels       — string[]
 │   ├── isConnected / isReconnecting
-│   ├── logRates       — Record<topic, number> (logs/sec, from server stats message)
-│   ├── clearLogs(topic), subscribe(topics), trimTopicBuffer(topic, cap?) [returned but currently unused], sendFilter(filters, panelId)
+│   ├── logRates       — Record<channel, number> (logs/sec, from server stats message)
+│   ├── clearLogs(channel), subscribe(channels), trimChannelBuffer(channel, cap?) [returned but currently unused], sendFilter(filters, panelId)
 │
 LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelReducer)
-├── frozenLogs / frozenTopic ← snapshot of logs + topic when paused
+├── frozenLogs / frozenChannel ← snapshot of logs + channel when paused
 ├── logSearchTerm / debouncedSearch     ← text search (300ms debounce for server-side)
-├── pathForTopic        ← { topic, path } — resets on topic change via RESET_TOPIC action
+├── pathForChannel      ← { channel, path } — resets on channel change via RESET_CHANNEL action
 ├── keywords / keywordInput / keywordMode / debouncedKeywordInput
 │   └── filteredLogs uses debouncedKeywordInput (300ms) — keeps filter and keyword chip in sync
 ├── timeRange / customRangeMs
@@ -42,7 +42,7 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 ├── isMobileMenuOpen / mobileMenuReady
 ├── atTop / atBottom    ← scroll position indicators
 ├── downloadError       ← transient download error message (auto-clears after 5s)
-├── topicMeta           ← backend-provided metadata for current topic (servers/paths)
+├── channelMeta         ← backend-provided metadata for current channel (servers/paths)
 │
 └── nowMs               ← separate useState (NOT in the reducer), Date.now() updated every 5s + on timeRange change; drives relative timestamps. There is no `timestampGen` — `nowMs` is the only clock state.
 ```
@@ -53,11 +53,11 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 | Component | `React.memo` | Internal `useMemo` | Notes |
 |---|---|---|---|
 | `LogPanel` | Yes | `filteredLogs` (via `useFilteredLogs`), `filteredServers`, `filteredPaths`, `displayKeywords`, `emptyState` | Main orchestrator |
-| `useTopicMeta` (hook) | — | `serversForSelectedTopic`, `pathsForSelectedServer`, `mergedServers`, `mergedPaths` | Extracted from LogPanel (`features/log-viewer/hooks/useTopicMeta.js`) — owns server/path discovery + backend meta merge |
+| `useChannelMeta` (hook) | — | `serversForSelectedChannel`, `pathsForSelectedServer`, `mergedServers`, `mergedPaths` | Extracted from LogPanel (`features/log-viewer/hooks/useChannelMeta.js`) — owns server/path discovery + backend meta merge |
 | `VirtualLogList` | Yes | — | Extracted to skip re-render when LogPanel state changes that don't affect the list. Relies on `LogPanel` passing it `useCallback`-stable handlers — otherwise the memo is defeated |
 | `LogEntry` | Yes | `relativeTime` (keyed on `[log._ts, nowMs]`), `highlightedMessage` (keyed on `[message, keywords, darkMode, logSearchTerm]` — deliberately NOT `nowMs`) | Only re-renders when its specific log object or keywords change |
-| `TopicItem` (Sidebar) | Yes | — | Only re-renders when `topic`, `isSelected`, `logRate`, or `darkMode` props change |
-| `Sidebar` | Yes | — | Re-renders on its own props changes; `TopicItem` children are protected by their own memo |
+| `ChannelItem` (Sidebar) | Yes | — | Only re-renders when `channel`, `isSelected`, `logRate`, or `darkMode` props change |
+| `Sidebar` | Yes | — | Re-renders on its own props changes; `ChannelItem` children are protected by their own memo |
 | Most other sub-components | **No** | — | DesktopHeader, MobileHeader, FilterBar, ActiveFilters, StatusBar, ScrollButtons, EmptyState — purely presentational, re-render with parent |
 | `KeywordFilter` | **No** | — | Has local state (`selectedColor`) and a ref (`inputRef`) — not purely presentational |
 | `FilterDropdown` | **No** | — | Has a ref and a click-outside effect — not purely presentational |
@@ -75,14 +75,14 @@ LogPanel.jsx (per-panel local) — all resettable state via useReducer (panelRed
 WebSocket frame arrives (single or batch JSON)
   → JSON.parse
   → Normalize via normalizeLogEvent: assign _id (monotonic counter), precompute _ts (Date.parse),
-    intern topic/serverName/path (shared refs), truncate oversized messages (>50KB)
-  → Push to pendingRef (per-topic enqueue capped at rawBufferPerTopic via pendingCountRef)
+    intern channel/serverName/path (shared refs), truncate oversized messages (>50KB)
+  → Push to pendingRef (per-channel enqueue capped at rawBufferPerChannel via pendingCountRef)
   ...150ms later (setInterval flush)...
-  → Group pending by topic
-  → setLogsByTopic: build the capped newest-first array in a SINGLE pass (walk new batch
+  → Group pending by channel
+  → setLogsByChannel: build the capped newest-first array in a SINGLE pass (walk new batch
     newest-first, then existing, stop at cap) — no reverse()/concat()/slice() intermediates.
-    cap = rawBufferPerTopic (displayCap×4 = 2000) viewed, or SIDEBAR_LOG_CAP (100) non-viewed
-  → App re-renders → topicLogs1/2 derived → LogPanel re-renders
+    cap = rawBufferPerChannel (displayCap×4 = 2000) viewed, or SIDEBAR_LOG_CAP (100) non-viewed
+  → App re-renders → channelLogs1/2 derived → LogPanel re-renders
   → filteredLogs = useFilteredLogs(): SINGLE pass over newest-first buffer applying all filters
     (server/path/search/keywords/timeRange), lowercasing each message at most once, early-exit
     at the display cap, result reversed in place to oldest-first
@@ -93,7 +93,7 @@ WebSocket frame arrives (single or batch JSON)
 
 ### Keys
 - `LogEntry` uses `log._id` (monotonic counter assigned in useWebSocket) — NOT array index
-- `TopicItem` uses `topic` string
+- `ChannelItem` uses `channel` string
 
 ## Virtualization Details
 
@@ -114,23 +114,23 @@ WebSocket frame arrives (single or batch JSON)
 ### Queues and buffers
 | Ref | Purpose | Cap |
 |---|---|---|
-| `pendingRef` | Logs waiting for next 150ms flush | Enqueue cap: `rawBufferPerTopic` (displayCap×4) for all topics via `pendingCountRef`; at flush, non-viewed topics are further capped to 100 (`SIDEBAR_LOG_CAP`) when written to `logsByTopic` |
+| `pendingRef` | Logs waiting for next 150ms flush | Enqueue cap: `rawBufferPerChannel` (displayCap×4) for all channels via `pendingCountRef`; at flush, non-viewed channels are further capped to 100 (`SIDEBAR_LOG_CAP`) when written to `logsByChannel` |
 
 ### Message discrimination
 ```
 JSON.parse(event.data)
   → parse error?  → frame silently dropped (try/catch in onmessage)
-  → { type: "topics", topics: string[] }?  → Topic list (primary format, on connect)
-  → { type: "stats", topics: {...}, intervalMs }?  → Per-topic rate stats (~every 2s)
+  → { type: "channels", channels: string[] }?  → Channel list (primary format, on connect)
+  → { type: "stats", channels: {...}, intervalMs }?  → Per-channel rate stats (~every 2s)
   → { type: "filter-ack" }?  → No explicit branch; non-log objects are discarded by normalization
-  → Array of strings? (legacy)  → Topic list (backwards-compat fallback)
+  → Array of strings? (legacy)  → Channel list (backwards-compat fallback)
   → Array of objects?  → Batched log events (iterate, assign _id each)
   → Single object?  → Single log event (wrap in array, same path)
 ```
-Log events are validated by `normalizeLogEvent` (`src/utils/logUtils.js`) — events missing any required field (`topic`, `serverName`, `path`, `timestamp`, `message`) are silently dropped. Valid events get `_id`, a precomputed `_ts` (`Date.parse(timestamp)`), and interned `topic`/`serverName`/`path` (shared string references to reduce buffer memory).
+Log events are validated by `normalizeLogEvent` (`src/utils/logUtils.js`) — events missing any required field (`channel`, `serverName`, `path`, `timestamp`, `message`) are silently dropped. Valid events get `_id`, a precomputed `_ts` (`Date.parse(timestamp)`), and interned `channel`/`serverName`/`path` (shared string references to reduce buffer memory).
 
 ### Log-rate decay
-Per-topic log rates are updated from `{ type: "stats" }` messages. A 1s `setInterval` also runs to zero out stale rates: if a topic has received no stats update for at least 2× the stats interval (`statsIntervalMsRef`, default 2000ms), its rate is set straight to `0` (a hard cutoff, not a gradual multiplier). On socket close, all rates are reset to 0. This prevents sidebar rates from showing stale high values after a topic goes quiet.
+Per-channel log rates are updated from `{ type: "stats" }` messages. A 1s `setInterval` also runs to zero out stale rates: if a channel has received no stats update for at least 2× the stats interval (`statsIntervalMsRef`, default 2000ms), its rate is set straight to `0` (a hard cutoff, not a gradual multiplier). On socket close, all rates are reset to 0. This prevents sidebar rates from showing stale high values after a channel goes quiet.
 
 ### Reconnect
 - Exponential backoff: `min(1000 * 2^attempts, 30000)ms`
@@ -161,19 +161,19 @@ Server-side bandwidth optimization (parallel, does not block display):
 ### Client-side `filteredLogs` (single source of truth)
 `filteredLogs` is computed by the `useFilteredLogs()` hook (`src/hooks/useFilteredLogs.js`) called from `LogPanel`. It applies ALL filters locally in a **single pass** over the newest-first buffer: server/path exact match, plain text search (message field only), keywords with `debouncedKeywordInput` (AND/OR mode), and time range (comparing the precomputed `log._ts` against `nowMs − rangeMs`). Each message is lowercased at most once (search + keywords share it), the loop early-exits once the display cap is reached, and the result is reversed in place to oldest-first. `nowMs` is collapsed to a constant when `timeRange === 'all'`, so the 5s clock tick does not re-run the filter in the default view. The server-side filter reduces bandwidth but the UI never waits for it. Keyword filtering uses `debouncedKeywordInput` — the typed term is applied to filtering and highlighting only after the 300ms debounce fires.
 
-`mergedServers` and `mergedPaths` are derived by merging backend metadata (`/api/topics/{topic}/meta`) with the local buffer — meta order is preserved, buffer-only entries appended. `filteredServers`/`filteredPaths` then apply the search term on top of the merged lists.
+`mergedServers` and `mergedPaths` are derived by merging backend metadata (`/api/channels/{channel}/meta`) with the local buffer — meta order is preserved, buffer-only entries appended. `filteredServers`/`filteredPaths` then apply the search term on top of the merged lists.
 
 ## Theme System
 
 `src/constants/theme.js` exports `styles.dark` and `styles.light` — objects with 24 keys, each a Tailwind class string. Components receive `theme` prop and use `theme.background`, `theme.text`, `theme.logEntry`, etc.
 
-Key tokens: `background`, `sidebar`, `header`, `logArea`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `card`, `hover`, `selected`, `topicItem`, `logEntry`, `scrollbar`, `serverBadge`, `serverBadgeHover`, `popupBorder`, `dropdownItemSelected`, `inputFocus`, `button`, `buttonPrimary`, `accent`, `accentBg`
+Key tokens: `background`, `sidebar`, `header`, `logArea`, `text`, `textSecondary`, `textMuted`, `border`, `input`, `card`, `hover`, `selected`, `channelItem`, `logEntry`, `scrollbar`, `serverBadge`, `serverBadgeHover`, `popupBorder`, `dropdownItemSelected`, `inputFocus`, `button`, `buttonPrimary`, `accent`, `accentBg`
 
 ## Sub-component Props Quick Reference
 
 | Component | Key props | State? |
 |---|---|---|
-| `DesktopHeader` | selectedTopic, displayedLogs, logRate, onDownload, all toolbar callbacks | None |
+| `DesktopHeader` | selectedChannel, displayedLogs, logRate, onDownload, all toolbar callbacks | None |
 | `MobileHeader` | Same as Desktop + mobile-specific dropdowns, server/path filters, onDownload | None |
 | `FilterBar` | server/path dropdowns, timeRange, refs for positioning | None |
 | `ActiveFilters` | selectedServer/Path, logSearchTerm, keywords, clear callbacks | None (returns null if no filters) |
@@ -182,15 +182,15 @@ Key tokens: `background`, `sidebar`, `header`, `logArea`, `text`, `textSecondary
 | `EmptyState` | theme, splitView, panel callbacks | None |
 | `KeywordFilter` | keywords, inputValue, callbacks, mode | selectedColor, inputRef |
 | `FilterDropdown` | isOpen, items, selectedItem, searchTerm, callbacks | dropdownRef (click-outside) |
-| `SettingsModal` | isOpen, onClose, themeMode, terminalMode, topicSortMode, sidebarCollapsed + change callbacks | None (left-side drawer, not a centered modal) |
+| `SettingsModal` | isOpen, onClose, themeMode, terminalMode, channelSortMode, sidebarCollapsed + change callbacks | None (left-side drawer, not a centered modal) |
 
 ## File Map
 
 ```
 src/
 ├── main.jsx                    # Entry point — wraps <App /> in ErrorBoundary (fallback: recovery screen + reload button)
-├── App.jsx                     # Global state, split view, theme resolution, settings modal; updates document.title to track selected topic(s)
-├── config.js                   # VITE_WS_URL, VITE_SSO_*, VITE_MAX_LOGS_PER_TOPIC, VITE_MAX_MESSAGE_LENGTH; derives same-origin ws/http/sso endpoints
+├── App.jsx                     # Global state, split view, theme resolution, settings modal; updates document.title to track selected channel(s)
+├── config.js                   # VITE_WS_URL, VITE_SSO_*, VITE_MAX_LOGS_PER_CHANNEL, VITE_MAX_MESSAGE_LENGTH; derives same-origin ws/http/sso endpoints
 ├── constants/
 │   └── theme.js                # styles.dark / styles.light token objects (24 keys each)
 ├── hooks/
@@ -198,9 +198,9 @@ src/
 │   └── useFilteredLogs.js      # Client-side single-pass filter (server/path/search/keywords/timeRange)
 ├── api/
 │   ├── endpoints.js            # REST endpoint path constants
-│   └── logApi.js               # REST client — download logs (parses Content-Disposition for filename, falls back to timestamped `<topic>_<ts>.log`), fetch topic metadata
+│   └── logApi.js               # REST client — download logs (parses Content-Disposition for filename, falls back to timestamped `<channel>_<ts>.log`), fetch channel metadata
 ├── utils/
-│   └── logUtils.js             # normalizeLogEvent (interns topic/server/path, precomputes _ts, truncates), getRelativeTime
+│   └── logUtils.js             # normalizeLogEvent (interns channel/server/path, precomputes _ts, truncates), getRelativeTime
 ├── auth/
 │   ├── AuthContext.jsx         # Provider — bootstraps SSO, exposes auth state
 │   ├── authContext.js          # React context object
@@ -212,10 +212,10 @@ src/
 └── features/
     ├── filters/FilterDropdown.jsx, ServerDropdown.jsx, PathDropdown.jsx, KeywordFilter.jsx, TimeRangeSelector.jsx, timeRange.js (formatDurationMs), index.js
     ├── log-viewer/LogPanel.jsx, panelReducer.js, constants.js (getShortPath, getButtonStyles), index.js
-    │   ├── hooks/useTopicMeta.js   # server/path discovery + backend meta merge (extracted from LogPanel)
+    │   ├── hooks/useChannelMeta.js # server/path discovery + backend meta merge (extracted from LogPanel)
     │   └── components/VirtualLogList.jsx, LogEntry.jsx, FilterBar.jsx, ActiveFilters.jsx,
     │       StatusBar.jsx, EmptyState.jsx, ScrollButtons.jsx
     │       └── headers/DesktopHeader.jsx, MobileHeader.jsx
     ├── settings/SettingsModal.jsx, SettingRow.jsx, SortChip.jsx, ToggleSwitch.jsx, index.js
-    └── sidebar/Sidebar.jsx, TopicItem.jsx, index.js
+    └── sidebar/Sidebar.jsx, ChannelItem.jsx, index.js
 ```

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import config from '../config';
 
 export function useFilteredLogs({
-  selectedTopic, topicLogs, selectedServer, selectedPath,
+  selectedChannel, channelLogs, selectedServer, selectedPath,
   logSearchTerm, keywords, debouncedKeywordInput, keywordMode,
   timeRange, customRangeMs, nowMs,
 }) {
@@ -11,7 +11,7 @@ export function useFilteredLogs({
   // doesn't re-filter the whole buffer on every tick.
   const effectiveNow = timeRange === 'all' ? 0 : nowMs;
   return useMemo(() => {
-    if (!selectedTopic || !topicLogs) return [];
+    if (!selectedChannel || !channelLogs) return [];
 
     // Precompute predicate inputs once, outside the loop.
     const lowerSearch = logSearchTerm ? logSearchTerm.toLowerCase() : null;
@@ -35,10 +35,10 @@ export function useFilteredLogs({
     // and stop at the display cap, so this often scans far fewer than all logs.
     // Each message is lowercased at most once (search + keywords share it), and
     // no intermediate arrays are allocated — both matter on the 150ms hot path.
-    const cap = config.ws.maxLogsPerTopic;
+    const cap = config.ws.maxLogsPerChannel;
     const result = [];
-    for (let i = 0; i < topicLogs.length && result.length < cap; i++) {
-      const l = topicLogs[i];
+    for (let i = 0; i < channelLogs.length && result.length < cap; i++) {
+      const l = channelLogs[i];
       if (selectedServer && l.serverName !== selectedServer) continue;
       if (selectedPath && l.path !== selectedPath) continue;
       if (cutoff !== -Infinity && !(Number.isFinite(l._ts) && l._ts >= cutoff)) continue;
@@ -60,5 +60,5 @@ export function useFilteredLogs({
     // Collected newest-first; reverse in place to oldest-first for display.
     result.reverse();
     return result;
-  }, [selectedTopic, topicLogs, selectedServer, selectedPath, logSearchTerm, keywords, debouncedKeywordInput, keywordMode, timeRange, customRangeMs, effectiveNow]);
+  }, [selectedChannel, channelLogs, selectedServer, selectedPath, logSearchTerm, keywords, debouncedKeywordInput, keywordMode, timeRange, customRangeMs, effectiveNow]);
 }

@@ -1,6 +1,6 @@
 import config from '../config';
 
-// Intern low-cardinality strings (topic, serverName, path). JSON.parse mints a
+// Intern low-cardinality strings (channel, serverName, path). JSON.parse mints a
 // fresh string copy per log, so thousands of logs hold thousands of duplicate
 // copies of the same handful of values. Returning a shared reference for each
 // distinct value collapses those duplicates to one allocation apiece. These
@@ -17,13 +17,13 @@ const intern = (value) => {
 export const normalizeLogEvent = (value, nextId) => {
   if (!value || typeof value !== 'object') return null;
 
-  const topic = typeof value.topic === 'string' ? value.topic.trim() : '';
+  const channel = typeof value.channel === 'string' ? value.channel.trim() : '';
   const serverName = typeof value.serverName === 'string' ? value.serverName : null;
   const path = typeof value.path === 'string' ? value.path : null;
   const timestamp = typeof value.timestamp === 'string' ? value.timestamp : null;
   const message = typeof value.message === 'string' ? value.message : null;
 
-  if (!topic || serverName == null || path == null || timestamp == null || message == null) {
+  if (!channel || serverName == null || path == null || timestamp == null || message == null) {
     return null;
   }
 
@@ -33,7 +33,7 @@ export const normalizeLogEvent = (value, nextId) => {
 
   return {
     _id: nextId,
-    topic: intern(topic),
+    channel: intern(channel),
     serverName: intern(serverName),
     path: intern(path),
     timestamp,

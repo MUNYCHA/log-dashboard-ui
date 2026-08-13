@@ -1,20 +1,20 @@
 import React, { useMemo } from 'react';
-import TopicItem from './TopicItem';
+import ChannelItem from './ChannelItem';
 
-const TOPIC_SORT_OPTIONS = [
+const CHANNEL_SORT_OPTIONS = [
   { value: 'activity', label: 'Active' },
   { value: 'asc', label: 'A-Z' },
   { value: 'desc', label: 'Z-A' },
 ];
 
 const Sidebar = ({
-  topics,
-  selectedTopic,
-  onTopicSelect,
-  topicSearchTerm,
-  onTopicSearchChange,
-  topicSortMode,
-  onTopicSortModeChange,
+  channels,
+  selectedChannel,
+  onChannelSelect,
+  channelSearchTerm,
+  onChannelSearchChange,
+  channelSortMode,
+  onChannelSortModeChange,
   theme,
   darkMode,
   isOpen,
@@ -24,14 +24,14 @@ const Sidebar = ({
   onCollapse,
   onOpenSettings,
 }) => {
-  const sortedTopics = useMemo(() => {
-    const filtered = topics.filter((t) => t.toLowerCase().includes(topicSearchTerm.toLowerCase()));
+  const sortedChannels = useMemo(() => {
+    const filtered = channels.filter((c) => c.toLowerCase().includes(channelSearchTerm.toLowerCase()));
 
-    if (topicSortMode === 'asc') {
+    if (channelSortMode === 'asc') {
       return filtered.sort((a, b) => a.localeCompare(b));
     }
 
-    if (topicSortMode === 'desc') {
+    if (channelSortMode === 'desc') {
       return filtered.sort((a, b) => b.localeCompare(a));
     }
 
@@ -43,11 +43,11 @@ const Sidebar = ({
       if (rateA !== rateB) return rateB - rateA;
       return a.localeCompare(b);
     });
-  }, [topics, topicSearchTerm, topicSortMode, logRates]);
+  }, [channels, channelSearchTerm, channelSortMode, logRates]);
 
   const activeCount = useMemo(
-    () => topics.filter((t) => (logRates?.[t] || 0) > 0).length,
-    [topics, logRates],
+    () => channels.filter((c) => (logRates?.[c] || 0) > 0).length,
+    [channels, logRates],
   );
 
   const ghostBtn = darkMode
@@ -100,11 +100,11 @@ const Sidebar = ({
         <div className="px-4 pt-4 pb-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <h1 className={`text-[13px] font-semibold ${theme.text}`}>Topics</h1>
+              <h1 className={`text-[13px] font-semibold ${theme.text}`}>Channels</h1>
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-mono font-medium tabular-nums ${
                 darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
               }`}>
-                {activeCount}/{topics.length}
+                {activeCount}/{channels.length}
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -143,14 +143,14 @@ const Sidebar = ({
             </svg>
             <input
               type="text"
-              placeholder="Search topics"
+              placeholder="Search channels"
               className={`w-full h-9 rounded-full border pl-10 pr-4 text-[13px] focus:outline-none focus:ring-2 transition-all duration-150 ease-in-out ${
                 darkMode
                   ? 'bg-[#303134] border-[#5F6368] text-[#E8EAED] placeholder:text-[#80868B] focus:ring-[#8AB4F8]/20 focus:border-[#8AB4F8]'
                   : 'bg-[#F1F3F4] border-[#DADCE0] text-[#202124] placeholder:text-[#5F6368] focus:ring-[#1A73E8]/20 focus:border-[#1A73E8]'
               }`}
-              value={topicSearchTerm}
-              onChange={(e) => onTopicSearchChange(e.target.value)}
+              value={channelSearchTerm}
+              onChange={(e) => onChannelSearchChange(e.target.value)}
             />
           </div>
         </div>
@@ -160,13 +160,13 @@ const Sidebar = ({
           <div className={`grid grid-cols-3 gap-0.5 rounded-2xl border p-1 ${
             darkMode ? 'border-[#303134] bg-[#303134]' : 'border-[#E8EAED] bg-[#F1F3F4]'
           }`}>
-            {TOPIC_SORT_OPTIONS.map((option) => {
-              const isSelected = option.value === topicSortMode;
+            {CHANNEL_SORT_OPTIONS.map((option) => {
+              const isSelected = option.value === channelSortMode;
               return (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => onTopicSortModeChange(option.value)}
+                  onClick={() => onChannelSortModeChange(option.value)}
                   className={`w-full rounded-xl py-1.5 text-center text-[12px] font-medium transition-all duration-150 ease-in-out active:scale-95
                     ${isSelected
                       ? darkMode
@@ -184,16 +184,16 @@ const Sidebar = ({
           </div>
         </div>
 
-        {/* Topic list */}
+        {/* Channel list */}
         <div className={`flex-1 overflow-y-auto ${theme.scrollbar} px-3 pb-3`}>
           <div className="flex flex-col gap-0.5">
-            {sortedTopics.map((topic) => (
-              <TopicItem
-                key={topic}
-                topic={topic}
-                isSelected={selectedTopic === topic}
-                onTopicSelect={onTopicSelect}
-                logRate={logRates?.[topic] || 0}
+            {sortedChannels.map((channel) => (
+              <ChannelItem
+                key={channel}
+                channel={channel}
+                isSelected={selectedChannel === channel}
+                onChannelSelect={onChannelSelect}
+                logRate={logRates?.[channel] || 0}
                 darkMode={darkMode}
               />
             ))}

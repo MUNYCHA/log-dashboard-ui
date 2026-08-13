@@ -4,7 +4,7 @@ import { ServerDropdown, PathDropdown, TimeRangeSelector } from '../../../filter
 import { getShortPath } from '../../constants';
 
 const MobileHeader = ({
-  selectedTopic, displayedLogs, logRate, darkMode, theme,
+  selectedChannel, displayedLogs, logRate, darkMode, theme,
   onOpenSidebar, isSidebarOpen,
   isMobileMenuOpen, onToggleMobileMenu, mobileMenuReady,
   isPaused, onTogglePause,
@@ -44,7 +44,7 @@ const MobileHeader = ({
               </svg>
             </button>
             <h2 className="min-w-0 truncate text-sm font-semibold">
-              {selectedTopic}
+              {selectedChannel}
             </h2>
             <span className={`text-[11px] font-mono tabular-nums ${theme.textMuted}`}>
               {displayedLogs?.length || 0}
@@ -162,7 +162,7 @@ const MobileHeader = ({
               </button>
 
               <button
-                onClick={() => onClearLogs(selectedTopic)}
+                onClick={() => onClearLogs(selectedChannel)}
                 className={`col-span-2 py-2.5 rounded-xl border text-[13px] font-semibold transition-all duration-150 ease-in-out active:scale-95 ${btnDanger}`}
               >
                 Clear logs

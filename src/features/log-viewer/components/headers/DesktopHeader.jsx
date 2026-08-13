@@ -2,7 +2,7 @@ import React from 'react';
 import HeartbeatLine from '../../../../ui/HeartbeatLine';
 
 const DesktopHeader = ({
-  selectedTopic, displayedLogs, logRate, darkMode, theme,
+  selectedChannel, displayedLogs, logRate, darkMode, theme,
   splitView, isActivePanel, onSetActive, onClosePanel, onOpenSplit,
   isPaused, onTogglePause, btn,
   onDownload,
@@ -29,7 +29,7 @@ const DesktopHeader = ({
             />
           )}
           <h2 className={`truncate text-[17px] font-semibold tracking-tight ${theme.text}`}>
-            {selectedTopic}
+            {selectedChannel}
           </h2>
           <span className={`rounded-full px-2.5 py-0.5 text-[12px] font-mono tabular-nums font-medium flex-shrink-0 ${
             darkMode ? 'bg-[#303134] text-[#80868B]' : 'bg-[#F1F3F4] text-[#5F6368]'
@@ -78,7 +78,7 @@ const DesktopHeader = ({
             </button>
           )}
 
-          <button onClick={() => onClearLogs(selectedTopic)} className={btn.clear} title="Clear logs">
+          <button onClick={() => onClearLogs(selectedChannel)} className={btn.clear} title="Clear logs">
             <svg className={toolbarIconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={toolbarStrokeWidth} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
           </button>
         </div>
